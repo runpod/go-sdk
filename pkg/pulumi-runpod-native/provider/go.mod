@@ -2,8 +2,6 @@ module github.com/runpod/go-sdk/pkg/pulumi-runpod-native/provider
 
 go 1.21.3
 
-replace github.com/runpod/go-sdk/pkg/pulumi-runpod-native/provider => /Users/rutvik/Desktop/runpod/go-sdk/pkg/pulumi-runpod-native/provider
-
 require github.com/pulumi/pulumi-go-provider v0.12.2
 
 require (
