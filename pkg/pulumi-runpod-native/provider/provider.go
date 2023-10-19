@@ -3,6 +3,7 @@ package provider
 import (
 	p "github.com/pulumi/pulumi-go-provider"
 	"github.com/pulumi/pulumi-go-provider/infer"
+	"github.com/pulumi/pulumi/sdk/v3/go/common/tokens"
 )
 
 var Version string
@@ -15,6 +16,9 @@ func Provider() p.Provider {
 			infer.Resource[*Pod, PodArgs, PodState](),
 		},
 		Config: infer.Config[*Config](),
+		ModuleMap: map[tokens.ModuleName]tokens.ModuleName{
+			"provider": "index",
+		},
 	})
 }
 
