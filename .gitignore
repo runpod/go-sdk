@@ -19,3 +19,17 @@
 
 # Go workspace file
 go.work
+
+/vendor/
+**/bin/
+**/obj/
+**/node_modules/
+**/.vs
+**/.idea
+**/.ionide
+.pulumi
+Pulumi.*.yaml
+yarn.lock
+ci-scripts
+/nuget/
+provider/**/schema-embed.json
