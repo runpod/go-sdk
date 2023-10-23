@@ -1,9 +1,9 @@
 archives:
   - id: archive
     name_template: '{{ .Binary }}-{{ .Tag }}-{{ .Os }}-{{ .Arch }}'
-before:
-  hooks:
-    - make provider
+before:    
+  hooks:       
+    - make -C ./pkg/pulumi-runpod-native/ provider    
 builds:
   - binary: pulumi-resource-runpod
     dir: pkg
