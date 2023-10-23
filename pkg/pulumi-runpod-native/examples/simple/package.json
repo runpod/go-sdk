@@ -1,0 +1,10 @@
+{
+    "name": "runpod-typescript",
+    "version": "0.1.0",
+    "devDependencies": {
+        "@types/node": "latest"
+    },
+    "dependencies": {
+        "@pulumi/pulumi": "latest"
+    }
+}

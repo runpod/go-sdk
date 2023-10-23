@@ -25,19 +25,3 @@ func Provider() p.Provider {
 type Config struct {
 	Token string `pulumi:"token"`
 }
-type Pod struct{}
-type PodArgs struct {
-	GpuTypeId string `pulumi:"gpuTypeId"`
-	GpuCount  int    `pulumi:"gpuCount"`
-}
-type PodState struct {
-	PodArgs
-}
-
-func (*Pod) Create(ctx p.Context, name string, input PodArgs, preview bool) (string, PodState, error) {
-	state := PodState{PodArgs: input}
-	if preview {
-		return name, state, nil
-	}
-	return name, state, nil
-}
