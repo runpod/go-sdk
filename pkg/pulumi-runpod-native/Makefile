@@ -66,7 +66,7 @@ python_sdk::
 		cd ./bin && python3 setup.py build sdist
 
 .PHONY: build
-build:: provider go_sdk nodejs_sdk python_sdk
+build:: provider go_sdk nodejs_sdk
 
 # Required for the codegen action that runs in pulumi/pulumi
 only_build:: build
