@@ -6,7 +6,7 @@ package config
 import (
 	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
 	"github.com/pulumi/pulumi/sdk/v3/go/pulumi/config"
-	"internal"
+	"github.com/runpod/go-sdk/pkg/pulumi-runpod-native/sdk/go/runpod/internal"
 )
 
 var _ = internal.GetEnvOrDefault
