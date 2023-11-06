@@ -4,11 +4,13 @@ type Endpoint struct {
 	apiKey *string
 
 	// EndpointId where the job will be executed
-	EndpointId *string
+	EndpointId  *string
+	EndpointUrl *string
 }
 
 type Option struct {
-	EndpointId *string `json:"endpointId" required:"true"`
+	EndpointId  *string `json:"endpointId" required:"true"`
+	EndpointUrl *string `json:"endpointUrl" default:"https://api.runpod.ai/v2/"`
 }
 
 type RunInput struct {
@@ -48,21 +50,22 @@ type Policy struct {
 }
 
 type RunOutput struct {
-	Id     *string
-	Status *string
+	Id     *string `json:"id,omitempty"`
+	Status *string `json:"status,omitempty"`
 }
 
 type RunSyncOutput struct {
-	DelayTime     *int
-	Error         *string
-	ExecutionTime *int
-	Id            *string
-	Output        *interface{}
-	Retries       *int
-	Status        *string
+	DelayTime     *int         `json:"delayTime,omitempty"`
+	Error         *string      `json:"error,omitempty"`
+	ExecutionTime *int         `json:"executionTime,omitempty"`
+	Id            *string      `json:"id,omitempty"`
+	Output        *interface{} `json:"output,omitempty"`
+	Retries       *int         `json:"retries,omitempty"`
+	Status        *string      `json:"status,omitempty"`
 }
 
 type apiRequestInput struct {
+	method  string
 	url     *string
 	reqBody []byte
 	token   *string
@@ -75,26 +78,83 @@ type GetStatusInput struct {
 }
 
 type GetStatusOutput struct {
-	DelayTime     *int
-	Error         *string
-	ExecutionTime *int
-	Id            *string
-	Output        *interface{}
-	Retries       *int
-	Status        *string
+	DelayTime     *int         `json:"delayTime,omitempty"`
+	Error         *string      `json:"error,omitempty"`
+	ExecutionTime *int         `json:"executionTime,omitempty"`
+	Id            *string      `json:"id,omitempty"`
+	Output        *interface{} `json:"output,omitempty"`
+	Retries       *int         `json:"retries,omitempty"`
+	Status        *string      `json:"status,omitempty"`
 }
 
 type StatusSyncInput struct {
 	Id      *string `json:"id" required:"true"`
-	Timeout *int    `default:"90"`
+	Timeout *int    `default:"120"`
 }
 
 type StatusSyncOutput struct {
-	DelayTime     *int
-	Error         *string
-	ExecutionTime *int
-	Id            *string
-	Output        *interface{}
-	Retries       *int
-	Status        *string
+	DelayTime     *int         `json:"delayTime,omitempty"`
+	Error         *string      `json:"error,omitempty"`
+	ExecutionTime *int         `json:"executionTime,omitempty"`
+	Id            *string      `json:"id,omitempty"`
+	Output        *interface{} `json:"output,omitempty"`
+	Retries       *int         `json:"retries,omitempty"`
+	Status        *string      `json:"status,omitempty"`
+}
+
+type GetHealthInput struct {
+	RequestTimeout *int `default:"3"`
+}
+
+type GetHealthOutput struct {
+	Workers *GetHealthWorkerOutput `json:"workers,omitempty"`
+	Jobs    *GetHealthJobOutput    `json:"jobs,omitempty"`
+}
+
+type GetHealthWorkerOutput struct {
+	Running      *int `json:"running,omitempty"`
+	Idle         *int `json:"idle,omitempty"`
+	Initializing *int `json:"initializing,omitempty"`
+	Ready        *int `json:"ready,omitempty"`
+	Throttled    *int `json:"throttled,omitempty"`
+}
+
+type GetHealthJobOutput struct {
+	InProgress *int `json:"inProgress,omitempty"`
+	InQueue    *int `json:"inQueue,omitempty"`
+	Completed  *int `json:"completed,omitempty"`
+	Failed     *int `json:"failed,omitempty"`
+	Retried    *int `json:"retried,omitempty"`
+}
+
+type PurgeQueueInput struct {
+	RequestTimeout *int `default:"3"`
+}
+
+type PurgeQueueOutput struct {
+	Status  *string `json:"status,omitempty"`
+	Removed *int    `json:"removed,omitempty"`
+}
+
+type CancelRequestInput struct {
+	Id             *string `json:"id" required:"true"`
+	RequestTimeout *int    `default:"3"`
+}
+
+type CancelRequestOutput struct {
+	DelayTime     *int    `json:"delayTime,omitempty"`
+	Error         *string `json:"error,omitempty"`
+	ExecutionTime *int    `json:"executionTime,omitempty"`
+	Id            *string `json:"id,omitempty"`
+	Status        *string `json:"status,omitempty"`
+}
+
+type StreamInput struct {
+	Id      *string `json:"id" required:"true"`
+	Timeout *int    `default:"120"`
+}
+
+type StreamOutput struct {
+	Status *string
+	Stream []map[string]interface{}
 }

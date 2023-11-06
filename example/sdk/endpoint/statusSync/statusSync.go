@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"time"
 
@@ -19,20 +20,15 @@ func main() {
 		panic(err)
 	}
 	input := rpEndpoint.StatusSyncInput{
-		Id:      sdk.String("63c140e6-888f-4d5b-857c-90db79b9f67e-u1"),
+		Id:      sdk.String("sync-435b2842-6b3c-4e7d-b404-24d6a759bc7b-u1"),
 		Timeout: sdk.Int(100),
 	}
 	now := time.Now()
 	output, err := endpoint.StatusSync(&input)
 	if err != nil {
-		fmt.Println(time.Since(now).Seconds())
-		fmt.Println("output: ", output)
-
-		fmt.Println("output: ", *output.Id, *output.Status)
-
 		panic(err)
 	}
 	fmt.Println(time.Since(now).Seconds())
-	fmt.Println("output: ", *output.Id, *output.Status)
-
+	dt, _ := json.Marshal(output)
+	fmt.Printf("output:%s\n", dt)
 }
