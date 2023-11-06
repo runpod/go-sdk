@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"github.com/runpod/go-sdk/pkg/sdk"
@@ -27,6 +28,6 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println("output: ", *output.Id, *output.Status)
-
+	data, _ := json.Marshal(output)
+	fmt.Printf("output: %s\n", data)
 }

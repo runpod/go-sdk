@@ -1,8 +1,8 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
-	"time"
 
 	"github.com/runpod/go-sdk/pkg/sdk"
 	"github.com/runpod/go-sdk/pkg/sdk/config"
@@ -18,19 +18,16 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	now := time.Now()
 	jobInput := rpEndpoint.RunSyncInput{
 		JobInput: &rpEndpoint.JobInput{
-			Input: map[string]interface{}{"mock_delay": 95},
+			Input: map[string]interface{}{"mock_delay": 10},
 		},
 		Timeout: sdk.Int(120),
 	}
 	output, err := endpoint.RunSync(&jobInput)
 	if err != nil {
-		fmt.Println(time.Since(now).Seconds())
 		panic(err)
 	}
-	fmt.Println(time.Since(now).Seconds())
-	fmt.Println("output: ", *output.Status)
-
+	data, _ := json.Marshal(output)
+	fmt.Printf("output: %s\n", data)
 }

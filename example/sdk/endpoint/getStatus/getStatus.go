@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"github.com/runpod/go-sdk/pkg/sdk"
@@ -18,12 +19,12 @@ func main() {
 		panic(err)
 	}
 	input := rpEndpoint.GetStatusInput{
-		Id: sdk.String("3fef28d4-96e9-4e55-b236-5f5dda58b146-u1"),
+		Id: sdk.String("30edb8b9-2b8d-4977-af7a-85fd91f51a12-u1"),
 	}
 	output, err := endpoint.GetStatus(&input)
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println("output: ", *output.Id, *output.Status, *output.Output)
-
+	dt, _ := json.Marshal(output)
+	fmt.Printf("output:%s\n", dt)
 }
