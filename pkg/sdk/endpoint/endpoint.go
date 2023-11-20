@@ -363,7 +363,7 @@ func (ep *Endpoint) PurgeQueue(input *PurgeQueueInput) (*PurgeQueueOutput, error
 	return &result, nil
 }
 
-func (ep *Endpoint) CancelRequest(input *CancelRequestInput) (*CancelRequestOutput, error) {
+func (ep *Endpoint) Cancel(input *CancelInput) (*CancelOutput, error) {
 	if input.Id == nil {
 		return nil, fmt.Errorf("job id is required")
 	}
@@ -377,7 +377,7 @@ func (ep *Endpoint) CancelRequest(input *CancelRequestInput) (*CancelRequestOutp
 
 	url := *ep.EndpointUrl + "/" + *ep.EndpointId + "/cancel/" + *input.Id
 
-	var result CancelRequestOutput
+	var result CancelOutput
 	respBody, err := getApiResponse(apiRequestInput{
 		method:  "POST",
 		url:     &url,
