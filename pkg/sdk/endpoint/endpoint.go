@@ -14,6 +14,10 @@ import (
 	"github.com/runpod/go-sdk/pkg/sdk/config"
 )
 
+func isCompleted(status string) bool {
+	return status == "COMPLETED" || status == "FAILED" || status == "CANCELLED" || status == "TIMED_OUT"
+}
+
 var slsEndpointUrl = "https://api.runpod.ai/v2"
 
 func New(cf *config.Config, input *Option) (*Endpoint, error) {
@@ -96,7 +100,7 @@ func (ep *Endpoint) RunSync(input *RunSyncInput) (*RunSyncOutput, error) {
 	if err != nil {
 		return nil, fmt.Errorf("json decoder error: %s", err)
 	}
-	if result.Status != nil && (*result.Status == "COMPLETED" || *result.Status == "FAILED") {
+	if result.Status != nil && (isCompleted(*result.Status)) {
 		return &result, nil
 	} else if result.Error != nil {
 		return &result, nil
@@ -125,7 +129,7 @@ func (ep *Endpoint) RunSync(input *RunSyncInput) (*RunSyncOutput, error) {
 			if err != nil {
 				return &result, fmt.Errorf("json decoder error: %s", err)
 			}
-			if result.Status != nil && (*result.Status == "COMPLETED" || *result.Status == "FAILED") {
+			if result.Status != nil && (isCompleted(*result.Status)) {
 				return &result, nil
 			} else if result.Error != nil {
 				return &result, nil
@@ -211,7 +215,7 @@ func (ep *Endpoint) StatusSync(input *StatusSyncInput) (*StatusSyncOutput, error
 			if err != nil {
 				return &result, fmt.Errorf("json decoder error: %s", err)
 			}
-			if result.Status != nil && (*result.Status == "COMPLETED" || *result.Status == "FAILED") {
+			if result.Status != nil && (isCompleted(*result.Status)) {
 				return &result, nil
 			} else if result.Error != nil {
 				return &result, nil
@@ -244,7 +248,7 @@ func statusSyncApiCall(ctx context.Context, ep *Endpoint, url *string, reqTimeou
 	}
 }
 
-func (ep *Endpoint) GetStatus(input *GetStatusInput) (*GetStatusOutput, error) {
+func (ep *Endpoint) Status(input *StatusInput) (*StatusOutput, error) {
 	if input.Id == nil {
 		return nil, fmt.Errorf("endpoint id is required")
 	}
@@ -257,7 +261,7 @@ func (ep *Endpoint) GetStatus(input *GetStatusInput) (*GetStatusOutput, error) {
 
 	url := *ep.EndpointUrl + "/" + *ep.EndpointId + "/status/" + *input.Id
 
-	var result GetStatusOutput
+	var result StatusOutput
 	respBody, err := getApiResponse(apiRequestInput{
 		method:  "POST",
 		url:     &url,
@@ -304,7 +308,7 @@ func getApiResponse(input apiRequestInput) ([]byte, error) {
 	return respBody, nil
 }
 
-func (ep *Endpoint) GetHealth(input *GetHealthInput) (*GetHealthOutput, error) {
+func (ep *Endpoint) Health(input *HealthInput) (*HealthOutput, error) {
 	var timeout int
 	if input.RequestTimeout != nil {
 		timeout = *input.RequestTimeout
@@ -314,7 +318,7 @@ func (ep *Endpoint) GetHealth(input *GetHealthInput) (*GetHealthOutput, error) {
 
 	url := *ep.EndpointUrl + "/" + *ep.EndpointId + "/health"
 
-	var result GetHealthOutput
+	var result HealthOutput
 	respBody, err := getApiResponse(apiRequestInput{
 		method:  "GET",
 		url:     &url,
@@ -390,7 +394,7 @@ func (ep *Endpoint) CancelRequest(input *CancelRequestInput) (*CancelRequestOutp
 	return &result, nil
 }
 
-func (ep *Endpoint) Stream(input *StreamInput, outputChan chan<- StreamOutput) error {
+func (ep *Endpoint) Stream(input *StreamInput, outputChan chan<- StreamResult) error {
 	if input.Id == nil {
 		return fmt.Errorf("job id is required")
 	}
@@ -436,11 +440,14 @@ func (ep *Endpoint) Stream(input *StreamInput, outputChan chan<- StreamOutput) e
 		case <-ctx.Done():
 			return fmt.Errorf("ctx timeout reached")
 		default:
-			result, err := streamApiCall(ctx, ep, &url, &reqTimeout, outputChan)
+			result, err := streamApiCall(ctx, ep, &url, &reqTimeout)
 			if err != nil {
 				return err
 			}
-			if result.Status != nil && (*result.Status == "COMPLETED" || *result.Status == "FAILED") {
+			for _, streamResult := range result.Stream {
+				outputChan <- streamResult
+			}
+			if result.Status != nil && (isCompleted(*result.Status)) {
 				return nil
 			}
 		}
@@ -450,7 +457,7 @@ func (ep *Endpoint) Stream(input *StreamInput, outputChan chan<- StreamOutput) e
 
 }
 
-func streamApiCall(ctx context.Context, ep *Endpoint, url *string, reqTimeout *int, outputChan chan<- StreamOutput) (StreamOutput, error) {
+func streamApiCall(ctx context.Context, ep *Endpoint, url *string, reqTimeout *int) (StreamOutput, error) {
 	done := make(chan bool)
 	var err error
 	var result StreamOutput
@@ -466,7 +473,6 @@ func streamApiCall(ctx context.Context, ep *Endpoint, url *string, reqTimeout *i
 			done <- false
 			return
 		}
-		outputChan <- result
 		done <- true
 	}()
 
