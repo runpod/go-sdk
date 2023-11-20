@@ -30,10 +30,11 @@ type RunSyncInput struct {
 }
 
 type JobInput struct {
-	Input    map[string]interface{} `json:"input,omitempty"`
-	Policy   *Policy                `json:"policy,omitempty"`
-	S3Config *S3Config              `json:"s3Config,omitempty"`
-	Webhook  *string                `json:"webhook,omitempty"`
+	Input     map[string]interface{} `json:"input,omitempty"`
+	Policy    *Policy                `json:"policy,omitempty"`
+	S3Config  *S3Config              `json:"s3Config,omitempty"`
+	Webhook   *string                `json:"webhook,omitempty"`
+	WebhookV2 *string                `json:"webhookV2,omitempty"`
 }
 
 type S3Config struct {
