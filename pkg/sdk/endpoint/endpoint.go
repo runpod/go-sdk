@@ -68,7 +68,7 @@ func (ep *Endpoint) RunSync(input *RunSyncInput) (*RunSyncOutput, error) {
 	if input.Timeout != nil {
 		timeout = *input.Timeout
 	} else {
-		timeout = 120
+		timeout = 90
 	}
 
 	if timeout >= 90 {
@@ -183,7 +183,7 @@ func (ep *Endpoint) StatusSync(input *StatusSyncInput) (*StatusSyncOutput, error
 	if input.Timeout != nil {
 		timeout = *input.Timeout
 	} else {
-		timeout = 120
+		timeout = 90
 	}
 
 	if timeout >= 90 {
@@ -405,7 +405,7 @@ func (ep *Endpoint) Stream(input *StreamInput, outputChan chan<- StreamResult) e
 	if input.Timeout != nil {
 		timeout = *input.Timeout
 	} else {
-		timeout = 120
+		timeout = 90
 	}
 
 	if timeout >= 90 {
