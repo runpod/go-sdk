@@ -18,10 +18,10 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	input := rpEndpoint.GetStatusInput{
+	input := rpEndpoint.StatusInput{
 		Id: sdk.String("30edb8b9-2b8d-4977-af7a-85fd91f51a12-u1"),
 	}
-	output, err := endpoint.GetStatus(&input)
+	output, err := endpoint.Status(&input)
 	if err != nil {
 		panic(err)
 	}

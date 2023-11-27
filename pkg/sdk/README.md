@@ -55,10 +55,10 @@ output, err := endpoint.Run(&rpEndpoint.RunInput{
 You can check on the status of this request once you have the id:
 
 ```go
-input := rpEndpoint.GetStatusInput{
+input := rpEndpoint.StatusInput{
     Id: sdk.String("30edb8b9-2b8d-4977-af7a-85fd91f51a12-u1"),
 }
-output, err := endpoint.GetStatus(&input)
+output, err := endpoint.Status(&input)
 ```
 
 If you don't want to manage polling for request completion yourself, you can simply call `runSync`, which will enqueue the request and then poll until the request completes, fails or times out.
@@ -76,16 +76,16 @@ output, err := endpoint.RunSync(&jobInput)
 If you have the id of a request, you can cancel it if it's taking too long or no longer necessary:
 
 ```go
-input := rpEndpoint.CancelRequestInput{
+input := rpEndpoint.CancelInput{
     Id: sdk.String("30edb8b9-2b8d-4977-af7a-85fd91f51a12-u1"),
 }
-output, err := endpoint.CancelRequest(&input)
+output, err := endpoint.Cancel(&input)
 ```
 
 For long running applications or troubleshooting, you may want to check the health of the endpoint workers:
 
 ```go
-output, err := endpoint.GetHealth(&input)
+output, err := endpoint.Health(&input)
 ```
 
 Streaming is also supported with channels. refer to stream_go_routine example to use results as soon as it streams.

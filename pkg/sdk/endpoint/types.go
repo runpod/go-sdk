@@ -30,10 +30,11 @@ type RunSyncInput struct {
 }
 
 type JobInput struct {
-	Input    map[string]interface{} `json:"input,omitempty"`
-	Policy   *Policy                `json:"policy,omitempty"`
-	S3Config *S3Config              `json:"s3Config,omitempty"`
-	Webhook  *string                `json:"webhook,omitempty"`
+	Input     map[string]interface{} `json:"input,omitempty"`
+	Policy    *Policy                `json:"policy,omitempty"`
+	S3Config  *S3Config              `json:"s3Config,omitempty"`
+	Webhook   *string                `json:"webhook,omitempty"`
+	WebhookV2 *string                `json:"webhookV2,omitempty"`
 }
 
 type S3Config struct {
@@ -72,12 +73,12 @@ type apiRequestInput struct {
 	timeout *int
 }
 
-type GetStatusInput struct {
+type StatusInput struct {
 	Id             *string `json:"id" required:"true"`
 	RequestTimeout *int    `default:"3"`
 }
 
-type GetStatusOutput struct {
+type StatusOutput struct {
 	DelayTime     *int         `json:"delayTime,omitempty"`
 	Error         *string      `json:"error,omitempty"`
 	ExecutionTime *int         `json:"executionTime,omitempty"`
@@ -102,16 +103,16 @@ type StatusSyncOutput struct {
 	Status        *string      `json:"status,omitempty"`
 }
 
-type GetHealthInput struct {
+type HealthInput struct {
 	RequestTimeout *int `default:"3"`
 }
 
-type GetHealthOutput struct {
-	Workers *GetHealthWorkerOutput `json:"workers,omitempty"`
-	Jobs    *GetHealthJobOutput    `json:"jobs,omitempty"`
+type HealthOutput struct {
+	Workers *HealthWorkerOutput `json:"workers,omitempty"`
+	Jobs    *HealthJobOutput    `json:"jobs,omitempty"`
 }
 
-type GetHealthWorkerOutput struct {
+type HealthWorkerOutput struct {
 	Running      *int `json:"running,omitempty"`
 	Idle         *int `json:"idle,omitempty"`
 	Initializing *int `json:"initializing,omitempty"`
@@ -119,7 +120,7 @@ type GetHealthWorkerOutput struct {
 	Throttled    *int `json:"throttled,omitempty"`
 }
 
-type GetHealthJobOutput struct {
+type HealthJobOutput struct {
 	InProgress *int `json:"inProgress,omitempty"`
 	InQueue    *int `json:"inQueue,omitempty"`
 	Completed  *int `json:"completed,omitempty"`
@@ -136,12 +137,12 @@ type PurgeQueueOutput struct {
 	Removed *int    `json:"removed,omitempty"`
 }
 
-type CancelRequestInput struct {
+type CancelInput struct {
 	Id             *string `json:"id" required:"true"`
 	RequestTimeout *int    `default:"3"`
 }
 
-type CancelRequestOutput struct {
+type CancelOutput struct {
 	DelayTime     *int    `json:"delayTime,omitempty"`
 	Error         *string `json:"error,omitempty"`
 	ExecutionTime *int    `json:"executionTime,omitempty"`
@@ -154,7 +155,8 @@ type StreamInput struct {
 	Timeout *int    `default:"120"`
 }
 
+type StreamResult map[string]interface{}
 type StreamOutput struct {
 	Status *string
-	Stream []map[string]interface{}
+	Stream []StreamResult
 }
