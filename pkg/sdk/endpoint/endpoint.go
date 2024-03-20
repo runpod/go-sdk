@@ -8,6 +8,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"runtime"
 	"strconv"
 	"time"
 
@@ -279,6 +280,18 @@ func (ep *Endpoint) Status(input *StatusInput) (*StatusOutput, error) {
 	return &result, nil
 }
 
+func getUserAgent() string {
+	product := "RunPod-Go-SDK"
+	version := "0.0.0"
+
+	platform := runtime.GOOS
+	platformDetails := fmt.Sprintf("%s/%s", runtime.GOARCH, runtime.Version())
+
+	userAgent := fmt.Sprintf("%s/%s (%s; %s) Language/Go", product, version, platform, platformDetails)
+
+	return userAgent
+}
+
 func getApiResponse(input apiRequestInput) ([]byte, error) {
 	var result []byte
 	req, err := http.NewRequest(input.method, *input.url, bytes.NewBuffer(input.reqBody))
@@ -288,6 +301,7 @@ func getApiResponse(input apiRequestInput) ([]byte, error) {
 
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", "Bearer "+*input.token)
+	req.Header.Set("User-Agent", getUserAgent())
 
 	client := &http.Client{Timeout: time.Second * time.Duration(*input.timeout)}
 	resp, err := client.Do(req)
