@@ -1,2 +1,2 @@
 # go-sdk
-RunPod Go SDK
+Runpod Go SDK
