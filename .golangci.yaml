@@ -1,0 +1,29 @@
+# golangci-lint v2 configuration, the same shape Runpod's Go services use:
+# the default ("standard") linter set plus gofmt and goimports as formatters,
+# with this module's own path as the import group local-prefix.
+#
+# Run it with `task lint`, which applies it to both modules — the generator has
+# its own go.mod and picks this file up from the parent directory.
+# lib/<area>/*.gen.go carries the standard "Code generated ... DO NOT EDIT."
+# header, so golangci-lint's default exclude-generated rule keeps the generated
+# client out of the report.
+
+version: "2"
+
+linters:
+  default: standard
+
+formatters:
+  enable:
+    - gofmt
+    - goimports
+  settings:
+    goimports:
+      local-prefixes:
+        - github.com/runpod/go-sdk/v2
+
+# Report every occurrence: the defaults (3 per message, 50 per linter) hid five
+# of the eleven errcheck findings the first run on this repo produced.
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0

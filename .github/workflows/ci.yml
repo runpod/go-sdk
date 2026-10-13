@@ -1,0 +1,162 @@
+name: ci
+
+# Offline lane: lint, unit tests, the spec patch layer and a codegen
+# reproducibility check on every pull request and on pushes to main.
+#
+# The live smoke test (runpod_live_test.go) needs RUNPOD_API_KEY and skips
+# itself when the variable is empty. No key is put in this workflow's
+# environment, so it never runs here: CI stays hermetic and free of charges.
+#
+# Action pinning: actions/checkout, actions/setup-go and actions/setup-python
+# are pinned to a commit SHA (the tag in the trailing comment is what that SHA
+# was tagged as), so a moved tag cannot change what runs.
+# golangci/golangci-lint-action tracks its major tag @v9 (the pattern the
+# Runpod Go services use) because its releases are what carry the linter
+# plumbing this workflow depends on; the linter version itself is pinned below
+# and in the Taskfile, so the analysis is reproducible regardless.
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - dev
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: read # lets golangci-lint annotate the pull request
+
+jobs:
+  lint:
+    name: lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+
+      - name: Set up Go
+        uses: actions/setup-go@44694675825211faa026b3c33043df3e48a5fa00 # v6.0.0
+        with:
+          go-version-file: 'go.mod'
+          cache: true
+
+      # Same version the Taskfile pins for `task lint`, same .golangci.yaml.
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v9
+        with:
+          version: v2.13.2
+
+      # The generator is its own module, so the run above does not reach it.
+      - name: golangci-lint (generator module)
+        uses: golangci/golangci-lint-action@v9
+        with:
+          version: v2.13.2
+          working-directory: generator
+
+  unit:
+    name: unit tests (go ${{ matrix.go }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        # The floor go.mod claims, and current Go — what most consumers run.
+        go: ['1.25.0', 'stable']
+    steps:
+      - name: Checkout
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+
+      - name: Set up Go
+        uses: actions/setup-go@44694675825211faa026b3c33043df3e48a5fa00 # v6.0.0
+        with:
+          go-version: ${{ matrix.go }}
+          cache: true
+
+      - name: Vet
+        run: |
+          go vet ./...
+          go -C generator vet ./...
+
+      - name: Unit tests
+        run: |
+          go test -race ./...
+          go -C generator test -race ./...
+
+      - name: Modules are tidy
+        run: |
+          go mod tidy -diff
+          go -C generator mod tidy -diff
+
+  spec:
+    name: spec and codegen
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+
+      - name: Set up Go
+        uses: actions/setup-go@44694675825211faa026b3c33043df3e48a5fa00 # v6.0.0
+        with:
+          go-version-file: 'go.mod'
+          cache: true
+
+      # The patch layer and its test import PyYAML, and its emitter decides the
+      # bytes the no-op check compares, so the version is pinned here (the same
+      # pin as the MCP server's ci) instead of whatever the runner image ships.
+      - name: Set up Python
+        uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v6.0.0
+        with:
+          python-version: '3.12'
+      - name: Install PyYAML
+        run: python3 -m pip install --disable-pip-version-check pyyaml==6.0.3
+
+      # The only thing asserting that the vendored spec is patch-layer output,
+      # that every enum names its constants, and that no concrete AWS account
+      # id ships.
+      - name: Spec patch layer
+        run: python3 scripts/test_fix_spec.py
+
+      # "Never hand-edit lib/" is the repo's central rule; this is what
+      # enforces it.
+      # git diff cannot see a generated package that is not tracked yet, so a
+      # new lib/<area>/ would slip past it; status catches untracked files too.
+      - name: Generated code is reproducible
+        run: |
+          go -C generator run . -root ..
+          if [ -n "$(git status --porcelain -- lib/)" ]; then
+            echo "::error::lib/ is not reproducible from the spec — run 'task generate' and commit the result"
+            git status --porcelain -- lib/
+            git diff -- lib/ | head -100
+            exit 1
+          fi
+
+  vulnerabilities:
+    name: govulncheck
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+
+      # govulncheck v1.8.0 needs Go 1.26 or newer, and go.mod's directive is the
+      # module's floor (1.25), not the toolchain the scanner runs on — so this
+      # job tracks the current stable release instead of go-version-file.
+      - name: Set up Go
+        uses: actions/setup-go@44694675825211faa026b3c33043df3e48a5fa00 # v6.0.0
+        with:
+          go-version: 'stable'
+          cache: true
+
+      # Version-pinned and run through `go run`, like golangci-lint, so the
+      # scanner never enters either module's dependency graph.
+      - name: govulncheck
+        run: |
+          go run golang.org/x/vuln/cmd/govulncheck@v1.8.0 ./...
+          go -C generator run golang.org/x/vuln/cmd/govulncheck@v1.8.0 ./...
