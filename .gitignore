@@ -33,3 +33,9 @@ yarn.lock
 ci-scripts
 /nuget/
 provider/**/schema-embed.json
+
+# v2 SDK
+artifacts/
+.env
+.DS_Store
+__pycache__/

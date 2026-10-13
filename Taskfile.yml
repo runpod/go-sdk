@@ -1,0 +1,87 @@
+version: '3'
+
+silent: true
+
+# RUNPOD_API_KEY (and optional RUNPOD_API_BASE_URL) live in .env, which is
+# gitignored; see .env.example. Offline tasks don't need it.
+dotenv: ['.env']
+
+vars:
+  # The production REST host serves the machine-readable v2 spec. Override
+  # SPEC_URL to pin another source.
+  SPEC_URL: 'https://api.runpod.io/v2/openapi.yaml'
+  SPEC_PATH: 'spec/openapi.yaml'
+  # golangci-lint is version-pinned here and run through `go run` with the
+  # version suffix, so it never enters this module's dependency graph.
+  # .github/workflows/ci.yml pins the same version.
+  GOLANGCI_LINT: 'github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.13.2'
+
+tasks:
+  spec-pull:
+    desc: Fetch the latest v2 OpenAPI spec and run the patch layer over it
+    cmds:
+      - curl -fsSL "{{.SPEC_URL}}" -o "{{.SPEC_PATH}}"
+      - task: spec-fix
+
+  spec-fix:
+    desc: Apply the patch layer to the vendored spec in place
+    cmds:
+      - python3 scripts/fix_spec.py "{{.SPEC_PATH}}"
+
+  spec-test:
+    desc: Check the patch layer and the vendored spec (offline, no Go needed)
+    cmds:
+      - python3 scripts/test_fix_spec.py
+
+  generate:
+    desc: Regenerate lib/ (one package per spec tag) from the vendored spec
+    cmds:
+      # The generator is its own module (generator/go.mod) so oapi-codegen stays
+      # out of the published SDK's requirements; -root points it back here.
+      - go -C generator run . -root ..
+
+  build:
+    desc: Build all packages, the generator module included
+    cmds:
+      - go build ./...
+      # Compile-only: the generator is a main package, so a plain build would
+      # drop its binary in the source tree.
+      - go -C generator build -o /dev/null ./...
+
+  test:
+    desc: Run the test suite
+    cmds:
+      - go test ./...
+      - go -C generator test ./...
+
+  test-offline:
+    desc: Run the offline tier only (no credentials, no network)
+    cmds:
+      - go test -short ./...
+      - go -C generator test ./...
+
+  vet:
+    desc: Vet both modules
+    cmds:
+      - go vet ./...
+      - go -C generator vet ./...
+
+  lint:
+    desc: Lint the hand-written packages (.golangci.yaml; lib/ is generated and skipped)
+    cmds:
+      - go run {{.GOLANGCI_LINT}} run ./...
+      # Its own module, so the root run does not reach it; it picks up the same
+      # .golangci.yaml from the parent directory.
+      - go -C generator run {{.GOLANGCI_LINT}} run ./...
+
+  all:
+    desc: Check the spec layer, regenerate, build, vet, test, and lint
+    cmds:
+      - task: spec-test
+      - task: generate
+      - task: build
+      - task: vet
+      # The offline tier, so the full gate never spends against a key in .env;
+      # `task test` is the opt-in that includes the live smoke test.
+      - task: test-offline
+      - task: lint
