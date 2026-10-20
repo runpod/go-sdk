@@ -8,7 +8,7 @@ areas share is one type in `lib/types`, so a pod read from a cluster is the same
 `types.Pod` the pods package returns.
 
 <!-- runpod-agent-setup:start -->
-**Using an AI agent?** Point it to https://docs.runpod.io/agent-setup.md to install the Runpod skills and MCP server.
+**Using an AI agent?** Point it to https://agents.runpod.io/ to install the Runpod skills and MCP server.
 <!-- runpod-agent-setup:end -->
 
 ## Install
