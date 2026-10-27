@@ -49,6 +49,11 @@ YAML_11_BOOL = re.compile(
     r"|true|True|TRUE|false|False|FALSE)$"
 )
 
+# Characters YAML treats as line breaks besides \n and \r. PyYAML emits them raw
+# in a plain or block scalar, where a reader folds them into a space; the
+# double-quoted style is the only one that escapes them (\N, \L, \P).
+YAML_EXTRA_BREAKS = re.compile("[\x85  ]")
+
 # A sequence stays on one line while its rendered flow form fits this width.
 FLOW_WIDTH = 60
 
@@ -88,6 +93,9 @@ class SpecDumper(yaml.SafeDumper):
 
 def represent_str(dumper, value):
     """Multi-line text stays readable; ambiguous scalars get quoted."""
+    if YAML_EXTRA_BREAKS.search(value):
+        # The global volume name patterns carry NEL (U+0085) in a character class.
+        return dumper.represent_scalar(STR_TAG, value, style='"')
     if "\n" in value.rstrip("\n"):
         # Author-chosen line breaks (bullet lists, PATCH-semantics blocks).
         return dumper.represent_scalar(STR_TAG, value, style="|")
@@ -198,49 +206,6 @@ def resolve_parameter(spec: dict, path: str, method: str, name: str):
             raise PatchError(f"{method.upper()} {path}: the {name!r} parameter has no schema — retire or repoint this entry")
         return parameter["schema"]
     raise PatchError(f"{method.upper()} {path}: no {name!r} parameter — retire or repoint this entry")
-
-
-# Operations that declare no typed auth failures, with the response they anchor
-# after. `security: [bearerAuth]` is global (spec `security`), so all three can
-# answer 401/403 like the other 41 operations do.
-DELEGATION_OPERATIONS = [
-    ("/v2/registries/delegations", "get", "200"),
-    ("/v2/registries/delegations", "post", "201"),
-    ("/v2/registries/delegations/{id}", "delete", "204"),
-]
-
-AUTH_RESPONSES = {
-    "401": {"$ref": "#/components/responses/UnauthorizedError"},
-    "403": {"$ref": "#/components/responses/ForbiddenError"},
-}
-
-
-def add_delegation_auth_responses(spec: dict) -> int:
-    """2026-08-28: ECR-delegation operations declare only success/429/default.
-
-    Observed in the generated clients: CreateDelegationResult exposes JSON201
-    and ApplicationproblemJSON429 while its sibling CreateRegistryResult also
-    exposes 400/401/403/422 — a caller that hits 401 on a delegation call gets
-    nil in every typed field and has to parse the raw body.
-    """
-    edits = 0
-    for path, method, success in DELEGATION_OPERATIONS:
-        responses = resolve(spec, ("paths", path, method, "responses"))
-        if success not in responses:
-            raise PatchError(f"{method.upper()} {path}: no {success} response to anchor on")
-        if all(status in responses for status in AUTH_RESPONSES):
-            continue
-        rebuilt: dict = {}
-        for status, body in responses.items():
-            if status in AUTH_RESPONSES:
-                continue
-            rebuilt[status] = body
-            if status == success:
-                rebuilt.update(copy.deepcopy(AUTH_RESPONSES))
-        responses.clear()
-        responses.update(rebuilt)
-        edits += 1
-    return edits
 
 
 # Every AWS account id in an example is the documented all-digits placeholder.
@@ -480,14 +445,28 @@ DESCRIPTION_EDITS: list[tuple[tuple[str | int, ...], str, str]] = [
     # Server-internal structure ("the handler", "upstream") described to
     # external API consumers; the contract half is what callers need.
     (
-        ("components", "schemas", "Mounts", "description"),
-        "At-most-one of `persistent` or\n`network` may be set today (mutually exclusive, enforced at the\n"
-        "handler with 400 if both are present). The `network` field is an\n"
-        "array for forward compatibility with eventual multi-network-volume\n"
-        "support, but `maxItems` is 1 today.",
-        "At most one of `persistent` or\n`network` may be set: sending both is rejected with 400. The\n"
+        ("components", "schemas", "BaseMounts", "description"),
+        "At-most-one\nof `persistent` or `network` may be set today (mutually exclusive,\n"
+        "enforced at the handler with 400 if both are present). The `network`\n"
+        "field is an array for forward compatibility with eventual\n"
+        "multi-network-volume support, but `maxItems` is 1 today.",
+        "At most one\nof `persistent` or `network` may be set: sending both is rejected with 400. The\n"
         "`network` field is an array for forward compatibility with\n"
         "multi-network-volume support; `maxItems` is 1.",
+    ),
+    (
+        ("components", "schemas", "Mounts", "description"),
+        "`persistent` is mutually exclusive\nwith both `network` and `global` (enforced at the handler with 400 if\n"
+        "combined). The `network` field is an array for forward compatibility\n"
+        "with eventual multi-network-volume support, but `maxItems` is 1 today.",
+        "`persistent` is mutually exclusive\nwith both `network` and `global`: combining them is rejected with 400.\n"
+        "The `network` field is an array for forward compatibility with\n"
+        "multi-network-volume support; `maxItems` is 1.",
+    ),
+    (
+        ("components", "schemas", "Mounts", "allOf", 1, "properties", "global", "description"),
+        "`persistent` (rejected with 400): upstream drops a persistent\ndisk whenever a volume is attached.",
+        "`persistent` (rejected with 400): a persistent disk is dropped\nwhenever a volume is attached.",
     ),
     (
         ("components", "schemas", "TemplateMounts", "description"),
@@ -661,7 +640,6 @@ def use_neutral_secret_examples(spec: dict) -> int:
 
 # Applied in order.
 PATCHES = [
-    ("delegation-auth-responses", add_delegation_auth_responses),
     ("placeholder-aws-account-ids", use_placeholder_aws_account_ids),
     ("current-brand-casing", use_current_brand_casing),
     ("enum-constant-names", name_enum_constants),

@@ -61,6 +61,15 @@ class RoundTrip(unittest.TestCase):
             )
         self.assertEqual(reloaded, spec)
 
+    def test_yaml_line_break_characters_survive_a_round_trip(self):
+        # NEL, LINE SEPARATOR and PARAGRAPH SEPARATOR are line breaks to a YAML
+        # reader: written raw into a plain scalar they come back as a space.
+        patterns = ["[^\\p{Z}\\t-\\r\x85]", "a b", "a b"]
+        spec = {"openapi": "3.1.0", "paths": {}, "components": {"schemas": {"Name": {"examples": patterns}}}}
+        text = dump_spec(spec)
+        for reader in (SpecLoader, yaml.SafeLoader):
+            self.assertEqual(yaml.load(text, Loader=reader), spec, f"{reader.__name__} folded a line break")
+
     def test_stock_pyyaml_shows_why_the_loader_is_needed(self):
         # The bug this guards against, spelled out: plain `OFF` is false in 1.1.
         self.assertIs(yaml.safe_load("enum: [OFF]")["enum"][0], False)
@@ -148,7 +157,17 @@ class VendoredSpec(unittest.TestCase):
         self.assertEqual(carries, takes_cursor)
         self.assertEqual(
             carries,
-            {"listPods", "listEndpoints", "listEndpointReleases", "listEndpointBuilds", "listTemplates"},
+            {
+                "listPods",
+                "listEndpoints",
+                "listEndpointReleases",
+                "listEndpointBuilds",
+                "listTemplates",
+                "listClusters",
+                "listNetworkVolumes",
+                "listGlobalVolumes",
+                "listAuditLogs",
+            },
             "the set of paged operations moved — re-derive the README's paging paragraph too",
         )
 
@@ -211,13 +230,6 @@ class MovedAnchors(unittest.TestCase):
         self.spec["components"]["schemas"]["EndpointType"]["description"] = "Rewritten upstream."
         with self.assertRaises(fix_spec.PatchError):
             fix_spec.normalize_public_descriptions(self.spec)
-
-    def test_a_vanished_delegation_response_raises(self):
-        responses = self.spec["paths"]["/v2/registries/delegations"]["get"]["responses"]
-        for status in ("200", "401", "403"):
-            responses.pop(status, None)
-        with self.assertRaises(fix_spec.PatchError):
-            fix_spec.add_delegation_auth_responses(self.spec)
 
     def test_a_changed_secret_example_raises(self):
         env = self.spec["components"]["schemas"]["BaseContainerConfig"]["properties"]["env"]

@@ -25,7 +25,6 @@ func testClient(t *testing.T, url string) *Client {
 	c, err := New(Config{
 		APIKey:     "test-key",
 		GraphQLURL: url,
-		RestV1URL:  url,
 		HTTPClient: &http.Client{Timeout: 5 * time.Second},
 	})
 	if err != nil {
@@ -66,9 +65,6 @@ func TestNewAppliesProductionDefaults(t *testing.T) {
 	if c.GraphQLURL() != DefaultGraphQLURL {
 		t.Errorf("graphql url = %q, want %q", c.GraphQLURL(), DefaultGraphQLURL)
 	}
-	if c.RestV1URL() != DefaultRestV1URL {
-		t.Errorf("rest v1 url = %q, want %q", c.RestV1URL(), DefaultRestV1URL)
-	}
 	if c.userAgent != DefaultUserAgent {
 		t.Errorf("user agent = %q, want %q", c.userAgent, DefaultUserAgent)
 	}
@@ -85,7 +81,6 @@ func TestNewKeepsConfiguredEndpointsAndClient(t *testing.T) {
 	c, err := New(Config{
 		APIKey:     "test-key",
 		GraphQLURL: "https://stage.example.com/graphql",
-		RestV1URL:  "https://stage.example.com/v1",
 		UserAgent:  "Terraform/RunPodProvider",
 		HTTPClient: httpClient,
 	})
@@ -95,9 +90,6 @@ func TestNewKeepsConfiguredEndpointsAndClient(t *testing.T) {
 
 	if c.GraphQLURL() != "https://stage.example.com/graphql" {
 		t.Errorf("graphql url = %q", c.GraphQLURL())
-	}
-	if c.RestV1URL() != "https://stage.example.com/v1" {
-		t.Errorf("rest v1 url = %q", c.RestV1URL())
 	}
 	if c.userAgent != "Terraform/RunPodProvider" {
 		t.Errorf("user agent = %q, want the configured one", c.userAgent)

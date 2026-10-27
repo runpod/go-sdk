@@ -103,6 +103,23 @@ func TestQueryReportsUnauthorized(t *testing.T) {
 	}
 }
 
+func TestQueryReportsANotFound(t *testing.T) {
+	// A GraphQL URL pointed at the wrong path answers 404; the caller tells it
+	// apart from other failures through IsNotFound.
+	srv := testServer(t, func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusNotFound)
+		_, _ = io.WriteString(w, "no such route")
+	})
+
+	_, err := testClient(t, srv.URL+"/graphql").Query(context.Background(), "query {}", nil)
+	if !IsNotFound(err) {
+		t.Fatalf("error = %v, want a *NotFoundError", err)
+	}
+	if !strings.Contains(err.Error(), "/graphql") || !strings.Contains(err.Error(), "no such route") {
+		t.Errorf("error = %q, want the path and the body", err)
+	}
+}
+
 func TestQueryReportsServerError(t *testing.T) {
 	srv := testServer(t, func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)

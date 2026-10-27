@@ -746,6 +746,12 @@ type ListTemplatesResult403Headers struct {
 	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
 }
 
+// ListTemplatesResult413Headers the declared response headers of an HTTP 413 response for ListTemplates
+type ListTemplatesResult413Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
 // ListTemplatesResult429Headers the declared response headers of an HTTP 429 response for ListTemplates
 type ListTemplatesResult429Headers struct {
 	RateLimit       *externalRef0.RateLimitHeader
@@ -768,6 +774,8 @@ type ListTemplatesResult struct {
 	ApplicationproblemJSON401 *externalRef0.ErrorResponse
 	// ApplicationproblemJSON403 the response for an HTTP 403 `application/problem+json` response
 	ApplicationproblemJSON403 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON413 the response for an HTTP 413 `application/problem+json` response
+	ApplicationproblemJSON413 *externalRef0.ErrorResponse
 	// ApplicationproblemJSON429 the response for an HTTP 429 `application/problem+json` response
 	ApplicationproblemJSON429 *externalRef0.ErrorResponse
 	// ApplicationproblemJSONDefault the response for an HTTP default `application/problem+json` response
@@ -776,6 +784,8 @@ type ListTemplatesResult struct {
 	Headers200 *ListTemplatesResult200Headers
 	// Headers403 the parsed response headers for an HTTP 403 response
 	Headers403 *ListTemplatesResult403Headers
+	// Headers413 the parsed response headers for an HTTP 413 response
+	Headers413 *ListTemplatesResult413Headers
 	// Headers429 the parsed response headers for an HTTP 429 response
 	Headers429 *ListTemplatesResult429Headers
 	// HeadersDefault the parsed response headers for an HTTP default response
@@ -795,6 +805,11 @@ func (r ListTemplatesResult) GetApplicationproblemJSON401() *externalRef0.ErrorR
 // GetApplicationproblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
 func (r ListTemplatesResult) GetApplicationproblemJSON403() *externalRef0.ErrorResponse {
 	return r.ApplicationproblemJSON403
+}
+
+// GetApplicationproblemJSON413 returns the response for an HTTP 413 `application/problem+json` response
+func (r ListTemplatesResult) GetApplicationproblemJSON413() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON413
 }
 
 // GetApplicationproblemJSON429 returns the response for an HTTP 429 `application/problem+json` response
@@ -854,6 +869,12 @@ type CreateTemplateResult403Headers struct {
 	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
 }
 
+// CreateTemplateResult413Headers the declared response headers of an HTTP 413 response for CreateTemplate
+type CreateTemplateResult413Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
 // CreateTemplateResult422Headers the declared response headers of an HTTP 422 response for CreateTemplate
 type CreateTemplateResult422Headers struct {
 	RateLimit       *externalRef0.RateLimitHeader
@@ -884,6 +905,8 @@ type CreateTemplateResult struct {
 	ApplicationproblemJSON401 *externalRef0.ErrorResponse
 	// ApplicationproblemJSON403 the response for an HTTP 403 `application/problem+json` response
 	ApplicationproblemJSON403 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON413 the response for an HTTP 413 `application/problem+json` response
+	ApplicationproblemJSON413 *externalRef0.ErrorResponse
 	// ApplicationproblemJSON422 the response for an HTTP 422 `application/problem+json` response
 	ApplicationproblemJSON422 *externalRef0.ErrorResponse
 	// ApplicationproblemJSON429 the response for an HTTP 429 `application/problem+json` response
@@ -896,6 +919,8 @@ type CreateTemplateResult struct {
 	Headers400 *CreateTemplateResult400Headers
 	// Headers403 the parsed response headers for an HTTP 403 response
 	Headers403 *CreateTemplateResult403Headers
+	// Headers413 the parsed response headers for an HTTP 413 response
+	Headers413 *CreateTemplateResult413Headers
 	// Headers422 the parsed response headers for an HTTP 422 response
 	Headers422 *CreateTemplateResult422Headers
 	// Headers429 the parsed response headers for an HTTP 429 response
@@ -922,6 +947,11 @@ func (r CreateTemplateResult) GetApplicationproblemJSON401() *externalRef0.Error
 // GetApplicationproblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
 func (r CreateTemplateResult) GetApplicationproblemJSON403() *externalRef0.ErrorResponse {
 	return r.ApplicationproblemJSON403
+}
+
+// GetApplicationproblemJSON413 returns the response for an HTTP 413 `application/problem+json` response
+func (r CreateTemplateResult) GetApplicationproblemJSON413() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON413
 }
 
 // GetApplicationproblemJSON422 returns the response for an HTTP 422 `application/problem+json` response
@@ -1234,6 +1264,12 @@ type UpdateTemplateResult404Headers struct {
 	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
 }
 
+// UpdateTemplateResult413Headers the declared response headers of an HTTP 413 response for UpdateTemplate
+type UpdateTemplateResult413Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
 // UpdateTemplateResult422Headers the declared response headers of an HTTP 422 response for UpdateTemplate
 type UpdateTemplateResult422Headers struct {
 	RateLimit       *externalRef0.RateLimitHeader
@@ -1266,6 +1302,8 @@ type UpdateTemplateResult struct {
 	ApplicationproblemJSON403 *externalRef0.ErrorResponse
 	// ApplicationproblemJSON404 the response for an HTTP 404 `application/problem+json` response
 	ApplicationproblemJSON404 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON413 the response for an HTTP 413 `application/problem+json` response
+	ApplicationproblemJSON413 *externalRef0.ErrorResponse
 	// ApplicationproblemJSON422 the response for an HTTP 422 `application/problem+json` response
 	ApplicationproblemJSON422 *externalRef0.ErrorResponse
 	// ApplicationproblemJSON429 the response for an HTTP 429 `application/problem+json` response
@@ -1280,6 +1318,8 @@ type UpdateTemplateResult struct {
 	Headers403 *UpdateTemplateResult403Headers
 	// Headers404 the parsed response headers for an HTTP 404 response
 	Headers404 *UpdateTemplateResult404Headers
+	// Headers413 the parsed response headers for an HTTP 413 response
+	Headers413 *UpdateTemplateResult413Headers
 	// Headers422 the parsed response headers for an HTTP 422 response
 	Headers422 *UpdateTemplateResult422Headers
 	// Headers429 the parsed response headers for an HTTP 429 response
@@ -1311,6 +1351,11 @@ func (r UpdateTemplateResult) GetApplicationproblemJSON403() *externalRef0.Error
 // GetApplicationproblemJSON404 returns the response for an HTTP 404 `application/problem+json` response
 func (r UpdateTemplateResult) GetApplicationproblemJSON404() *externalRef0.ErrorResponse {
 	return r.ApplicationproblemJSON404
+}
+
+// GetApplicationproblemJSON413 returns the response for an HTTP 413 `application/problem+json` response
+func (r UpdateTemplateResult) GetApplicationproblemJSON413() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON413
 }
 
 // GetApplicationproblemJSON422 returns the response for an HTTP 422 `application/problem+json` response
@@ -1535,6 +1580,13 @@ func ParseListTemplatesResult(rsp *http.Response) (*ListTemplatesResult, error) 
 		}
 		response.ApplicationproblemJSON403 = &dest
 
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 413:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON413 = &dest
+
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
 		var dest externalRef0.ErrorResponse
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
@@ -1586,6 +1638,23 @@ func ParseListTemplatesResult(rsp *http.Response) (*ListTemplatesResult, error) 
 			headers.RateLimitPolicy = &value
 		}
 		response.Headers403 = &headers
+	case rsp.StatusCode == 413:
+		var headers ListTemplatesResult413Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers413 = &headers
 	case rsp.StatusCode == 429:
 		var headers ListTemplatesResult429Headers
 		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
@@ -1674,6 +1743,13 @@ func ParseCreateTemplateResult(rsp *http.Response) (*CreateTemplateResult, error
 		}
 		response.ApplicationproblemJSON403 = &dest
 
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 413:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON413 = &dest
+
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
 		var dest externalRef0.ErrorResponse
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
@@ -1749,6 +1825,23 @@ func ParseCreateTemplateResult(rsp *http.Response) (*CreateTemplateResult, error
 			headers.RateLimitPolicy = &value
 		}
 		response.Headers403 = &headers
+	case rsp.StatusCode == 413:
+		var headers CreateTemplateResult413Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers413 = &headers
 	case rsp.StatusCode == 422:
 		var headers CreateTemplateResult422Headers
 		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
@@ -2193,6 +2286,13 @@ func ParseUpdateTemplateResult(rsp *http.Response) (*UpdateTemplateResult, error
 		}
 		response.ApplicationproblemJSON404 = &dest
 
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 413:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON413 = &dest
+
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
 		var dest externalRef0.ErrorResponse
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
@@ -2285,6 +2385,23 @@ func ParseUpdateTemplateResult(rsp *http.Response) (*UpdateTemplateResult, error
 			headers.RateLimitPolicy = &value
 		}
 		response.Headers404 = &headers
+	case rsp.StatusCode == 413:
+		var headers UpdateTemplateResult413Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers413 = &headers
 	case rsp.StatusCode == 422:
 		var headers UpdateTemplateResult422Headers
 		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {

@@ -587,6 +587,44 @@ func (e WorkerStatus) Valid() bool {
 	}
 }
 
+// AuditLog One recorded action on the account.
+type AuditLog struct {
+	// Action Name of the action, as recorded at write time. Not an enum: values are free-form, mostly lower case verbs, and new actions appear without an API version change. Current writers record values such as `create`, `update`, `delete`, `rename`, `lock`, `unlock`, `start`, `reset`, `add` and `setBillingMode`.
+	//
+	// Examples: create, delete, rename
+	Action string `json:"action"`
+
+	// ActorId ID of the user who performed the action. Null when the action was not attributable to a user.
+	//
+	// Examples: user_id_abc_123
+	ActorId *string `json:"actorId"`
+
+	// Email Email of the actor when the action was recorded. Null when unknown.
+	//
+	// Examples: actor@example.com
+	Email *string `json:"email"`
+
+	// ResourceId ID of the affected resource. Empty when the action was not about one resource; a bulk action lists every affected ID, comma-separated.
+	//
+	// Examples: abc123
+	ResourceId string `json:"resourceId"`
+
+	// ResourceType Kind of resource the action applied to, as recorded at write time. Not an enum: values are free-form, mostly lower camel case, and new kinds appear without an API version change. Current writers record values such as `pod`, `apiKey`, `sharedApiKey`, `secret`, `costCenter`, `paymentMethod`, `billingAccount`, `registryCredential`, `organization` and `group`, and `unknown` when the writer recorded no kind.
+	//
+	// Examples: pod, apiKey, costCenter
+	ResourceType string `json:"resourceType"`
+
+	// Timestamp When the action happened (UTC, whole seconds).
+	//
+	// Examples: 2026-09-02T00:00:00Z
+	Timestamp time.Time `json:"timestamp"`
+
+	// Value Details of the change as a JSON-encoded string. The structure varies by action; parse it as JSON for a structured view. A bulk action split across several entries adds an `auditChunk` object with `index` and `of`. Null when the action recorded no details.
+	//
+	// Examples: {"status":"TERMINATED"}, {"name":"training-run-7"}, {"id":"sec_789","name":"HF_TOKEN","sharedWithOrganization":true}
+	Value *string `json:"value"`
+}
+
 // AvailabilityLevel Catalog stock availability level.
 type AvailabilityLevel string
 
@@ -716,6 +754,21 @@ type BaseGpuConfig struct {
 	//
 	// Examples: NVIDIA GeForce RTX 4090
 	Id string `json:"id"`
+}
+
+// BaseMounts The mount kinds every resource that takes `mounts` shares. At most one
+// of `persistent` or `network` may be set: sending both is rejected with 400. The
+// `network` field is an array for forward compatibility with
+// multi-network-volume support; `maxItems` is 1. Left open so
+// that concrete schemas can extend it and close themselves.
+type BaseMounts struct {
+	Network *[]NetworkMount `json:"network,omitempty"`
+
+	// Persistent Host-local persistent storage. Pinned to the pod's host machine — data
+	// does not survive a host failure. Disallowed on CPU pods. Mutually
+	// exclusive with NetworkMount. Deprecated: prefer NetworkMount for any
+	// data you cannot recreate.
+	Persistent *PersistentMount `json:"persistent,omitempty"`
 }
 
 // BillingAmounts Total spend across all billable Runpod resources with each cost component broken out, fully prefixed by resource. Backs the aggregate record's amounts and the metadata totals. Serverless amounts are inclusive of platform charges.
@@ -1090,6 +1143,11 @@ type ClusterCompute struct {
 	PodCount int `json:"podCount"`
 }
 
+// ClusterMounts Storage mounts for a cluster create: `persistent` or `network`, not
+// both. Clusters cannot mount global volumes, so `global` is rejected
+// with 422.
+type ClusterMounts = BaseMounts
+
 // ClusterNetwork The cluster's private VXLAN overlay network (shared by all member pods).
 type ClusterNetwork struct {
 	// Cidr The overlay network's CIDR block.
@@ -1325,26 +1383,10 @@ type CreateClusterRequest struct {
 	// Examples: runpod/pytorch:1.0.2-cu1281-torch280-ubuntu2404
 	Image *string `json:"image,omitempty"`
 
-	// Mounts Storage mounts attached to a pod. At most one of `persistent` or
-	// `network` may be set: sending both is rejected with 400. The
-	// `network` field is an array for forward compatibility with
-	// multi-network-volume support; `maxItems` is 1.
-	//
-	// PATCH semantics:
-	// - Omitting `mounts` or sending `{}` leaves the existing mount
-	//   unchanged.
-	// - An explicit `network: []` is rejected with 400 (clearing mounts
-	//   is not supported).
-	// - Mount kind is fixed at create — a PATCH that introduces a kind
-	//   not present at create (persistent on a network pod, network on
-	//   a persistent pod, or any mount on a previously-mountless pod)
-	//   is rejected with 400.
-	// - The `volumeId` of a network mount is immutable; a PATCH that
-	//   names a different `volumeId` is rejected with 400.
-	// - Partial mounts are not supported — every mount entry must
-	//   include the full schema (`size` + `path` for persistent,
-	//   `volumeId` + `path` for network). Missing required fields → 422.
-	Mounts *Mounts `json:"mounts,omitempty"`
+	// Mounts Storage mounts for a cluster create: `persistent` or `network`, not
+	// both. Clusters cannot mount global volumes, so `global` is rejected
+	// with 422.
+	Mounts *ClusterMounts `json:"mounts,omitempty"`
 
 	// Name Examples: my-training-cluster
 	Name string `json:"name"`
@@ -1535,8 +1577,21 @@ type CreateEndpointRequest struct {
 	// Examples: runpod/pytorch:1.0.2-cu1281-torch280-ubuntu2404
 	Image *string `json:"image,omitempty"`
 
+	// Mounts Volumes to mount on the endpoint's workers. A `network` or `global`
+	// list that is present replaces the endpoint's current list of that kind;
+	// an empty list detaches it, and an omitted list is left unchanged. Both
+	// kinds cannot be present on the endpoint at once, so to switch kinds send
+	// `[]` for one and the new list for the other in the same request. Changes
+	// apply to workers created afterwards. At most one global volume, GPU
+	// endpoints only. `network` may accompany the deprecated `networkVolumes` field
+	// only if the two agree exactly.
+	Mounts *EndpointMountsInput `json:"mounts,omitempty"`
+
 	// Name Examples: my-inference
-	Name           string    `json:"name"`
+	Name string `json:"name"`
+
+	// NetworkVolumes Network volume IDs.
+	// Deprecated: this property has been marked as deprecated upstream, but no `x-deprecated-reason` was set
 	NetworkVolumes *[]string `json:"networkVolumes,omitempty"`
 
 	// Ports Exposed ports, formatted as port/protocol
@@ -1586,6 +1641,15 @@ type CreateEndpointRequest struct {
 		Max         *int `json:"max,omitempty"`
 		Min         *int `json:"min,omitempty"`
 	} `json:"workers,omitempty"`
+}
+
+// CreateGlobalVolumeRequest defines model for CreateGlobalVolumeRequest.
+type CreateGlobalVolumeRequest struct {
+	// Name Human-readable name, 1–191 characters with at least one non-whitespace character. Leading and trailing whitespace is trimmed.
+	//
+	//
+	// Examples: training-data
+	Name string `json:"name"`
 }
 
 // CreateGpuConfig GPU request for a pod create. Carries the CUDA host constraints, which
@@ -1726,9 +1790,9 @@ type CreatePodRequest struct {
 	// Examples: runpod/pytorch:1.0.2-cu1281-torch280-ubuntu2404
 	Image *string `json:"image,omitempty"`
 
-	// Mounts Storage mounts attached to a pod. At most one of `persistent` or
-	// `network` may be set: sending both is rejected with 400. The
-	// `network` field is an array for forward compatibility with
+	// Mounts Storage mounts attached to a pod. `persistent` is mutually exclusive
+	// with both `network` and `global`: combining them is rejected with 400.
+	// The `network` field is an array for forward compatibility with
 	// multi-network-volume support; `maxItems` is 1.
 	//
 	// PATCH semantics:
@@ -2124,10 +2188,14 @@ type Endpoint struct {
 	// Examples: runpod/pytorch:1.0.2-cu1281-torch280-ubuntu2404
 	Image *string `json:"image,omitempty"`
 
+	// Mounts Volumes mounted on every worker of the endpoint.
+	Mounts EndpointMounts `json:"mounts"`
+
 	// Name Examples: my-inference
 	Name string `json:"name"`
 
 	// NetworkVolumes Examples: ["vol_abc"]
+	// Deprecated: this property has been marked as deprecated upstream, but no `x-deprecated-reason` was set
 	NetworkVolumes []string `json:"networkVolumes"`
 
 	// Ports Exposed ports, formatted as port/protocol
@@ -2293,6 +2361,36 @@ type EndpointGpuConfig struct {
 	Pools []string `json:"pools"`
 }
 
+// EndpointMount A volume mounted on every worker, always at `/runpod-volume`. Custom
+// paths are not supported yet.
+type EndpointMount struct {
+	// VolumeId ID of a NetworkVolume (under `network`) or GlobalVolume (under `global`).
+	//
+	// Examples: vol_abc
+	VolumeId string `json:"volumeId"`
+}
+
+// EndpointMounts Volumes mounted on every worker of the endpoint.
+type EndpointMounts struct {
+	Global  []EndpointMount `json:"global"`
+	Network []EndpointMount `json:"network"`
+}
+
+// EndpointMountsInput Volumes to mount on the endpoint's workers. A `network` or `global`
+// list that is present replaces the endpoint's current list of that kind;
+// an empty list detaches it, and an omitted list is left unchanged. Both
+// kinds cannot be present on the endpoint at once, so to switch kinds send
+// `[]` for one and the new list for the other in the same request. Changes
+// apply to workers created afterwards. At most one global volume, GPU
+// endpoints only. `network` may accompany the deprecated `networkVolumes` field
+// only if the two agree exactly.
+type EndpointMountsInput struct {
+	Global *[]EndpointMount `json:"global,omitempty"`
+
+	// Network Network volumes, at most one per data center.
+	Network *[]EndpointMount `json:"network,omitempty"`
+}
+
 // EndpointRequestUrls Request URLs appropriate to the endpoint's top-level `type`.
 // Queue-based endpoints provide job submission and management URLs;
 // load-balancing endpoints provide `base` and `health` because their
@@ -2371,6 +2469,42 @@ type ErrorResponse struct {
 // - `FLASHBOOT`          — enabled
 // - `PRIORITY_FLASHBOOT` — enabled with priority capacity
 type FlashBoot string
+
+// GlobalMount Reference to a GlobalVolume. Usage-billed, so it has no size. The
+// underlying `volumeId` is immutable post-create; the mount `path` may be
+// changed via PATCH.
+type GlobalMount struct {
+	// Path Mount path inside the container. Optional on create, where a default is chosen for you; a PATCH that omits it leaves the path unchanged.
+	//
+	// Examples: /data
+	Path *string `json:"path,omitempty"`
+
+	// VolumeId ID of an existing GlobalVolume.
+	//
+	// Examples: gsb_abc
+	VolumeId string `json:"volumeId"`
+}
+
+// GlobalVolume defines model for GlobalVolume.
+type GlobalVolume struct {
+	// CreatedAt When the volume was created
+	CreatedAt time.Time `json:"createdAt"`
+
+	// CreatedByUserId ID of the user who created the volume, if known
+	//
+	// Examples: user_123
+	CreatedByUserId *string `json:"createdByUserId"`
+
+	// Id Unique global volume identifier
+	//
+	// Examples: gsb_abc
+	Id string `json:"id"`
+
+	// Name Human-readable name (not required to be unique)
+	//
+	// Examples: training-data
+	Name string `json:"name"`
+}
 
 // GpuCloudFilter GPU availability cloud filter.
 type GpuCloudFilter string
@@ -2496,6 +2630,14 @@ type GpuType struct {
 	Secure bool `json:"secure"`
 }
 
+// ListAuditLogsResponse defines model for ListAuditLogsResponse.
+type ListAuditLogsResponse struct {
+	AuditLogs []AuditLog `json:"auditLogs"`
+
+	// Pagination Cursor-pagination metadata. A list response carries it only where the operation takes the `cursor` and `limit` query parameters; every other list endpoint returns its bare list. Where it is present, follow `nextCursor` while `hasNextPage` is true to walk the full result set.
+	Pagination Pagination `json:"pagination"`
+}
+
 // ListBillingResponse Aggregated billing records across all Runpod resources.
 type ListBillingResponse struct {
 	Metadata BillingMetadata `json:"metadata"`
@@ -2511,6 +2653,9 @@ type ListClusterBillingResponse struct {
 // ListClustersResponse defines model for ListClustersResponse.
 type ListClustersResponse struct {
 	Clusters []Cluster `json:"clusters"`
+
+	// Pagination Cursor-pagination metadata. A list response carries it only where the operation takes the `cursor` and `limit` query parameters; every other list endpoint returns its bare list. Where it is present, follow `nextCursor` while `hasNextPage` is true to walk the full result set.
+	Pagination Pagination `json:"pagination"`
 }
 
 // ListCpuTypesResponse defines model for ListCpuTypesResponse.
@@ -2586,6 +2731,14 @@ type ListEndpointsResponse struct {
 	Pagination Pagination `json:"pagination"`
 }
 
+// ListGlobalVolumesResponse defines model for ListGlobalVolumesResponse.
+type ListGlobalVolumesResponse struct {
+	GlobalVolumes []GlobalVolume `json:"globalVolumes"`
+
+	// Pagination Cursor-pagination metadata. A list response carries it only where the operation takes the `cursor` and `limit` query parameters; every other list endpoint returns its bare list. Where it is present, follow `nextCursor` while `hasNextPage` is true to walk the full result set.
+	Pagination Pagination `json:"pagination"`
+}
+
 // ListGpuTypesResponse defines model for ListGpuTypesResponse.
 type ListGpuTypesResponse struct {
 	Gpus []GpuType `json:"gpus"`
@@ -2600,6 +2753,9 @@ type ListNetworkVolumeBillingResponse struct {
 // ListNetworkVolumesResponse defines model for ListNetworkVolumesResponse.
 type ListNetworkVolumesResponse struct {
 	NetworkVolumes []NetworkVolume `json:"networkVolumes"`
+
+	// Pagination Cursor-pagination metadata. A list response carries it only where the operation takes the `cursor` and `limit` query parameters; every other list endpoint returns its bare list. Where it is present, follow `nextCursor` while `hasNextPage` is true to walk the full result set.
+	Pagination Pagination `json:"pagination"`
 }
 
 // ListPodBillingResponse Billing records for pods.
@@ -2658,9 +2814,9 @@ type LoadBalancingRequestUrls struct {
 // - `system`    — host lifecycle/userlogs stream
 type LogSource string
 
-// Mounts Storage mounts attached to a pod. At most one of `persistent` or
-// `network` may be set: sending both is rejected with 400. The
-// `network` field is an array for forward compatibility with
+// Mounts Storage mounts attached to a pod. `persistent` is mutually exclusive
+// with both `network` and `global`: combining them is rejected with 400.
+// The `network` field is an array for forward compatibility with
 // multi-network-volume support; `maxItems` is 1.
 //
 // PATCH semantics:
@@ -2678,6 +2834,14 @@ type LogSource string
 //     include the full schema (`size` + `path` for persistent,
 //     `volumeId` + `path` for network). Missing required fields → 422.
 type Mounts struct {
+	// Global At most one global volume, on GPU and CPU pods, with no data
+	// center constraint. Combinable with `network` but not with
+	// `persistent` (rejected with 400): a persistent disk is dropped
+	// whenever a volume is attached. Same PATCH rules as
+	// `network`: global mounts are fixed at create, `global: []` is
+	// rejected with 400, and `volumeId` is immutable; only `path` may
+	// change.
+	Global  *[]GlobalMount  `json:"global,omitempty"`
 	Network *[]NetworkMount `json:"network,omitempty"`
 
 	// Persistent Host-local persistent storage. Pinned to the pod's host machine — data
@@ -2809,6 +2973,19 @@ type NetworkVolumeBillingRecord struct {
 	TotalAmount float64 `json:"totalAmount"`
 }
 
+// Organization The authenticated caller's current organization.
+type Organization struct {
+	// Id Organization ID.
+	//
+	// Examples: org_id_abc_123
+	Id string `json:"id"`
+
+	// Name Organization name.
+	//
+	// Examples: my-org
+	Name string `json:"name"`
+}
+
 // Paginated Mixin for cursor-paginated list responses. Compose it with `allOf` next to the resource's bare list schema so that a list shape shared with a non-paginated endpoint (e.g. a cluster's member pods) does not inherit a pagination block it cannot honour.
 type Paginated struct {
 	// Pagination Cursor-pagination metadata. A list response carries it only where the operation takes the `cursor` and `limit` query parameters; every other list endpoint returns its bare list. Where it is present, follow `nextCursor` while `hasNextPage` is true to walk the full result set.
@@ -2928,9 +3105,9 @@ type Pod struct {
 	// Examples: false
 	Locked bool `json:"locked"`
 
-	// Mounts Storage mounts attached to a pod. At most one of `persistent` or
-	// `network` may be set: sending both is rejected with 400. The
-	// `network` field is an array for forward compatibility with
+	// Mounts Storage mounts attached to a pod. `persistent` is mutually exclusive
+	// with both `network` and `global`: combining them is rejected with 400.
+	// The `network` field is an array for forward compatibility with
 	// multi-network-volume support; `maxItems` is 1.
 	//
 	// PATCH semantics:
@@ -2962,7 +3139,7 @@ type Pod struct {
 	// Examples: null
 	Registry *string `json:"registry"`
 
-	// Runtime Live utilization metrics. Null when the pod is not RUNNING.
+	// Runtime Live utilization metrics. Null when the pod is not RUNNING, and when listing pods with `GET /v2/pods`; fetch a single pod by ID to obtain metrics.
 	Runtime *PodRuntime `json:"runtime"`
 
 	// Ssh SSH connection details, via the Runpod proxy or directly to the pod's published `22/tcp` port.
@@ -3169,7 +3346,7 @@ type PodRuntimePort struct {
 
 // PodSsh How to connect to this pod over SSH. Both variants authenticate with the account's registered SSH public keys (`PUT /v2/account/ssh-keys`), which reach the pod only if it was created with `startSsh` — a pod created without it has no SSH access regardless of what this block reports.
 type PodSsh struct {
-	// Direct Connection straight to the pod's sshd over its published `22/tcp` mapping. Supports the full SSH feature set. Null unless `22/tcp` is in `ports` and the running pod has been assigned a public port for it — so it is absent while the pod is provisioning or stopped.
+	// Direct Connection straight to the pod's sshd over its published `22/tcp` mapping. Supports the full SSH feature set. Null unless `22/tcp` is in `ports` and the running pod has been assigned a public port for it — so it is absent while the pod is provisioning or stopped. Also null when listing pods with `GET /v2/pods`; fetch a single pod by ID to obtain the live mapping.
 	Direct *PodSshEndpoint `json:"direct"`
 
 	// Proxy Connection through Runpod's SSH proxy. Works without exposing a port and without a public IP, but carries an interactive shell only — SCP, SFTP, rsync, and port forwarding need `direct`. Null until the pod has a machine assignment.
@@ -3804,8 +3981,21 @@ type UpdateEndpointRequest struct {
 	// Image Docker image reference
 	//
 	// Examples: runpod/pytorch:1.0.2-cu1281-torch280-ubuntu2404
-	Image          *string   `json:"image,omitempty"`
-	Name           *string   `json:"name,omitempty"`
+	Image *string `json:"image,omitempty"`
+
+	// Mounts Volumes to mount on the endpoint's workers. A `network` or `global`
+	// list that is present replaces the endpoint's current list of that kind;
+	// an empty list detaches it, and an omitted list is left unchanged. Both
+	// kinds cannot be present on the endpoint at once, so to switch kinds send
+	// `[]` for one and the new list for the other in the same request. Changes
+	// apply to workers created afterwards. At most one global volume, GPU
+	// endpoints only. `network` may accompany the deprecated `networkVolumes` field
+	// only if the two agree exactly.
+	Mounts *EndpointMountsInput `json:"mounts,omitempty"`
+	Name   *string              `json:"name,omitempty"`
+
+	// NetworkVolumes Network volume IDs. Pass `[]` to detach.
+	// Deprecated: this property has been marked as deprecated upstream, but no `x-deprecated-reason` was set
 	NetworkVolumes *[]string `json:"networkVolumes,omitempty"`
 
 	// Ports Exposed ports, formatted as port/protocol
@@ -3839,6 +4029,16 @@ type UpdateEndpointRequest struct {
 	TemplateId *string          `json:"templateId,omitempty"`
 	Timeout    *int             `json:"timeout,omitempty"`
 	Workers    *EndpointWorkers `json:"workers,omitempty"`
+}
+
+// UpdateGlobalVolumeRequest Only the provided fields are updated. At least one field must be
+// present; an empty body is rejected.
+type UpdateGlobalVolumeRequest struct {
+	// Name New human-readable name, 1–191 characters with at least one non-whitespace character. Leading and trailing whitespace is trimmed.
+	//
+	//
+	// Examples: renamed-volume
+	Name *string `json:"name,omitempty"`
 }
 
 // UpdateNetworkVolumeRequest Only the provided fields are updated. At least one field must be
@@ -3902,9 +4102,9 @@ type UpdatePodRequest struct {
 	// Locked Lock the pod (true) or unlock it (false). Locked pods cannot be stopped or reset.
 	Locked *bool `json:"locked,omitempty"`
 
-	// Mounts Storage mounts attached to a pod. At most one of `persistent` or
-	// `network` may be set: sending both is rejected with 400. The
-	// `network` field is an array for forward compatibility with
+	// Mounts Storage mounts attached to a pod. `persistent` is mutually exclusive
+	// with both `network` and `global`: combining them is rejected with 400.
+	// The `network` field is an array for forward compatibility with
 	// multi-network-volume support; `maxItems` is 1.
 	//
 	// PATCH semantics:
@@ -4164,6 +4364,21 @@ type WorkerSummary struct {
 	Unhealthy int `json:"unhealthy"`
 }
 
+// AuditLogActionsFilter defines model for AuditLogActionsFilter.
+type AuditLogActionsFilter = []string
+
+// AuditLogActorIdsFilter defines model for AuditLogActorIdsFilter.
+type AuditLogActorIdsFilter = []string
+
+// AuditLogEndTime defines model for AuditLogEndTime.
+type AuditLogEndTime = time.Time
+
+// AuditLogSearch defines model for AuditLogSearch.
+type AuditLogSearch = string
+
+// AuditLogStartTime defines model for AuditLogStartTime.
+type AuditLogStartTime = time.Time
+
 // BillingEndTime defines model for BillingEndTime.
 type BillingEndTime = time.Time
 
@@ -4217,6 +4432,9 @@ type PaginationCursor = string
 // PaginationLimit defines model for PaginationLimit.
 type PaginationLimit = int
 
+// PaginationLimitAuditLogs defines model for PaginationLimitAuditLogs.
+type PaginationLimitAuditLogs = int
+
 // PaginationLimitBuilds defines model for PaginationLimitBuilds.
 type PaginationLimitBuilds = int
 
@@ -4231,6 +4449,12 @@ type MethodNotAllowedError = ErrorResponse
 
 // NotFoundError defines model for NotFoundError.
 type NotFoundError = ErrorResponse
+
+// RequestTooLargeError defines model for RequestTooLargeError.
+type RequestTooLargeError = ErrorResponse
+
+// ResponseTooLargeError defines model for ResponseTooLargeError.
+type ResponseTooLargeError = ErrorResponse
 
 // TooManyRequestsError defines model for TooManyRequestsError.
 type TooManyRequestsError = ErrorResponse

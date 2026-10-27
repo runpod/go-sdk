@@ -17,6 +17,15 @@ import (
 	externalRef0 "github.com/runpod/go-sdk/v2/lib/types"
 )
 
+// ListClustersParams defines parameters for ListClusters.
+type ListClustersParams struct {
+	// Cursor Opaque resume cursor — pass the previous response's `pagination.nextCursor` through verbatim; omit for the first page. A cursor is only valid for the operation and parameters that issued it; a malformed or foreign cursor is rejected with 422.
+	Cursor *externalRef0.PaginationCursor `form:"cursor,omitempty" json:"cursor,omitempty"`
+
+	// Limit Page size, 1–1000. Defaults to 1000 when omitted.
+	Limit *externalRef0.PaginationLimit `form:"limit,omitempty" json:"limit,omitempty"`
+}
+
 // CreateClusterJSONRequestBody defines body for CreateCluster for application/json ContentType.
 type CreateClusterJSONRequestBody = externalRef0.CreateClusterRequest
 
@@ -99,10 +108,12 @@ type ClientInterface interface {
 
 	// ListClusters List clusters
 	//
-	// Returns all clusters owned by the authenticated user.
+	// Returns clusters owned by the authenticated user, cursor-paginated
+	// newest-first; an omitted `limit` defaults to 1000. Follow
+	// `pagination.nextCursor` until `hasNextPage` is false.
 	//
 	// Corresponds with GET /v2/clusters (the `ListClusters` operationId).
-	ListClusters(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+	ListClusters(ctx context.Context, params *ListClustersParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// CreateClusterWithBody Create a cluster
 	//
@@ -172,11 +183,13 @@ type ClientInterface interface {
 
 // ListClusters List clusters
 //
-// Returns all clusters owned by the authenticated user.
+// Returns clusters owned by the authenticated user, cursor-paginated
+// newest-first; an omitted `limit` defaults to 1000. Follow
+// `pagination.nextCursor` until `hasNextPage` is false.
 //
 // Corresponds with GET /v2/clusters (the `ListClusters` operationId).
-func (c *Client) ListClusters(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewListClustersRequest(c.Server)
+func (c *Client) ListClusters(ctx context.Context, params *ListClustersParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListClustersRequest(c.Server, params)
 	if err != nil {
 		return nil, err
 	}
@@ -323,7 +336,7 @@ func (c *Client) ListClusterPods(ctx context.Context, id string, reqEditors ...R
 }
 
 // NewListClustersRequest constructs an http.Request for the ListClusters method
-func NewListClustersRequest(server string) (*http.Request, error) {
+func NewListClustersRequest(server string, params *ListClustersParams) (*http.Request, error) {
 	var err error
 
 	serverURL, err := url.Parse(server)
@@ -339,6 +352,45 @@ func NewListClustersRequest(server string) (*http.Request, error) {
 	queryURL, err := serverURL.Parse(operationPath)
 	if err != nil {
 		return nil, err
+	}
+
+	if params != nil {
+		// queryValues collects non-styled parameters (passthrough, JSON)
+		// that are safe to round-trip through url.Values.Encode().
+		queryValues := queryURL.Query()
+		// rawQueryFragments collects pre-encoded query fragments from
+		// styled parameters, preserving literal commas as delimiters
+		// per the OpenAPI spec (e.g. "color=blue,black,brown").
+		var rawQueryFragments []string
+
+		if params.Cursor != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "cursor", *params.Cursor, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.Limit != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "limit", *params.Limit, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if encoded := queryValues.Encode(); encoded != "" {
+			rawQueryFragments = append(rawQueryFragments, encoded)
+		}
+		queryURL.RawQuery = strings.Join(rawQueryFragments, "&")
 	}
 
 	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
@@ -584,12 +636,14 @@ type ClientWithResponsesInterface interface {
 
 	// ListClustersWithResponse List clusters
 	//
-	// Returns all clusters owned by the authenticated user.
+	// Returns clusters owned by the authenticated user, cursor-paginated
+	// newest-first; an omitted `limit` defaults to 1000. Follow
+	// `pagination.nextCursor` until `hasNextPage` is false.
 	//
 	// Returns a wrapper object for the known response body format(s).
 	//
 	// Corresponds with GET /v2/clusters (the `ListClusters` operationId).
-	ListClustersWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListClustersResult, error)
+	ListClustersWithResponse(ctx context.Context, params *ListClustersParams, reqEditors ...RequestEditorFn) (*ListClustersResult, error)
 
 	// CreateClusterWithBodyWithResponse Create a cluster
 	//
@@ -669,6 +723,12 @@ type ListClustersResult403Headers struct {
 	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
 }
 
+// ListClustersResult413Headers the declared response headers of an HTTP 413 response for ListClusters
+type ListClustersResult413Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
 // ListClustersResult429Headers the declared response headers of an HTTP 429 response for ListClusters
 type ListClustersResult429Headers struct {
 	RateLimit       *externalRef0.RateLimitHeader
@@ -685,12 +745,16 @@ type ListClustersResult struct {
 	ApplicationproblemJSON401 *externalRef0.ErrorResponse
 	// ApplicationproblemJSON403 the response for an HTTP 403 `application/problem+json` response
 	ApplicationproblemJSON403 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON413 the response for an HTTP 413 `application/problem+json` response
+	ApplicationproblemJSON413 *externalRef0.ErrorResponse
 	// ApplicationproblemJSON429 the response for an HTTP 429 `application/problem+json` response
 	ApplicationproblemJSON429 *externalRef0.ErrorResponse
 	// ApplicationproblemJSONDefault the response for an HTTP default `application/problem+json` response
 	ApplicationproblemJSONDefault *externalRef0.ErrorResponse
 	// Headers403 the parsed response headers for an HTTP 403 response
 	Headers403 *ListClustersResult403Headers
+	// Headers413 the parsed response headers for an HTTP 413 response
+	Headers413 *ListClustersResult413Headers
 	// Headers429 the parsed response headers for an HTTP 429 response
 	Headers429 *ListClustersResult429Headers
 }
@@ -708,6 +772,11 @@ func (r ListClustersResult) GetApplicationproblemJSON401() *externalRef0.ErrorRe
 // GetApplicationproblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
 func (r ListClustersResult) GetApplicationproblemJSON403() *externalRef0.ErrorResponse {
 	return r.ApplicationproblemJSON403
+}
+
+// GetApplicationproblemJSON413 returns the response for an HTTP 413 `application/problem+json` response
+func (r ListClustersResult) GetApplicationproblemJSON413() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON413
 }
 
 // GetApplicationproblemJSON429 returns the response for an HTTP 429 `application/problem+json` response
@@ -761,6 +830,12 @@ type CreateClusterResult403Headers struct {
 	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
 }
 
+// CreateClusterResult413Headers the declared response headers of an HTTP 413 response for CreateCluster
+type CreateClusterResult413Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
 // CreateClusterResult422Headers the declared response headers of an HTTP 422 response for CreateCluster
 type CreateClusterResult422Headers struct {
 	RateLimit       *externalRef0.RateLimitHeader
@@ -785,6 +860,8 @@ type CreateClusterResult struct {
 	ApplicationproblemJSON401 *externalRef0.ErrorResponse
 	// ApplicationproblemJSON403 the response for an HTTP 403 `application/problem+json` response
 	ApplicationproblemJSON403 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON413 the response for an HTTP 413 `application/problem+json` response
+	ApplicationproblemJSON413 *externalRef0.ErrorResponse
 	// ApplicationproblemJSON422 the response for an HTTP 422 `application/problem+json` response
 	ApplicationproblemJSON422 *externalRef0.ErrorResponse
 	// ApplicationproblemJSON429 the response for an HTTP 429 `application/problem+json` response
@@ -795,6 +872,8 @@ type CreateClusterResult struct {
 	Headers400 *CreateClusterResult400Headers
 	// Headers403 the parsed response headers for an HTTP 403 response
 	Headers403 *CreateClusterResult403Headers
+	// Headers413 the parsed response headers for an HTTP 413 response
+	Headers413 *CreateClusterResult413Headers
 	// Headers422 the parsed response headers for an HTTP 422 response
 	Headers422 *CreateClusterResult422Headers
 	// Headers429 the parsed response headers for an HTTP 429 response
@@ -819,6 +898,11 @@ func (r CreateClusterResult) GetApplicationproblemJSON401() *externalRef0.ErrorR
 // GetApplicationproblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
 func (r CreateClusterResult) GetApplicationproblemJSON403() *externalRef0.ErrorResponse {
 	return r.ApplicationproblemJSON403
+}
+
+// GetApplicationproblemJSON413 returns the response for an HTTP 413 `application/problem+json` response
+func (r CreateClusterResult) GetApplicationproblemJSON413() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON413
 }
 
 // GetApplicationproblemJSON422 returns the response for an HTTP 422 `application/problem+json` response
@@ -1056,6 +1140,12 @@ type UpdateClusterResult403Headers struct {
 	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
 }
 
+// UpdateClusterResult413Headers the declared response headers of an HTTP 413 response for UpdateCluster
+type UpdateClusterResult413Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
 // UpdateClusterResult422Headers the declared response headers of an HTTP 422 response for UpdateCluster
 type UpdateClusterResult422Headers struct {
 	RateLimit       *externalRef0.RateLimitHeader
@@ -1082,6 +1172,8 @@ type UpdateClusterResult struct {
 	ApplicationproblemJSON403 *externalRef0.ErrorResponse
 	// ApplicationproblemJSON404 the response for an HTTP 404 `application/problem+json` response
 	ApplicationproblemJSON404 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON413 the response for an HTTP 413 `application/problem+json` response
+	ApplicationproblemJSON413 *externalRef0.ErrorResponse
 	// ApplicationproblemJSON422 the response for an HTTP 422 `application/problem+json` response
 	ApplicationproblemJSON422 *externalRef0.ErrorResponse
 	// ApplicationproblemJSON429 the response for an HTTP 429 `application/problem+json` response
@@ -1092,6 +1184,8 @@ type UpdateClusterResult struct {
 	Headers400 *UpdateClusterResult400Headers
 	// Headers403 the parsed response headers for an HTTP 403 response
 	Headers403 *UpdateClusterResult403Headers
+	// Headers413 the parsed response headers for an HTTP 413 response
+	Headers413 *UpdateClusterResult413Headers
 	// Headers422 the parsed response headers for an HTTP 422 response
 	Headers422 *UpdateClusterResult422Headers
 	// Headers429 the parsed response headers for an HTTP 429 response
@@ -1121,6 +1215,11 @@ func (r UpdateClusterResult) GetApplicationproblemJSON403() *externalRef0.ErrorR
 // GetApplicationproblemJSON404 returns the response for an HTTP 404 `application/problem+json` response
 func (r UpdateClusterResult) GetApplicationproblemJSON404() *externalRef0.ErrorResponse {
 	return r.ApplicationproblemJSON404
+}
+
+// GetApplicationproblemJSON413 returns the response for an HTTP 413 `application/problem+json` response
+func (r UpdateClusterResult) GetApplicationproblemJSON413() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON413
 }
 
 // GetApplicationproblemJSON422 returns the response for an HTTP 422 `application/problem+json` response
@@ -1262,13 +1361,15 @@ func (r ListClusterPodsResult) ContentType() string {
 
 // ListClustersWithResponse List clusters
 //
-// Returns all clusters owned by the authenticated user.
+// Returns clusters owned by the authenticated user, cursor-paginated
+// newest-first; an omitted `limit` defaults to 1000. Follow
+// `pagination.nextCursor` until `hasNextPage` is false.
 //
 // Returns a wrapper object for the known response body format(s).
 //
 // Corresponds with GET /v2/clusters (the `ListClusters` operationId).
-func (c *ClientWithResponses) ListClustersWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListClustersResult, error) {
-	rsp, err := c.ListClusters(ctx, reqEditors...)
+func (c *ClientWithResponses) ListClustersWithResponse(ctx context.Context, params *ListClustersParams, reqEditors ...RequestEditorFn) (*ListClustersResult, error) {
+	rsp, err := c.ListClusters(ctx, params, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
@@ -1423,6 +1524,13 @@ func ParseListClustersResult(rsp *http.Response) (*ListClustersResult, error) {
 		}
 		response.ApplicationproblemJSON403 = &dest
 
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 413:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON413 = &dest
+
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
 		var dest externalRef0.ErrorResponse
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
@@ -1457,6 +1565,23 @@ func ParseListClustersResult(rsp *http.Response) (*ListClustersResult, error) {
 			headers.RateLimitPolicy = &value
 		}
 		response.Headers403 = &headers
+	case rsp.StatusCode == 413:
+		var headers ListClustersResult413Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers413 = &headers
 	case rsp.StatusCode == 429:
 		var headers ListClustersResult429Headers
 		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
@@ -1528,6 +1653,13 @@ func ParseCreateClusterResult(rsp *http.Response) (*CreateClusterResult, error) 
 		}
 		response.ApplicationproblemJSON403 = &dest
 
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 413:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON413 = &dest
+
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
 		var dest externalRef0.ErrorResponse
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
@@ -1586,6 +1718,23 @@ func ParseCreateClusterResult(rsp *http.Response) (*CreateClusterResult, error) 
 			headers.RateLimitPolicy = &value
 		}
 		response.Headers403 = &headers
+	case rsp.StatusCode == 413:
+		var headers CreateClusterResult413Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers413 = &headers
 	case rsp.StatusCode == 422:
 		var headers CreateClusterResult422Headers
 		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
@@ -1887,6 +2036,13 @@ func ParseUpdateClusterResult(rsp *http.Response) (*UpdateClusterResult, error) 
 		}
 		response.ApplicationproblemJSON404 = &dest
 
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 413:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON413 = &dest
+
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
 		var dest externalRef0.ErrorResponse
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
@@ -1945,6 +2101,23 @@ func ParseUpdateClusterResult(rsp *http.Response) (*UpdateClusterResult, error) 
 			headers.RateLimitPolicy = &value
 		}
 		response.Headers403 = &headers
+	case rsp.StatusCode == 413:
+		var headers UpdateClusterResult413Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers413 = &headers
 	case rsp.StatusCode == 422:
 		var headers UpdateClusterResult422Headers
 		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
