@@ -806,6 +806,12 @@ type CreateRegistryResult403Headers struct {
 	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
 }
 
+// CreateRegistryResult413Headers the declared response headers of an HTTP 413 response for CreateRegistry
+type CreateRegistryResult413Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
 // CreateRegistryResult422Headers the declared response headers of an HTTP 422 response for CreateRegistry
 type CreateRegistryResult422Headers struct {
 	RateLimit       *externalRef0.RateLimitHeader
@@ -836,6 +842,8 @@ type CreateRegistryResult struct {
 	ApplicationproblemJSON401 *externalRef0.ErrorResponse
 	// ApplicationproblemJSON403 the response for an HTTP 403 `application/problem+json` response
 	ApplicationproblemJSON403 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON413 the response for an HTTP 413 `application/problem+json` response
+	ApplicationproblemJSON413 *externalRef0.ErrorResponse
 	// ApplicationproblemJSON422 the response for an HTTP 422 `application/problem+json` response
 	ApplicationproblemJSON422 *externalRef0.ErrorResponse
 	// ApplicationproblemJSON429 the response for an HTTP 429 `application/problem+json` response
@@ -848,6 +856,8 @@ type CreateRegistryResult struct {
 	Headers400 *CreateRegistryResult400Headers
 	// Headers403 the parsed response headers for an HTTP 403 response
 	Headers403 *CreateRegistryResult403Headers
+	// Headers413 the parsed response headers for an HTTP 413 response
+	Headers413 *CreateRegistryResult413Headers
 	// Headers422 the parsed response headers for an HTTP 422 response
 	Headers422 *CreateRegistryResult422Headers
 	// Headers429 the parsed response headers for an HTTP 429 response
@@ -874,6 +884,11 @@ func (r CreateRegistryResult) GetApplicationproblemJSON401() *externalRef0.Error
 // GetApplicationproblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
 func (r CreateRegistryResult) GetApplicationproblemJSON403() *externalRef0.ErrorResponse {
 	return r.ApplicationproblemJSON403
+}
+
+// GetApplicationproblemJSON413 returns the response for an HTTP 413 `application/problem+json` response
+func (r CreateRegistryResult) GetApplicationproblemJSON413() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON413
 }
 
 // GetApplicationproblemJSON422 returns the response for an HTTP 422 `application/problem+json` response
@@ -1028,8 +1043,20 @@ type CreateDelegationResult201Headers struct {
 	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
 }
 
+// CreateDelegationResult400Headers the declared response headers of an HTTP 400 response for CreateDelegation
+type CreateDelegationResult400Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
 // CreateDelegationResult403Headers the declared response headers of an HTTP 403 response for CreateDelegation
 type CreateDelegationResult403Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+// CreateDelegationResult413Headers the declared response headers of an HTTP 413 response for CreateDelegation
+type CreateDelegationResult413Headers struct {
 	RateLimit       *externalRef0.RateLimitHeader
 	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
 }
@@ -1052,18 +1079,26 @@ type CreateDelegationResult struct {
 	HTTPResponse *http.Response
 	// JSON201 the response for an HTTP 201 `application/json` response
 	JSON201 *externalRef0.EcrDelegation
+	// ApplicationproblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationproblemJSON400 *externalRef0.ErrorResponse
 	// ApplicationproblemJSON401 the response for an HTTP 401 `application/problem+json` response
 	ApplicationproblemJSON401 *externalRef0.ErrorResponse
 	// ApplicationproblemJSON403 the response for an HTTP 403 `application/problem+json` response
 	ApplicationproblemJSON403 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON413 the response for an HTTP 413 `application/problem+json` response
+	ApplicationproblemJSON413 *externalRef0.ErrorResponse
 	// ApplicationproblemJSON429 the response for an HTTP 429 `application/problem+json` response
 	ApplicationproblemJSON429 *externalRef0.ErrorResponse
 	// ApplicationproblemJSONDefault the response for an HTTP default `application/problem+json` response
 	ApplicationproblemJSONDefault *externalRef0.ErrorResponse
 	// Headers201 the parsed response headers for an HTTP 201 response
 	Headers201 *CreateDelegationResult201Headers
+	// Headers400 the parsed response headers for an HTTP 400 response
+	Headers400 *CreateDelegationResult400Headers
 	// Headers403 the parsed response headers for an HTTP 403 response
 	Headers403 *CreateDelegationResult403Headers
+	// Headers413 the parsed response headers for an HTTP 413 response
+	Headers413 *CreateDelegationResult413Headers
 	// Headers429 the parsed response headers for an HTTP 429 response
 	Headers429 *CreateDelegationResult429Headers
 	// HeadersDefault the parsed response headers for an HTTP default response
@@ -1075,6 +1110,11 @@ func (r CreateDelegationResult) GetJSON201() *externalRef0.EcrDelegation {
 	return r.JSON201
 }
 
+// GetApplicationproblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r CreateDelegationResult) GetApplicationproblemJSON400() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON400
+}
+
 // GetApplicationproblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
 func (r CreateDelegationResult) GetApplicationproblemJSON401() *externalRef0.ErrorResponse {
 	return r.ApplicationproblemJSON401
@@ -1083,6 +1123,11 @@ func (r CreateDelegationResult) GetApplicationproblemJSON401() *externalRef0.Err
 // GetApplicationproblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
 func (r CreateDelegationResult) GetApplicationproblemJSON403() *externalRef0.ErrorResponse {
 	return r.ApplicationproblemJSON403
+}
+
+// GetApplicationproblemJSON413 returns the response for an HTTP 413 `application/problem+json` response
+func (r CreateDelegationResult) GetApplicationproblemJSON413() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON413
 }
 
 // GetApplicationproblemJSON429 returns the response for an HTTP 429 `application/problem+json` response
@@ -1783,6 +1828,13 @@ func ParseCreateRegistryResult(rsp *http.Response) (*CreateRegistryResult, error
 		}
 		response.ApplicationproblemJSON403 = &dest
 
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 413:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON413 = &dest
+
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
 		var dest externalRef0.ErrorResponse
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
@@ -1858,6 +1910,23 @@ func ParseCreateRegistryResult(rsp *http.Response) (*CreateRegistryResult, error
 			headers.RateLimitPolicy = &value
 		}
 		response.Headers403 = &headers
+	case rsp.StatusCode == 413:
+		var headers CreateRegistryResult413Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers413 = &headers
 	case rsp.StatusCode == 422:
 		var headers CreateRegistryResult422Headers
 		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
@@ -2074,6 +2143,13 @@ func ParseCreateDelegationResult(rsp *http.Response) (*CreateDelegationResult, e
 		}
 		response.JSON201 = &dest
 
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON400 = &dest
+
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
 		var dest externalRef0.ErrorResponse
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
@@ -2087,6 +2163,13 @@ func ParseCreateDelegationResult(rsp *http.Response) (*CreateDelegationResult, e
 			return nil, err
 		}
 		response.ApplicationproblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 413:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON413 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
 		var dest externalRef0.ErrorResponse
@@ -2122,6 +2205,23 @@ func ParseCreateDelegationResult(rsp *http.Response) (*CreateDelegationResult, e
 			headers.RateLimitPolicy = &value
 		}
 		response.Headers201 = &headers
+	case rsp.StatusCode == 400:
+		var headers CreateDelegationResult400Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers400 = &headers
 	case rsp.StatusCode == 403:
 		var headers CreateDelegationResult403Headers
 		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
@@ -2139,6 +2239,23 @@ func ParseCreateDelegationResult(rsp *http.Response) (*CreateDelegationResult, e
 			headers.RateLimitPolicy = &value
 		}
 		response.Headers403 = &headers
+	case rsp.StatusCode == 413:
+		var headers CreateDelegationResult413Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers413 = &headers
 	case rsp.StatusCode == 429:
 		var headers CreateDelegationResult429Headers
 		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {

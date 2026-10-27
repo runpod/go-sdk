@@ -141,10 +141,9 @@ type ClientInterface interface {
 	// them (each carries a non-null `cluster` membership block).
 	//
 	// Results are cursor-paginated newest-first; an omitted `limit`
-	// defaults to 1000. When cluster member pods are excluded, the
-	// exclusion applies to each page after it is cut, so a page may hold
-	// fewer than `limit` pods — follow `pagination.nextCursor` until
-	// `hasNextPage` is false rather than counting items.
+	// defaults to 1000. The cluster-member exclusion is applied before the
+	// page is cut, so a page holds `limit` pods whenever that many remain.
+	// Follow `pagination.nextCursor` until `hasNextPage` is false.
 	//
 	// Corresponds with GET /v2/pods (the `ListPods` operationId).
 	ListPods(ctx context.Context, params *ListPodsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -207,8 +206,9 @@ type ClientInterface interface {
 	// | `429` | Rate limited. | Back off using `Retry-After`, then resume. |
 	// | `5xx` | Transient upstream failure. | Retry the same candidate with backoff. |
 	//
-	// Requests larger than 102400 bytes receive `413` before authentication
-	// or processing. Reduce the serialized JSON request body and retry.
+	// Requests larger than 102400 bytes receive `413` after authentication
+	// and rate limiting, before deployment processing. Reduce the serialized
+	// JSON request body and retry.
 	//
 	// This limit also applies to the deployment request built from your input
 	// and any referenced template. A small request can therefore receive `413`
@@ -286,8 +286,9 @@ type ClientInterface interface {
 	// | `429` | Rate limited. | Back off using `Retry-After`, then resume. |
 	// | `5xx` | Transient upstream failure. | Retry the same candidate with backoff. |
 	//
-	// Requests larger than 102400 bytes receive `413` before authentication
-	// or processing. Reduce the serialized JSON request body and retry.
+	// Requests larger than 102400 bytes receive `413` after authentication
+	// and rate limiting, before deployment processing. Reduce the serialized
+	// JSON request body and retry.
 	//
 	// This limit also applies to the deployment request built from your input
 	// and any referenced template. A small request can therefore receive `413`
@@ -453,10 +454,9 @@ type ClientInterface interface {
 // them (each carries a non-null `cluster` membership block).
 //
 // Results are cursor-paginated newest-first; an omitted `limit`
-// defaults to 1000. When cluster member pods are excluded, the
-// exclusion applies to each page after it is cut, so a page may hold
-// fewer than `limit` pods — follow `pagination.nextCursor` until
-// `hasNextPage` is false rather than counting items.
+// defaults to 1000. The cluster-member exclusion is applied before the
+// page is cut, so a page holds `limit` pods whenever that many remain.
+// Follow `pagination.nextCursor` until `hasNextPage` is false.
 //
 // Corresponds with GET /v2/pods (the `ListPods` operationId).
 func (c *Client) ListPods(ctx context.Context, params *ListPodsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
@@ -529,8 +529,9 @@ func (c *Client) ListPods(ctx context.Context, params *ListPodsParams, reqEditor
 // | `429` | Rate limited. | Back off using `Retry-After`, then resume. |
 // | `5xx` | Transient upstream failure. | Retry the same candidate with backoff. |
 //
-// Requests larger than 102400 bytes receive `413` before authentication
-// or processing. Reduce the serialized JSON request body and retry.
+// Requests larger than 102400 bytes receive `413` after authentication
+// and rate limiting, before deployment processing. Reduce the serialized
+// JSON request body and retry.
 //
 // This limit also applies to the deployment request built from your input
 // and any referenced template. A small request can therefore receive `413`
@@ -618,8 +619,9 @@ func (c *Client) CreatePodWithBody(ctx context.Context, contentType string, body
 // | `429` | Rate limited. | Back off using `Retry-After`, then resume. |
 // | `5xx` | Transient upstream failure. | Retry the same candidate with backoff. |
 //
-// Requests larger than 102400 bytes receive `413` before authentication
-// or processing. Reduce the serialized JSON request body and retry.
+// Requests larger than 102400 bytes receive `413` after authentication
+// and rate limiting, before deployment processing. Reduce the serialized
+// JSON request body and retry.
 //
 // This limit also applies to the deployment request built from your input
 // and any referenced template. A small request can therefore receive `413`
@@ -1288,10 +1290,9 @@ type ClientWithResponsesInterface interface {
 	// them (each carries a non-null `cluster` membership block).
 	//
 	// Results are cursor-paginated newest-first; an omitted `limit`
-	// defaults to 1000. When cluster member pods are excluded, the
-	// exclusion applies to each page after it is cut, so a page may hold
-	// fewer than `limit` pods — follow `pagination.nextCursor` until
-	// `hasNextPage` is false rather than counting items.
+	// defaults to 1000. The cluster-member exclusion is applied before the
+	// page is cut, so a page holds `limit` pods whenever that many remain.
+	// Follow `pagination.nextCursor` until `hasNextPage` is false.
 	//
 	// Returns a wrapper object for the known response body format(s).
 	//
@@ -1356,8 +1357,9 @@ type ClientWithResponsesInterface interface {
 	// | `429` | Rate limited. | Back off using `Retry-After`, then resume. |
 	// | `5xx` | Transient upstream failure. | Retry the same candidate with backoff. |
 	//
-	// Requests larger than 102400 bytes receive `413` before authentication
-	// or processing. Reduce the serialized JSON request body and retry.
+	// Requests larger than 102400 bytes receive `413` after authentication
+	// and rate limiting, before deployment processing. Reduce the serialized
+	// JSON request body and retry.
 	//
 	// This limit also applies to the deployment request built from your input
 	// and any referenced template. A small request can therefore receive `413`
@@ -1435,8 +1437,9 @@ type ClientWithResponsesInterface interface {
 	// | `429` | Rate limited. | Back off using `Retry-After`, then resume. |
 	// | `5xx` | Transient upstream failure. | Retry the same candidate with backoff. |
 	//
-	// Requests larger than 102400 bytes receive `413` before authentication
-	// or processing. Reduce the serialized JSON request body and retry.
+	// Requests larger than 102400 bytes receive `413` after authentication
+	// and rate limiting, before deployment processing. Reduce the serialized
+	// JSON request body and retry.
 	//
 	// This limit also applies to the deployment request built from your input
 	// and any referenced template. A small request can therefore receive `413`
@@ -1613,6 +1616,12 @@ type ListPodsResult403Headers struct {
 	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
 }
 
+// ListPodsResult413Headers the declared response headers of an HTTP 413 response for ListPods
+type ListPodsResult413Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
 // ListPodsResult429Headers the declared response headers of an HTTP 429 response for ListPods
 type ListPodsResult429Headers struct {
 	RateLimit       *externalRef0.RateLimitHeader
@@ -1635,6 +1644,8 @@ type ListPodsResult struct {
 	ApplicationproblemJSON401 *externalRef0.ErrorResponse
 	// ApplicationproblemJSON403 the response for an HTTP 403 `application/problem+json` response
 	ApplicationproblemJSON403 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON413 the response for an HTTP 413 `application/problem+json` response
+	ApplicationproblemJSON413 *externalRef0.ErrorResponse
 	// ApplicationproblemJSON429 the response for an HTTP 429 `application/problem+json` response
 	ApplicationproblemJSON429 *externalRef0.ErrorResponse
 	// ApplicationproblemJSONDefault the response for an HTTP default `application/problem+json` response
@@ -1643,6 +1654,8 @@ type ListPodsResult struct {
 	Headers200 *ListPodsResult200Headers
 	// Headers403 the parsed response headers for an HTTP 403 response
 	Headers403 *ListPodsResult403Headers
+	// Headers413 the parsed response headers for an HTTP 413 response
+	Headers413 *ListPodsResult413Headers
 	// Headers429 the parsed response headers for an HTTP 429 response
 	Headers429 *ListPodsResult429Headers
 	// HeadersDefault the parsed response headers for an HTTP default response
@@ -1662,6 +1675,11 @@ func (r ListPodsResult) GetApplicationproblemJSON401() *externalRef0.ErrorRespon
 // GetApplicationproblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
 func (r ListPodsResult) GetApplicationproblemJSON403() *externalRef0.ErrorResponse {
 	return r.ApplicationproblemJSON403
+}
+
+// GetApplicationproblemJSON413 returns the response for an HTTP 413 `application/problem+json` response
+func (r ListPodsResult) GetApplicationproblemJSON413() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON413
 }
 
 // GetApplicationproblemJSON429 returns the response for an HTTP 429 `application/problem+json` response
@@ -1727,6 +1745,12 @@ type CreatePodResult404Headers struct {
 	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
 }
 
+// CreatePodResult413Headers the declared response headers of an HTTP 413 response for CreatePod
+type CreatePodResult413Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
 // CreatePodResult422Headers the declared response headers of an HTTP 422 response for CreatePod
 type CreatePodResult422Headers struct {
 	RateLimit       *externalRef0.RateLimitHeader
@@ -1775,6 +1799,8 @@ type CreatePodResult struct {
 	Headers403 *CreatePodResult403Headers
 	// Headers404 the parsed response headers for an HTTP 404 response
 	Headers404 *CreatePodResult404Headers
+	// Headers413 the parsed response headers for an HTTP 413 response
+	Headers413 *CreatePodResult413Headers
 	// Headers422 the parsed response headers for an HTTP 422 response
 	Headers422 *CreatePodResult422Headers
 	// Headers429 the parsed response headers for an HTTP 429 response
@@ -2115,6 +2141,12 @@ type UpdatePodResult404Headers struct {
 	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
 }
 
+// UpdatePodResult413Headers the declared response headers of an HTTP 413 response for UpdatePod
+type UpdatePodResult413Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
 // UpdatePodResult422Headers the declared response headers of an HTTP 422 response for UpdatePod
 type UpdatePodResult422Headers struct {
 	RateLimit       *externalRef0.RateLimitHeader
@@ -2149,6 +2181,8 @@ type UpdatePodResult struct {
 	ApplicationproblemJSON404 *externalRef0.ErrorResponse
 	// ApplicationproblemJSON409 the response for an HTTP 409 `application/problem+json` response
 	ApplicationproblemJSON409 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON413 the response for an HTTP 413 `application/problem+json` response
+	ApplicationproblemJSON413 *externalRef0.ErrorResponse
 	// ApplicationproblemJSON422 the response for an HTTP 422 `application/problem+json` response
 	ApplicationproblemJSON422 *externalRef0.ErrorResponse
 	// ApplicationproblemJSON429 the response for an HTTP 429 `application/problem+json` response
@@ -2163,6 +2197,8 @@ type UpdatePodResult struct {
 	Headers403 *UpdatePodResult403Headers
 	// Headers404 the parsed response headers for an HTTP 404 response
 	Headers404 *UpdatePodResult404Headers
+	// Headers413 the parsed response headers for an HTTP 413 response
+	Headers413 *UpdatePodResult413Headers
 	// Headers422 the parsed response headers for an HTTP 422 response
 	Headers422 *UpdatePodResult422Headers
 	// Headers429 the parsed response headers for an HTTP 429 response
@@ -2199,6 +2235,11 @@ func (r UpdatePodResult) GetApplicationproblemJSON404() *externalRef0.ErrorRespo
 // GetApplicationproblemJSON409 returns the response for an HTTP 409 `application/problem+json` response
 func (r UpdatePodResult) GetApplicationproblemJSON409() *externalRef0.ErrorResponse {
 	return r.ApplicationproblemJSON409
+}
+
+// GetApplicationproblemJSON413 returns the response for an HTTP 413 `application/problem+json` response
+func (r UpdatePodResult) GetApplicationproblemJSON413() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON413
 }
 
 // GetApplicationproblemJSON422 returns the response for an HTTP 422 `application/problem+json` response
@@ -2281,6 +2322,12 @@ type PodActionResult409Headers struct {
 	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
 }
 
+// PodActionResult413Headers the declared response headers of an HTTP 413 response for PodAction
+type PodActionResult413Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
 // PodActionResult422Headers the declared response headers of an HTTP 422 response for PodAction
 type PodActionResult422Headers struct {
 	RateLimit       *externalRef0.RateLimitHeader
@@ -2315,6 +2362,8 @@ type PodActionResult struct {
 	ApplicationproblemJSON404 *externalRef0.ErrorResponse
 	// ApplicationproblemJSON409 the response for an HTTP 409 `application/problem+json` response
 	ApplicationproblemJSON409 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON413 the response for an HTTP 413 `application/problem+json` response
+	ApplicationproblemJSON413 *externalRef0.ErrorResponse
 	// ApplicationproblemJSON422 the response for an HTTP 422 `application/problem+json` response
 	ApplicationproblemJSON422 *externalRef0.ErrorResponse
 	// ApplicationproblemJSON429 the response for an HTTP 429 `application/problem+json` response
@@ -2333,6 +2382,8 @@ type PodActionResult struct {
 	Headers404 *PodActionResult404Headers
 	// Headers409 the parsed response headers for an HTTP 409 response
 	Headers409 *PodActionResult409Headers
+	// Headers413 the parsed response headers for an HTTP 413 response
+	Headers413 *PodActionResult413Headers
 	// Headers422 the parsed response headers for an HTTP 422 response
 	Headers422 *PodActionResult422Headers
 	// Headers429 the parsed response headers for an HTTP 429 response
@@ -2369,6 +2420,11 @@ func (r PodActionResult) GetApplicationproblemJSON404() *externalRef0.ErrorRespo
 // GetApplicationproblemJSON409 returns the response for an HTTP 409 `application/problem+json` response
 func (r PodActionResult) GetApplicationproblemJSON409() *externalRef0.ErrorResponse {
 	return r.ApplicationproblemJSON409
+}
+
+// GetApplicationproblemJSON413 returns the response for an HTTP 413 `application/problem+json` response
+func (r PodActionResult) GetApplicationproblemJSON413() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON413
 }
 
 // GetApplicationproblemJSON422 returns the response for an HTTP 422 `application/problem+json` response
@@ -2535,10 +2591,9 @@ func (r GetPodLogsResult) ContentType() string {
 // them (each carries a non-null `cluster` membership block).
 //
 // Results are cursor-paginated newest-first; an omitted `limit`
-// defaults to 1000. When cluster member pods are excluded, the
-// exclusion applies to each page after it is cut, so a page may hold
-// fewer than `limit` pods — follow `pagination.nextCursor` until
-// `hasNextPage` is false rather than counting items.
+// defaults to 1000. The cluster-member exclusion is applied before the
+// page is cut, so a page holds `limit` pods whenever that many remain.
+// Follow `pagination.nextCursor` until `hasNextPage` is false.
 //
 // Returns a wrapper object for the known response body format(s).
 //
@@ -2609,8 +2664,9 @@ func (c *ClientWithResponses) ListPodsWithResponse(ctx context.Context, params *
 // | `429` | Rate limited. | Back off using `Retry-After`, then resume. |
 // | `5xx` | Transient upstream failure. | Retry the same candidate with backoff. |
 //
-// Requests larger than 102400 bytes receive `413` before authentication
-// or processing. Reduce the serialized JSON request body and retry.
+// Requests larger than 102400 bytes receive `413` after authentication
+// and rate limiting, before deployment processing. Reduce the serialized
+// JSON request body and retry.
 //
 // This limit also applies to the deployment request built from your input
 // and any referenced template. A small request can therefore receive `413`
@@ -2694,8 +2750,9 @@ func (c *ClientWithResponses) CreatePodWithBodyWithResponse(ctx context.Context,
 // | `429` | Rate limited. | Back off using `Retry-After`, then resume. |
 // | `5xx` | Transient upstream failure. | Retry the same candidate with backoff. |
 //
-// Requests larger than 102400 bytes receive `413` before authentication
-// or processing. Reduce the serialized JSON request body and retry.
+// Requests larger than 102400 bytes receive `413` after authentication
+// and rate limiting, before deployment processing. Reduce the serialized
+// JSON request body and retry.
 //
 // This limit also applies to the deployment request built from your input
 // and any referenced template. A small request can therefore receive `413`
@@ -2942,6 +2999,13 @@ func ParseListPodsResult(rsp *http.Response) (*ListPodsResult, error) {
 		}
 		response.ApplicationproblemJSON403 = &dest
 
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 413:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON413 = &dest
+
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
 		var dest externalRef0.ErrorResponse
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
@@ -2993,6 +3057,23 @@ func ParseListPodsResult(rsp *http.Response) (*ListPodsResult, error) {
 			headers.RateLimitPolicy = &value
 		}
 		response.Headers403 = &headers
+	case rsp.StatusCode == 413:
+		var headers ListPodsResult413Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers413 = &headers
 	case rsp.StatusCode == 429:
 		var headers ListPodsResult429Headers
 		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
@@ -3187,6 +3268,23 @@ func ParseCreatePodResult(rsp *http.Response) (*CreatePodResult, error) {
 			headers.RateLimitPolicy = &value
 		}
 		response.Headers404 = &headers
+	case rsp.StatusCode == 413:
+		var headers CreatePodResult413Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers413 = &headers
 	case rsp.StatusCode == 422:
 		var headers CreatePodResult422Headers
 		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
@@ -3621,6 +3719,13 @@ func ParseUpdatePodResult(rsp *http.Response) (*UpdatePodResult, error) {
 		}
 		response.ApplicationproblemJSON409 = &dest
 
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 413:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON413 = &dest
+
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
 		var dest externalRef0.ErrorResponse
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
@@ -3713,6 +3818,23 @@ func ParseUpdatePodResult(rsp *http.Response) (*UpdatePodResult, error) {
 			headers.RateLimitPolicy = &value
 		}
 		response.Headers404 = &headers
+	case rsp.StatusCode == 413:
+		var headers UpdatePodResult413Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers413 = &headers
 	case rsp.StatusCode == 422:
 		var headers UpdatePodResult422Headers
 		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
@@ -3834,6 +3956,13 @@ func ParsePodActionResult(rsp *http.Response) (*PodActionResult, error) {
 			return nil, err
 		}
 		response.ApplicationproblemJSON409 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 413:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON413 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
 		var dest externalRef0.ErrorResponse
@@ -3961,6 +4090,23 @@ func ParsePodActionResult(rsp *http.Response) (*PodActionResult, error) {
 			headers.RateLimitPolicy = &value
 		}
 		response.Headers409 = &headers
+	case rsp.StatusCode == 413:
+		var headers PodActionResult413Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers413 = &headers
 	case rsp.StatusCode == 422:
 		var headers PodActionResult422Headers
 		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {

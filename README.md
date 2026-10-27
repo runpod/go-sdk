@@ -2,7 +2,8 @@
 
 Go client for the Runpod v2 REST API, generated from the openly served v2
 OpenAPI spec. One package per API area (pods, serverless, templates, networkvolumes,
-registries, catalog, billing, clusters, account) behind a single authenticated
+globalvolumes, registries, catalog, billing, clusters, account, organization,
+auditlogs) behind a single authenticated
 client with retry/backoff built in. Every request and response shape those
 areas share is one type in `lib/types`, so a pod read from a cluster is the same
 `types.Pod` the pods package returns.
@@ -72,7 +73,7 @@ An area package holds its operations: the client, the per-operation parameters,
 request bodies and response wrappers (`pods.CreatePodJSONRequestBody`,
 `pods.CreatePodResult`). Every schema the spec names is in `lib/types`
 (`types.Pod`, `types.CreateGpuConfig`, `types.ErrorResponse`, the enum
-constants), declared once and imported by all nine areas, so
+constants), declared once and imported by all twelve areas, so
 `clusters.ListClusterPodsWithResponse` hands back the same `types.Pod` as
 `pods.GetPodWithResponse`, and one error check works across areas.
 
@@ -80,11 +81,13 @@ The generated request bodies take their optional fields by pointer, which is
 what `runpod.Ptr` is for: it returns a pointer to any value, so a literal
 needs no temporary variable.
 
-Five list operations are cursor-paginated: `Pods.ListPods`,
+Nine list operations are cursor-paginated: `Pods.ListPods`,
 `Serverless.ListEndpoints`, `Serverless.ListEndpointBuilds`,
-`Serverless.ListEndpointReleases` and `Templates.ListTemplates`. Their `limit`
+`Serverless.ListEndpointReleases`, `Templates.ListTemplates`,
+`Clusters.ListClusters`, `NetworkVolumes.ListNetworkVolumes`,
+`GlobalVolumes.ListGlobalVolumes` and `AuditLogs.ListAuditLogs`. Their `limit`
 is a page size, not a cap you can leave off: omit it and you get 1000 items, or
-100 for the builds list. So `ListPodsWithResponse(ctx, nil)` reads like "all
+100 for the builds list and 200 for the audit logs. So `ListPodsWithResponse(ctx, nil)` reads like "all
 pods" and is one page of them. To see the whole set, follow
 `pagination.nextCursor` until `hasNextPage` is false:
 
@@ -107,10 +110,14 @@ for {
 
 `example_test.go` compiles this block too. A cursor is opaque and belongs to
 the operation and parameters that issued it; a foreign or malformed one comes
-back 422. Every other list operation — the billing reads, the catalog,
-clusters and their member pods, network volumes, registries, ECR delegations,
-endpoint workers, and account secrets — returns its whole result in one
-response and carries no `pagination` block at all.
+back 422. Every other list operation — the billing reads, the catalog, a
+cluster's member pods, registries, ECR delegations, endpoint workers, and
+account secrets — returns its whole result in one response and carries no
+`pagination` block at all.
+
+A list too large to answer in one response comes back 413, decoded into the
+result's `ApplicationproblemJSON413`: lower `limit` on a paginated operation,
+or ask for fewer items on one that is not.
 
 `Image` above is a full Runpod PyTorch tag, cuDNN variant and base OS included;
 the spec's `runpod/pytorch:2.8.0-py3.11-cuda12.8.1` examples abbreviate the same
@@ -142,7 +149,7 @@ rather than an opaque deadline error.
 runpod.go              hand-written: options, auth, one client per API area
 example_test.go        hand-written: the usage example above, compiled
 transport/             hand-written: the shared retry RoundTripper
-legacy/                hand-written: deprecated REST v1 + GraphQL client, see below
+legacy/                hand-written: deprecated GraphQL client, see below
 generator/             hand-written: its own module — splits the spec per tag, runs oapi-codegen
 scripts/               hand-written: the spec patch registry, its normalizer and tests
 spec/openapi.yaml      vendored: fetched by `task spec-pull`, normalized by the patch layer
@@ -153,7 +160,7 @@ artifacts/api/         generated intermediates (the shared components spec, one 
 pkg/, example/         the earlier SDK and the Pulumi provider: separate modules, unchanged
 ```
 
-Nine packages under `lib/` map one-to-one onto the spec's nine operation tags,
+Twelve packages under `lib/` map one-to-one onto the spec's twelve operation tags,
 over one `lib/types` holding the whole `components` object of the spec: schemas,
 responses, parameters and headers. The generator emits the components once, as
 `artifacts/api/components.yaml`, and gives each per-tag spec a reference to that
@@ -169,19 +176,19 @@ a code generator the SDK does not execute at runtime.
 
 ## Deprecated legacy client
 
-`github.com/runpod/go-sdk/v2/legacy` is a hand-written client for the REST v1
-host and the GraphQL endpoint. It is not wired onto `runpod.Client` and takes
-no part in v2 API work: its only consumer is the Terraform provider's
-deprecated compatibility shims, which carry 1.x fields REST v2 has no route
-for: the machine resource on GraphQL; the account user read, the billing
-reads, and a handful of pod, template and serverless-endpoint fields on REST v1.
-It has no registry username read: no supported source reports one. The GraphQL
-`ContainerRegistryAuth` type carries no username field and there is no
-`containerRegistryAuths` root field, and REST v2 treats the username as
-write-only.
+`github.com/runpod/go-sdk/v2/legacy` is a hand-written client for the GraphQL
+endpoint. It is not wired onto `runpod.Client` and takes no part in v2 API
+work: its only consumer is the Terraform provider's deprecated compatibility
+shims, which carry 1.x fields REST v2 has no route for: the machine resource
+and data sources; the provider holds its other GraphQL queries itself. It sends
+raw GraphQL documents through `Client.Query`; it has no REST v1 client, because
+the REST v1 host retires on 2026-11-15. It has no registry username
+read: no supported source reports one. The GraphQL `ContainerRegistryAuth` type
+carries no username field and there is no `containerRegistryAuths` root field,
+and REST v2 treats the username as write-only.
 
-Each route there is removed as REST v2 carries the same fields, and the package
-goes with the last of them. Import it only if you are maintaining those shims.
+Each use is removed as REST v2 carries the same fields, and the package goes
+with the last of them. Import it only if you are maintaining those shims.
 
 ## Regenerating from the spec
 
@@ -218,8 +225,7 @@ constant names all register there, never hand-edited into the spec or the
 generated code. The layer also normalizes formatting, so `spec/openapi.yaml` is
 its output byte for byte and re-running it over the vendored spec changes
 nothing; `task spec-test` asserts exactly that. Registered patches today, in the
-order they run: typed 401/403 responses on the three ECR-delegation operations,
-placeholder AWS account ids in examples, the post-rebrand `Runpod` casing in
+order they run: placeholder AWS account ids in examples, the post-rebrand `Runpod` casing in
 prose (identifiers, URLs and wire values keep theirs), `x-enum-varnames` on
 every enum, public-description cleanups (including the two pagination
 sentences the schemas contradict), the top-level `Clusters` tag entry the
@@ -234,7 +240,7 @@ Two tiers, both under `task test`:
 - **Offline** (default, no credentials, no network): retry-policy tests in
   `transport/` (backoff, jitter, `Retry-After`, which methods may replay)
   plus client-wiring tests in `runpod_test.go` that drive the generated catalog
-  client against an `httptest` server. `task spec-test` covers the patch layer
+  and global volumes clients against an `httptest` server. `task spec-test` covers the patch layer
   separately (Python, no Go toolchain needed).
 - **Live smoke** (opt-in): `runpod_live_test.go` runs only when
   `RUNPOD_API_KEY` is set, and issues a single read-only

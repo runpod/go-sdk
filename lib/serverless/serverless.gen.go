@@ -285,8 +285,9 @@ type ClientInterface interface {
 	//
 	// Mutable fields: `name`, `gpu`, `cpu`, `workers` (`min`/`max`),
 	// `scaling` (`type`/`value`/`idleTimeout`), `dataCenterIds`,
-	// `networkVolumes`, `timeout`, `flashboot`, and the container settings
-	// (`image`, `args`, `disk`, `ports`, `env`, `registry`).
+	// `networkVolumes`, `timeout`, `flashboot`, and the
+	// container settings (`image`, `args`, `disk`, `ports`, `env`,
+	// `registry`).
 	//
 	// Omitted compute preserves the current selection. `cpu` completely
 	// replaces a CPU endpoint's selection; compute family is immutable.
@@ -313,8 +314,9 @@ type ClientInterface interface {
 	//
 	// Mutable fields: `name`, `gpu`, `cpu`, `workers` (`min`/`max`),
 	// `scaling` (`type`/`value`/`idleTimeout`), `dataCenterIds`,
-	// `networkVolumes`, `timeout`, `flashboot`, and the container settings
-	// (`image`, `args`, `disk`, `ports`, `env`, `registry`).
+	// `networkVolumes`, `timeout`, `flashboot`, and the
+	// container settings (`image`, `args`, `disk`, `ports`, `env`,
+	// `registry`).
 	//
 	// Omitted compute preserves the current selection. `cpu` completely
 	// replaces a CPU endpoint's selection; compute family is immutable.
@@ -591,8 +593,9 @@ func (c *Client) GetEndpoint(ctx context.Context, id string, reqEditors ...Reque
 //
 // Mutable fields: `name`, `gpu`, `cpu`, `workers` (`min`/`max`),
 // `scaling` (`type`/`value`/`idleTimeout`), `dataCenterIds`,
-// `networkVolumes`, `timeout`, `flashboot`, and the container settings
-// (`image`, `args`, `disk`, `ports`, `env`, `registry`).
+// `networkVolumes`, `timeout`, `flashboot`, and the
+// container settings (`image`, `args`, `disk`, `ports`, `env`,
+// `registry`).
 //
 // Omitted compute preserves the current selection. `cpu` completely
 // replaces a CPU endpoint's selection; compute family is immutable.
@@ -629,8 +632,9 @@ func (c *Client) UpdateEndpointWithBody(ctx context.Context, id string, contentT
 //
 // Mutable fields: `name`, `gpu`, `cpu`, `workers` (`min`/`max`),
 // `scaling` (`type`/`value`/`idleTimeout`), `dataCenterIds`,
-// `networkVolumes`, `timeout`, `flashboot`, and the container settings
-// (`image`, `args`, `disk`, `ports`, `env`, `registry`).
+// `networkVolumes`, `timeout`, `flashboot`, and the
+// container settings (`image`, `args`, `disk`, `ports`, `env`,
+// `registry`).
 //
 // Omitted compute preserves the current selection. `cpu` completely
 // replaces a CPU endpoint's selection; compute family is immutable.
@@ -1515,8 +1519,9 @@ type ClientWithResponsesInterface interface {
 	//
 	// Mutable fields: `name`, `gpu`, `cpu`, `workers` (`min`/`max`),
 	// `scaling` (`type`/`value`/`idleTimeout`), `dataCenterIds`,
-	// `networkVolumes`, `timeout`, `flashboot`, and the container settings
-	// (`image`, `args`, `disk`, `ports`, `env`, `registry`).
+	// `networkVolumes`, `timeout`, `flashboot`, and the
+	// container settings (`image`, `args`, `disk`, `ports`, `env`,
+	// `registry`).
 	//
 	// Omitted compute preserves the current selection. `cpu` completely
 	// replaces a CPU endpoint's selection; compute family is immutable.
@@ -1543,8 +1548,9 @@ type ClientWithResponsesInterface interface {
 	//
 	// Mutable fields: `name`, `gpu`, `cpu`, `workers` (`min`/`max`),
 	// `scaling` (`type`/`value`/`idleTimeout`), `dataCenterIds`,
-	// `networkVolumes`, `timeout`, `flashboot`, and the container settings
-	// (`image`, `args`, `disk`, `ports`, `env`, `registry`).
+	// `networkVolumes`, `timeout`, `flashboot`, and the
+	// container settings (`image`, `args`, `disk`, `ports`, `env`,
+	// `registry`).
 	//
 	// Omitted compute preserves the current selection. `cpu` completely
 	// replaces a CPU endpoint's selection; compute family is immutable.
@@ -1654,6 +1660,12 @@ type ListEndpointsResult403Headers struct {
 	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
 }
 
+// ListEndpointsResult413Headers the declared response headers of an HTTP 413 response for ListEndpoints
+type ListEndpointsResult413Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
 // ListEndpointsResult429Headers the declared response headers of an HTTP 429 response for ListEndpoints
 type ListEndpointsResult429Headers struct {
 	RateLimit       *externalRef0.RateLimitHeader
@@ -1676,6 +1688,8 @@ type ListEndpointsResult struct {
 	ApplicationproblemJSON401 *externalRef0.ErrorResponse
 	// ApplicationproblemJSON403 the response for an HTTP 403 `application/problem+json` response
 	ApplicationproblemJSON403 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON413 the response for an HTTP 413 `application/problem+json` response
+	ApplicationproblemJSON413 *externalRef0.ErrorResponse
 	// ApplicationproblemJSON429 the response for an HTTP 429 `application/problem+json` response
 	ApplicationproblemJSON429 *externalRef0.ErrorResponse
 	// ApplicationproblemJSONDefault the response for an HTTP default `application/problem+json` response
@@ -1684,6 +1698,8 @@ type ListEndpointsResult struct {
 	Headers200 *ListEndpointsResult200Headers
 	// Headers403 the parsed response headers for an HTTP 403 response
 	Headers403 *ListEndpointsResult403Headers
+	// Headers413 the parsed response headers for an HTTP 413 response
+	Headers413 *ListEndpointsResult413Headers
 	// Headers429 the parsed response headers for an HTTP 429 response
 	Headers429 *ListEndpointsResult429Headers
 	// HeadersDefault the parsed response headers for an HTTP default response
@@ -1703,6 +1719,11 @@ func (r ListEndpointsResult) GetApplicationproblemJSON401() *externalRef0.ErrorR
 // GetApplicationproblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
 func (r ListEndpointsResult) GetApplicationproblemJSON403() *externalRef0.ErrorResponse {
 	return r.ApplicationproblemJSON403
+}
+
+// GetApplicationproblemJSON413 returns the response for an HTTP 413 `application/problem+json` response
+func (r ListEndpointsResult) GetApplicationproblemJSON413() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON413
 }
 
 // GetApplicationproblemJSON429 returns the response for an HTTP 429 `application/problem+json` response
@@ -1768,6 +1789,12 @@ type CreateEndpointResult404Headers struct {
 	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
 }
 
+// CreateEndpointResult413Headers the declared response headers of an HTTP 413 response for CreateEndpoint
+type CreateEndpointResult413Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
 // CreateEndpointResult422Headers the declared response headers of an HTTP 422 response for CreateEndpoint
 type CreateEndpointResult422Headers struct {
 	RateLimit       *externalRef0.RateLimitHeader
@@ -1800,6 +1827,8 @@ type CreateEndpointResult struct {
 	ApplicationproblemJSON403 *externalRef0.ErrorResponse
 	// ApplicationproblemJSON404 the response for an HTTP 404 `application/problem+json` response
 	ApplicationproblemJSON404 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON413 the response for an HTTP 413 `application/problem+json` response
+	ApplicationproblemJSON413 *externalRef0.ErrorResponse
 	// ApplicationproblemJSON422 the response for an HTTP 422 `application/problem+json` response
 	ApplicationproblemJSON422 *externalRef0.ErrorResponse
 	// ApplicationproblemJSON429 the response for an HTTP 429 `application/problem+json` response
@@ -1814,6 +1843,8 @@ type CreateEndpointResult struct {
 	Headers403 *CreateEndpointResult403Headers
 	// Headers404 the parsed response headers for an HTTP 404 response
 	Headers404 *CreateEndpointResult404Headers
+	// Headers413 the parsed response headers for an HTTP 413 response
+	Headers413 *CreateEndpointResult413Headers
 	// Headers422 the parsed response headers for an HTTP 422 response
 	Headers422 *CreateEndpointResult422Headers
 	// Headers429 the parsed response headers for an HTTP 429 response
@@ -1845,6 +1876,11 @@ func (r CreateEndpointResult) GetApplicationproblemJSON403() *externalRef0.Error
 // GetApplicationproblemJSON404 returns the response for an HTTP 404 `application/problem+json` response
 func (r CreateEndpointResult) GetApplicationproblemJSON404() *externalRef0.ErrorResponse {
 	return r.ApplicationproblemJSON404
+}
+
+// GetApplicationproblemJSON413 returns the response for an HTTP 413 `application/problem+json` response
+func (r CreateEndpointResult) GetApplicationproblemJSON413() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON413
 }
 
 // GetApplicationproblemJSON422 returns the response for an HTTP 422 `application/problem+json` response
@@ -2142,6 +2178,12 @@ type UpdateEndpointResult404Headers struct {
 	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
 }
 
+// UpdateEndpointResult413Headers the declared response headers of an HTTP 413 response for UpdateEndpoint
+type UpdateEndpointResult413Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
 // UpdateEndpointResult422Headers the declared response headers of an HTTP 422 response for UpdateEndpoint
 type UpdateEndpointResult422Headers struct {
 	RateLimit       *externalRef0.RateLimitHeader
@@ -2174,6 +2216,8 @@ type UpdateEndpointResult struct {
 	ApplicationproblemJSON403 *externalRef0.ErrorResponse
 	// ApplicationproblemJSON404 the response for an HTTP 404 `application/problem+json` response
 	ApplicationproblemJSON404 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON413 the response for an HTTP 413 `application/problem+json` response
+	ApplicationproblemJSON413 *externalRef0.ErrorResponse
 	// ApplicationproblemJSON422 the response for an HTTP 422 `application/problem+json` response
 	ApplicationproblemJSON422 *externalRef0.ErrorResponse
 	// ApplicationproblemJSON429 the response for an HTTP 429 `application/problem+json` response
@@ -2188,6 +2232,8 @@ type UpdateEndpointResult struct {
 	Headers403 *UpdateEndpointResult403Headers
 	// Headers404 the parsed response headers for an HTTP 404 response
 	Headers404 *UpdateEndpointResult404Headers
+	// Headers413 the parsed response headers for an HTTP 413 response
+	Headers413 *UpdateEndpointResult413Headers
 	// Headers422 the parsed response headers for an HTTP 422 response
 	Headers422 *UpdateEndpointResult422Headers
 	// Headers429 the parsed response headers for an HTTP 429 response
@@ -2219,6 +2265,11 @@ func (r UpdateEndpointResult) GetApplicationproblemJSON403() *externalRef0.Error
 // GetApplicationproblemJSON404 returns the response for an HTTP 404 `application/problem+json` response
 func (r UpdateEndpointResult) GetApplicationproblemJSON404() *externalRef0.ErrorResponse {
 	return r.ApplicationproblemJSON404
+}
+
+// GetApplicationproblemJSON413 returns the response for an HTTP 413 `application/problem+json` response
+func (r UpdateEndpointResult) GetApplicationproblemJSON413() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON413
 }
 
 // GetApplicationproblemJSON422 returns the response for an HTTP 422 `application/problem+json` response
@@ -2283,6 +2334,12 @@ type ListEndpointBuildsResult404Headers struct {
 	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
 }
 
+// ListEndpointBuildsResult413Headers the declared response headers of an HTTP 413 response for ListEndpointBuilds
+type ListEndpointBuildsResult413Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
 // ListEndpointBuildsResult429Headers the declared response headers of an HTTP 429 response for ListEndpointBuilds
 type ListEndpointBuildsResult429Headers struct {
 	RateLimit       *externalRef0.RateLimitHeader
@@ -2307,6 +2364,8 @@ type ListEndpointBuildsResult struct {
 	ApplicationproblemJSON403 *externalRef0.ErrorResponse
 	// ApplicationproblemJSON404 the response for an HTTP 404 `application/problem+json` response
 	ApplicationproblemJSON404 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON413 the response for an HTTP 413 `application/problem+json` response
+	ApplicationproblemJSON413 *externalRef0.ErrorResponse
 	// ApplicationproblemJSON429 the response for an HTTP 429 `application/problem+json` response
 	ApplicationproblemJSON429 *externalRef0.ErrorResponse
 	// ApplicationproblemJSONDefault the response for an HTTP default `application/problem+json` response
@@ -2317,6 +2376,8 @@ type ListEndpointBuildsResult struct {
 	Headers403 *ListEndpointBuildsResult403Headers
 	// Headers404 the parsed response headers for an HTTP 404 response
 	Headers404 *ListEndpointBuildsResult404Headers
+	// Headers413 the parsed response headers for an HTTP 413 response
+	Headers413 *ListEndpointBuildsResult413Headers
 	// Headers429 the parsed response headers for an HTTP 429 response
 	Headers429 *ListEndpointBuildsResult429Headers
 	// HeadersDefault the parsed response headers for an HTTP default response
@@ -2341,6 +2402,11 @@ func (r ListEndpointBuildsResult) GetApplicationproblemJSON403() *externalRef0.E
 // GetApplicationproblemJSON404 returns the response for an HTTP 404 `application/problem+json` response
 func (r ListEndpointBuildsResult) GetApplicationproblemJSON404() *externalRef0.ErrorResponse {
 	return r.ApplicationproblemJSON404
+}
+
+// GetApplicationproblemJSON413 returns the response for an HTTP 413 `application/problem+json` response
+func (r ListEndpointBuildsResult) GetApplicationproblemJSON413() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON413
 }
 
 // GetApplicationproblemJSON429 returns the response for an HTTP 429 `application/problem+json` response
@@ -2517,6 +2583,12 @@ type ListEndpointReleasesResult404Headers struct {
 	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
 }
 
+// ListEndpointReleasesResult413Headers the declared response headers of an HTTP 413 response for ListEndpointReleases
+type ListEndpointReleasesResult413Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
 // ListEndpointReleasesResult429Headers the declared response headers of an HTTP 429 response for ListEndpointReleases
 type ListEndpointReleasesResult429Headers struct {
 	RateLimit       *externalRef0.RateLimitHeader
@@ -2541,6 +2613,8 @@ type ListEndpointReleasesResult struct {
 	ApplicationproblemJSON403 *externalRef0.ErrorResponse
 	// ApplicationproblemJSON404 the response for an HTTP 404 `application/problem+json` response
 	ApplicationproblemJSON404 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON413 the response for an HTTP 413 `application/problem+json` response
+	ApplicationproblemJSON413 *externalRef0.ErrorResponse
 	// ApplicationproblemJSON429 the response for an HTTP 429 `application/problem+json` response
 	ApplicationproblemJSON429 *externalRef0.ErrorResponse
 	// ApplicationproblemJSONDefault the response for an HTTP default `application/problem+json` response
@@ -2551,6 +2625,8 @@ type ListEndpointReleasesResult struct {
 	Headers403 *ListEndpointReleasesResult403Headers
 	// Headers404 the parsed response headers for an HTTP 404 response
 	Headers404 *ListEndpointReleasesResult404Headers
+	// Headers413 the parsed response headers for an HTTP 413 response
+	Headers413 *ListEndpointReleasesResult413Headers
 	// Headers429 the parsed response headers for an HTTP 429 response
 	Headers429 *ListEndpointReleasesResult429Headers
 	// HeadersDefault the parsed response headers for an HTTP default response
@@ -2575,6 +2651,11 @@ func (r ListEndpointReleasesResult) GetApplicationproblemJSON403() *externalRef0
 // GetApplicationproblemJSON404 returns the response for an HTTP 404 `application/problem+json` response
 func (r ListEndpointReleasesResult) GetApplicationproblemJSON404() *externalRef0.ErrorResponse {
 	return r.ApplicationproblemJSON404
+}
+
+// GetApplicationproblemJSON413 returns the response for an HTTP 413 `application/problem+json` response
+func (r ListEndpointReleasesResult) GetApplicationproblemJSON413() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON413
 }
 
 // GetApplicationproblemJSON429 returns the response for an HTTP 429 `application/problem+json` response
@@ -3021,8 +3102,9 @@ func (c *ClientWithResponses) GetEndpointWithResponse(ctx context.Context, id st
 //
 // Mutable fields: `name`, `gpu`, `cpu`, `workers` (`min`/`max`),
 // `scaling` (`type`/`value`/`idleTimeout`), `dataCenterIds`,
-// `networkVolumes`, `timeout`, `flashboot`, and the container settings
-// (`image`, `args`, `disk`, `ports`, `env`, `registry`).
+// `networkVolumes`, `timeout`, `flashboot`, and the
+// container settings (`image`, `args`, `disk`, `ports`, `env`,
+// `registry`).
 //
 // Omitted compute preserves the current selection. `cpu` completely
 // replaces a CPU endpoint's selection; compute family is immutable.
@@ -3055,8 +3137,9 @@ func (c *ClientWithResponses) UpdateEndpointWithBodyWithResponse(ctx context.Con
 //
 // Mutable fields: `name`, `gpu`, `cpu`, `workers` (`min`/`max`),
 // `scaling` (`type`/`value`/`idleTimeout`), `dataCenterIds`,
-// `networkVolumes`, `timeout`, `flashboot`, and the container settings
-// (`image`, `args`, `disk`, `ports`, `env`, `registry`).
+// `networkVolumes`, `timeout`, `flashboot`, and the
+// container settings (`image`, `args`, `disk`, `ports`, `env`,
+// `registry`).
 //
 // Omitted compute preserves the current selection. `cpu` completely
 // replaces a CPU endpoint's selection; compute family is immutable.
@@ -3224,6 +3307,13 @@ func ParseListEndpointsResult(rsp *http.Response) (*ListEndpointsResult, error) 
 		}
 		response.ApplicationproblemJSON403 = &dest
 
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 413:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON413 = &dest
+
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
 		var dest externalRef0.ErrorResponse
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
@@ -3275,6 +3365,23 @@ func ParseListEndpointsResult(rsp *http.Response) (*ListEndpointsResult, error) 
 			headers.RateLimitPolicy = &value
 		}
 		response.Headers403 = &headers
+	case rsp.StatusCode == 413:
+		var headers ListEndpointsResult413Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers413 = &headers
 	case rsp.StatusCode == 429:
 		var headers ListEndpointsResult429Headers
 		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
@@ -3370,6 +3477,13 @@ func ParseCreateEndpointResult(rsp *http.Response) (*CreateEndpointResult, error
 		}
 		response.ApplicationproblemJSON404 = &dest
 
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 413:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON413 = &dest
+
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
 		var dest externalRef0.ErrorResponse
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
@@ -3462,6 +3576,23 @@ func ParseCreateEndpointResult(rsp *http.Response) (*CreateEndpointResult, error
 			headers.RateLimitPolicy = &value
 		}
 		response.Headers404 = &headers
+	case rsp.StatusCode == 413:
+		var headers CreateEndpointResult413Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers413 = &headers
 	case rsp.StatusCode == 422:
 		var headers CreateEndpointResult422Headers
 		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
@@ -3882,6 +4013,13 @@ func ParseUpdateEndpointResult(rsp *http.Response) (*UpdateEndpointResult, error
 		}
 		response.ApplicationproblemJSON404 = &dest
 
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 413:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON413 = &dest
+
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
 		var dest externalRef0.ErrorResponse
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
@@ -3974,6 +4112,23 @@ func ParseUpdateEndpointResult(rsp *http.Response) (*UpdateEndpointResult, error
 			headers.RateLimitPolicy = &value
 		}
 		response.Headers404 = &headers
+	case rsp.StatusCode == 413:
+		var headers UpdateEndpointResult413Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers413 = &headers
 	case rsp.StatusCode == 422:
 		var headers UpdateEndpointResult422Headers
 		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
@@ -4079,6 +4234,13 @@ func ParseListEndpointBuildsResult(rsp *http.Response) (*ListEndpointBuildsResul
 		}
 		response.ApplicationproblemJSON404 = &dest
 
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 413:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON413 = &dest
+
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
 		var dest externalRef0.ErrorResponse
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
@@ -4147,6 +4309,23 @@ func ParseListEndpointBuildsResult(rsp *http.Response) (*ListEndpointBuildsResul
 			headers.RateLimitPolicy = &value
 		}
 		response.Headers404 = &headers
+	case rsp.StatusCode == 413:
+		var headers ListEndpointBuildsResult413Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers413 = &headers
 	case rsp.StatusCode == 429:
 		var headers ListEndpointBuildsResult429Headers
 		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
@@ -4391,6 +4570,13 @@ func ParseListEndpointReleasesResult(rsp *http.Response) (*ListEndpointReleasesR
 		}
 		response.ApplicationproblemJSON404 = &dest
 
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 413:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON413 = &dest
+
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
 		var dest externalRef0.ErrorResponse
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
@@ -4459,6 +4645,23 @@ func ParseListEndpointReleasesResult(rsp *http.Response) (*ListEndpointReleasesR
 			headers.RateLimitPolicy = &value
 		}
 		response.Headers404 = &headers
+	case rsp.StatusCode == 413:
+		var headers ListEndpointReleasesResult413Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers413 = &headers
 	case rsp.StatusCode == 429:
 		var headers ListEndpointReleasesResult429Headers
 		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {

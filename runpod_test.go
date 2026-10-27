@@ -2,6 +2,7 @@ package runpod
 
 import (
 	"context"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -11,6 +12,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/runpod/go-sdk/v2/lib/globalvolumes"
 	"github.com/runpod/go-sdk/v2/transport"
 )
 
@@ -43,7 +45,7 @@ func TestNewRequiresAPIKey(t *testing.T) {
 }
 
 func TestEveryAreaClientIsWired(t *testing.T) {
-	// A tenth area is a new field on Client and a new block in New; a forgotten
+	// Another area is a new field on Client and a new block in New; a forgotten
 	// one compiles, lints clean and is unreachable from the SDK. The lib/ count
 	// is what catches a generated package nobody wired.
 	client, err := New(WithAPIKey("test-key"))
@@ -139,6 +141,48 @@ func TestCatalogListGpuTypes(t *testing.T) {
 	gpus := resp.JSON200.Gpus
 	if len(gpus) != 1 || gpus[0].Id != "NVIDIA GeForce RTX 4090" || gpus[0].Memory != 24 {
 		t.Fatalf("unexpected decode: %+v", gpus)
+	}
+}
+
+func TestGlobalVolumesCreate(t *testing.T) {
+	// Global volumes are the first area whose create takes only a name, so the
+	// request body is asserted whole: a regeneration that grew a required field
+	// would change it.
+	var gotMethod, gotPath, gotBody atomic.Value
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		body, _ := io.ReadAll(r.Body)
+		gotMethod.Store(r.Method)
+		gotPath.Store(r.URL.Path)
+		gotBody.Store(string(body))
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusCreated)
+		_, _ = w.Write([]byte(`{"id":"gsb_abc","name":"training-data","createdAt":"2026-09-24T00:00:00Z","createdByUserId":null}`))
+	}))
+	t.Cleanup(srv.Close)
+
+	client, err := New(WithAPIKey("test-key"), WithBaseURL(srv.URL))
+	if err != nil {
+		t.Fatal(err)
+	}
+	resp, err := client.GlobalVolumes.CreateGlobalVolumeWithResponse(context.Background(),
+		globalvolumes.CreateGlobalVolumeJSONRequestBody{Name: "training-data"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if resp.JSON201 == nil {
+		t.Fatalf("JSON201 = nil, status %d, body %s", resp.HTTPResponse.StatusCode, resp.Body)
+	}
+	if got := gotMethod.Load(); got != http.MethodPost {
+		t.Errorf("method = %q, want POST", got)
+	}
+	if got := gotPath.Load(); got != "/v2/global-volumes" {
+		t.Errorf("path = %q, want /v2/global-volumes", got)
+	}
+	if got := gotBody.Load(); got != `{"name":"training-data"}` {
+		t.Errorf("body = %s, want {\"name\":\"training-data\"}", got)
+	}
+	if resp.JSON201.Id != "gsb_abc" || resp.JSON201.CreatedByUserId != nil {
+		t.Errorf("unexpected decode: %+v", resp.JSON201)
 	}
 }
 

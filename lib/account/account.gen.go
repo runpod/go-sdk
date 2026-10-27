@@ -1031,6 +1031,12 @@ type CreateSecretResult403Headers struct {
 	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
 }
 
+// CreateSecretResult413Headers the declared response headers of an HTTP 413 response for CreateSecret
+type CreateSecretResult413Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
 // CreateSecretResult422Headers the declared response headers of an HTTP 422 response for CreateSecret
 type CreateSecretResult422Headers struct {
 	RateLimit       *externalRef0.RateLimitHeader
@@ -1063,6 +1069,8 @@ type CreateSecretResult struct {
 	ApplicationproblemJSON403 *externalRef0.ErrorResponse
 	// ApplicationproblemJSON409 the response for an HTTP 409 `application/problem+json` response
 	ApplicationproblemJSON409 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON413 the response for an HTTP 413 `application/problem+json` response
+	ApplicationproblemJSON413 *externalRef0.ErrorResponse
 	// ApplicationproblemJSON422 the response for an HTTP 422 `application/problem+json` response
 	ApplicationproblemJSON422 *externalRef0.ErrorResponse
 	// ApplicationproblemJSON429 the response for an HTTP 429 `application/problem+json` response
@@ -1075,6 +1083,8 @@ type CreateSecretResult struct {
 	Headers400 *CreateSecretResult400Headers
 	// Headers403 the parsed response headers for an HTTP 403 response
 	Headers403 *CreateSecretResult403Headers
+	// Headers413 the parsed response headers for an HTTP 413 response
+	Headers413 *CreateSecretResult413Headers
 	// Headers422 the parsed response headers for an HTTP 422 response
 	Headers422 *CreateSecretResult422Headers
 	// Headers429 the parsed response headers for an HTTP 429 response
@@ -1106,6 +1116,11 @@ func (r CreateSecretResult) GetApplicationproblemJSON403() *externalRef0.ErrorRe
 // GetApplicationproblemJSON409 returns the response for an HTTP 409 `application/problem+json` response
 func (r CreateSecretResult) GetApplicationproblemJSON409() *externalRef0.ErrorResponse {
 	return r.ApplicationproblemJSON409
+}
+
+// GetApplicationproblemJSON413 returns the response for an HTTP 413 `application/problem+json` response
+func (r CreateSecretResult) GetApplicationproblemJSON413() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON413
 }
 
 // GetApplicationproblemJSON422 returns the response for an HTTP 422 `application/problem+json` response
@@ -1403,6 +1418,12 @@ type UpdateSecretResult404Headers struct {
 	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
 }
 
+// UpdateSecretResult413Headers the declared response headers of an HTTP 413 response for UpdateSecret
+type UpdateSecretResult413Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
 // UpdateSecretResult422Headers the declared response headers of an HTTP 422 response for UpdateSecret
 type UpdateSecretResult422Headers struct {
 	RateLimit       *externalRef0.RateLimitHeader
@@ -1435,6 +1456,8 @@ type UpdateSecretResult struct {
 	ApplicationproblemJSON403 *externalRef0.ErrorResponse
 	// ApplicationproblemJSON404 the response for an HTTP 404 `application/problem+json` response
 	ApplicationproblemJSON404 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON413 the response for an HTTP 413 `application/problem+json` response
+	ApplicationproblemJSON413 *externalRef0.ErrorResponse
 	// ApplicationproblemJSON422 the response for an HTTP 422 `application/problem+json` response
 	ApplicationproblemJSON422 *externalRef0.ErrorResponse
 	// ApplicationproblemJSON429 the response for an HTTP 429 `application/problem+json` response
@@ -1449,6 +1472,8 @@ type UpdateSecretResult struct {
 	Headers403 *UpdateSecretResult403Headers
 	// Headers404 the parsed response headers for an HTTP 404 response
 	Headers404 *UpdateSecretResult404Headers
+	// Headers413 the parsed response headers for an HTTP 413 response
+	Headers413 *UpdateSecretResult413Headers
 	// Headers422 the parsed response headers for an HTTP 422 response
 	Headers422 *UpdateSecretResult422Headers
 	// Headers429 the parsed response headers for an HTTP 429 response
@@ -1480,6 +1505,11 @@ func (r UpdateSecretResult) GetApplicationproblemJSON403() *externalRef0.ErrorRe
 // GetApplicationproblemJSON404 returns the response for an HTTP 404 `application/problem+json` response
 func (r UpdateSecretResult) GetApplicationproblemJSON404() *externalRef0.ErrorResponse {
 	return r.ApplicationproblemJSON404
+}
+
+// GetApplicationproblemJSON413 returns the response for an HTTP 413 `application/problem+json` response
+func (r UpdateSecretResult) GetApplicationproblemJSON413() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON413
 }
 
 // GetApplicationproblemJSON422 returns the response for an HTTP 422 `application/problem+json` response
@@ -1634,8 +1664,20 @@ type UpdateSshKeysResult200Headers struct {
 	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
 }
 
+// UpdateSshKeysResult400Headers the declared response headers of an HTTP 400 response for UpdateSshKeys
+type UpdateSshKeysResult400Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
 // UpdateSshKeysResult403Headers the declared response headers of an HTTP 403 response for UpdateSshKeys
 type UpdateSshKeysResult403Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+// UpdateSshKeysResult413Headers the declared response headers of an HTTP 413 response for UpdateSshKeys
+type UpdateSshKeysResult413Headers struct {
 	RateLimit       *externalRef0.RateLimitHeader
 	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
 }
@@ -1664,10 +1706,14 @@ type UpdateSshKeysResult struct {
 	HTTPResponse *http.Response
 	// JSON200 the response for an HTTP 200 `application/json` response
 	JSON200 *externalRef0.SshKeys
+	// ApplicationproblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationproblemJSON400 *externalRef0.ErrorResponse
 	// ApplicationproblemJSON401 the response for an HTTP 401 `application/problem+json` response
 	ApplicationproblemJSON401 *externalRef0.ErrorResponse
 	// ApplicationproblemJSON403 the response for an HTTP 403 `application/problem+json` response
 	ApplicationproblemJSON403 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON413 the response for an HTTP 413 `application/problem+json` response
+	ApplicationproblemJSON413 *externalRef0.ErrorResponse
 	// ApplicationproblemJSON422 the response for an HTTP 422 `application/problem+json` response
 	ApplicationproblemJSON422 *externalRef0.ErrorResponse
 	// ApplicationproblemJSON429 the response for an HTTP 429 `application/problem+json` response
@@ -1676,8 +1722,12 @@ type UpdateSshKeysResult struct {
 	ApplicationproblemJSONDefault *externalRef0.ErrorResponse
 	// Headers200 the parsed response headers for an HTTP 200 response
 	Headers200 *UpdateSshKeysResult200Headers
+	// Headers400 the parsed response headers for an HTTP 400 response
+	Headers400 *UpdateSshKeysResult400Headers
 	// Headers403 the parsed response headers for an HTTP 403 response
 	Headers403 *UpdateSshKeysResult403Headers
+	// Headers413 the parsed response headers for an HTTP 413 response
+	Headers413 *UpdateSshKeysResult413Headers
 	// Headers422 the parsed response headers for an HTTP 422 response
 	Headers422 *UpdateSshKeysResult422Headers
 	// Headers429 the parsed response headers for an HTTP 429 response
@@ -1691,6 +1741,11 @@ func (r UpdateSshKeysResult) GetJSON200() *externalRef0.SshKeys {
 	return r.JSON200
 }
 
+// GetApplicationproblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r UpdateSshKeysResult) GetApplicationproblemJSON400() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON400
+}
+
 // GetApplicationproblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
 func (r UpdateSshKeysResult) GetApplicationproblemJSON401() *externalRef0.ErrorResponse {
 	return r.ApplicationproblemJSON401
@@ -1699,6 +1754,11 @@ func (r UpdateSshKeysResult) GetApplicationproblemJSON401() *externalRef0.ErrorR
 // GetApplicationproblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
 func (r UpdateSshKeysResult) GetApplicationproblemJSON403() *externalRef0.ErrorResponse {
 	return r.ApplicationproblemJSON403
+}
+
+// GetApplicationproblemJSON413 returns the response for an HTTP 413 `application/problem+json` response
+func (r UpdateSshKeysResult) GetApplicationproblemJSON413() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON413
 }
 
 // GetApplicationproblemJSON422 returns the response for an HTTP 422 `application/problem+json` response
@@ -2119,6 +2179,13 @@ func ParseCreateSecretResult(rsp *http.Response) (*CreateSecretResult, error) {
 		}
 		response.ApplicationproblemJSON409 = &dest
 
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 413:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON413 = &dest
+
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
 		var dest externalRef0.ErrorResponse
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
@@ -2194,6 +2261,23 @@ func ParseCreateSecretResult(rsp *http.Response) (*CreateSecretResult, error) {
 			headers.RateLimitPolicy = &value
 		}
 		response.Headers403 = &headers
+	case rsp.StatusCode == 413:
+		var headers CreateSecretResult413Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers413 = &headers
 	case rsp.StatusCode == 422:
 		var headers CreateSecretResult422Headers
 		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
@@ -2614,6 +2698,13 @@ func ParseUpdateSecretResult(rsp *http.Response) (*UpdateSecretResult, error) {
 		}
 		response.ApplicationproblemJSON404 = &dest
 
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 413:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON413 = &dest
+
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
 		var dest externalRef0.ErrorResponse
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
@@ -2706,6 +2797,23 @@ func ParseUpdateSecretResult(rsp *http.Response) (*UpdateSecretResult, error) {
 			headers.RateLimitPolicy = &value
 		}
 		response.Headers404 = &headers
+	case rsp.StatusCode == 413:
+		var headers UpdateSecretResult413Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers413 = &headers
 	case rsp.StatusCode == 422:
 		var headers UpdateSecretResult422Headers
 		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
@@ -2922,6 +3030,13 @@ func ParseUpdateSshKeysResult(rsp *http.Response) (*UpdateSshKeysResult, error) 
 		}
 		response.JSON200 = &dest
 
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON400 = &dest
+
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
 		var dest externalRef0.ErrorResponse
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
@@ -2935,6 +3050,13 @@ func ParseUpdateSshKeysResult(rsp *http.Response) (*UpdateSshKeysResult, error) 
 			return nil, err
 		}
 		response.ApplicationproblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 413:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON413 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
 		var dest externalRef0.ErrorResponse
@@ -2977,6 +3099,23 @@ func ParseUpdateSshKeysResult(rsp *http.Response) (*UpdateSshKeysResult, error) 
 			headers.RateLimitPolicy = &value
 		}
 		response.Headers200 = &headers
+	case rsp.StatusCode == 400:
+		var headers UpdateSshKeysResult400Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers400 = &headers
 	case rsp.StatusCode == 403:
 		var headers UpdateSshKeysResult403Headers
 		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
@@ -2994,6 +3133,23 @@ func ParseUpdateSshKeysResult(rsp *http.Response) (*UpdateSshKeysResult, error) 
 			headers.RateLimitPolicy = &value
 		}
 		response.Headers403 = &headers
+	case rsp.StatusCode == 413:
+		var headers UpdateSshKeysResult413Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers413 = &headers
 	case rsp.StatusCode == 422:
 		var headers UpdateSshKeysResult422Headers
 		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
