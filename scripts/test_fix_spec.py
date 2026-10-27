@@ -64,7 +64,7 @@ class RoundTrip(unittest.TestCase):
     def test_yaml_line_break_characters_survive_a_round_trip(self):
         # NEL, LINE SEPARATOR and PARAGRAPH SEPARATOR are line breaks to a YAML
         # reader: written raw into a plain scalar they come back as a space.
-        patterns = ["[^\\p{Z}\\t-\\r\x85]", "a b", "a b"]
+        patterns = ["[^\\p{Z}\\t-\\r\x85]", "a\u2028b", "a\u2029b"]
         spec = {"openapi": "3.1.0", "paths": {}, "components": {"schemas": {"Name": {"examples": patterns}}}}
         text = dump_spec(spec)
         for reader in (SpecLoader, yaml.SafeLoader):

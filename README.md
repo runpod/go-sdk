@@ -179,10 +179,10 @@ a code generator the SDK does not execute at runtime.
 `github.com/runpod/go-sdk/v2/legacy` is a hand-written client for the GraphQL
 endpoint. It is not wired onto `runpod.Client` and takes no part in v2 API
 work: its only consumer is the Terraform provider's deprecated compatibility
-shims, which carry 1.x fields REST v2 has no route for: the machine resource,
-the account identity, and a handful of pod, template and serverless-endpoint
-fields. It sends raw GraphQL documents through `Client.Query`; it has no REST
-v1 client, because the REST v1 host is retired. It has no registry username
+shims, which carry 1.x fields REST v2 has no route for: the machine resource
+and data sources; the provider holds its other GraphQL queries itself. It sends
+raw GraphQL documents through `Client.Query`; it has no REST v1 client, because
+the REST v1 host retires on 2026-11-15. It has no registry username
 read: no supported source reports one. The GraphQL `ContainerRegistryAuth` type
 carries no username field and there is no `containerRegistryAuths` root field,
 and REST v2 treats the username as write-only.

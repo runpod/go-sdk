@@ -24,8 +24,9 @@ tags.
 - `client.AuditLogs.ListAuditLogs` (`GET /v2/audit-logs`): the account's audit
   trail, cursor-paginated (page size up to 200), with actor, action, time-range
   and text filters.
-- 413 responses: `RequestTooLargeError` on the write operations (request body
-  over 1 MiB) and `ResponseTooLargeError` on the list operations (a page too
+- 413 responses: `RequestTooLargeError` on the write operations (a request
+  body over the route's limit, 100 KiB on pod create) and
+  `ResponseTooLargeError` on the nine paginated list operations (a page too
   large to return; lower `limit`). Each result type gains
   `ApplicationproblemJSON413`.
 

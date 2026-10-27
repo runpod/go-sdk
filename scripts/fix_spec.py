@@ -52,7 +52,7 @@ YAML_11_BOOL = re.compile(
 # Characters YAML treats as line breaks besides \n and \r. PyYAML emits them raw
 # in a plain or block scalar, where a reader folds them into a space; the
 # double-quoted style is the only one that escapes them (\N, \L, \P).
-YAML_EXTRA_BREAKS = re.compile("[\x85  ]")
+YAML_EXTRA_BREAKS = re.compile("[\x85\u2028\u2029]")
 
 # A sequence stays on one line while its rendered flow form fits this width.
 FLOW_WIDTH = 60

@@ -4,8 +4,8 @@
 // work goes through runpod.New and the packages under lib/.
 //
 // It exists because REST v2 has no route yet for what those shims carry: the
-// machine resource and data sources, the account identity, and the handful of
-// pod, template and serverless-endpoint fields the 1.x provider carried over.
+// machine resource and data sources. The provider holds the queries for the
+// other 1.x fields itself and sends them through Query.
 // Nothing belongs here that is not a 1.x behaviour REST v2 has no field for.
 // It sends raw GraphQL documents; the caller owns the query text and the
 // shape it reads back.
