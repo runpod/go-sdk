@@ -19,6 +19,9 @@ import (
 
 // ListEndpointsParams defines parameters for ListEndpoints.
 type ListEndpointsParams struct {
+	// Filters Only return resources matching these filters, as URL-encoded JSON. The filters apply before the page is cut, so send the same value with each `cursor` to keep walking the filtered list.
+	Filters *externalRef0.ResourceFilters `form:"filters,omitempty" json:"filters,omitempty"`
+
 	// Cursor Opaque resume cursor — pass the previous response's `pagination.nextCursor` through verbatim; omit for the first page. A cursor is only valid for the operation and parameters that issued it; a malformed or foreign cursor is rejected with 422.
 	Cursor *externalRef0.PaginationCursor `form:"cursor,omitempty" json:"cursor,omitempty"`
 
@@ -33,6 +36,60 @@ type ListEndpointBuildsParams struct {
 
 	// Limit Page size, 1–100. Defaults to 100 when omitted.
 	Limit *externalRef0.PaginationLimitBuilds `form:"limit,omitempty" json:"limit,omitempty"`
+}
+
+// GetEndpointColdStartMetricsParams defines parameters for GetEndpointColdStartMetrics.
+type GetEndpointColdStartMetricsParams struct {
+	// StartTime Start of the window (RFC 3339), inclusive. Defaults to 24 hours before endTime, rounded down to the start of an interval bucket. Must be within the last 90 days.
+	StartTime *externalRef0.MetricsStartTime `form:"startTime,omitempty" json:"startTime,omitempty"`
+
+	// EndTime End of the window (RFC 3339), exclusive. Defaults to now; a future value is treated as now.
+	EndTime *externalRef0.MetricsEndTime `form:"endTime,omitempty" json:"endTime,omitempty"`
+
+	// Interval Bucket size. Defaults to 1h.
+	Interval *externalRef0.MetricsInterval `form:"interval,omitempty" json:"interval,omitempty"`
+
+	// Cursor Opaque resume cursor — pass the previous response's `pagination.nextCursor` through verbatim; omit for the first page. A cursor is only valid for the operation and parameters that issued it; a malformed or foreign cursor is rejected with 422.
+	Cursor *externalRef0.PaginationCursor `form:"cursor,omitempty" json:"cursor,omitempty"`
+
+	// Limit Page size, 1–1000. Defaults to 1000 when omitted.
+	Limit *externalRef0.PaginationLimit `form:"limit,omitempty" json:"limit,omitempty"`
+}
+
+// GetEndpointRequestMetricsParams defines parameters for GetEndpointRequestMetrics.
+type GetEndpointRequestMetricsParams struct {
+	// StartTime Start of the window (RFC 3339), inclusive. Defaults to 24 hours before endTime, rounded down to the start of an interval bucket. Must be within the last 90 days.
+	StartTime *externalRef0.MetricsStartTime `form:"startTime,omitempty" json:"startTime,omitempty"`
+
+	// EndTime End of the window (RFC 3339), exclusive. Defaults to now; a future value is treated as now.
+	EndTime *externalRef0.MetricsEndTime `form:"endTime,omitempty" json:"endTime,omitempty"`
+
+	// Interval Bucket size. Defaults to 1h.
+	Interval *externalRef0.MetricsInterval `form:"interval,omitempty" json:"interval,omitempty"`
+
+	// Cursor Opaque resume cursor — pass the previous response's `pagination.nextCursor` through verbatim; omit for the first page. A cursor is only valid for the operation and parameters that issued it; a malformed or foreign cursor is rejected with 422.
+	Cursor *externalRef0.PaginationCursor `form:"cursor,omitempty" json:"cursor,omitempty"`
+
+	// Limit Page size, 1–1000. Defaults to 1000 when omitted.
+	Limit *externalRef0.PaginationLimit `form:"limit,omitempty" json:"limit,omitempty"`
+}
+
+// GetEndpointWorkerMetricsParams defines parameters for GetEndpointWorkerMetrics.
+type GetEndpointWorkerMetricsParams struct {
+	// StartTime Start of the window (RFC 3339), inclusive. Defaults to 24 hours before endTime, rounded down to the start of an interval bucket. Must be within the last 90 days.
+	StartTime *externalRef0.MetricsStartTime `form:"startTime,omitempty" json:"startTime,omitempty"`
+
+	// EndTime End of the window (RFC 3339), exclusive. Defaults to now; a future value is treated as now.
+	EndTime *externalRef0.MetricsEndTime `form:"endTime,omitempty" json:"endTime,omitempty"`
+
+	// Interval Bucket size. Defaults to 1h.
+	Interval *externalRef0.MetricsInterval `form:"interval,omitempty" json:"interval,omitempty"`
+
+	// Cursor Opaque resume cursor — pass the previous response's `pagination.nextCursor` through verbatim; omit for the first page. A cursor is only valid for the operation and parameters that issued it; a malformed or foreign cursor is rejected with 422.
+	Cursor *externalRef0.PaginationCursor `form:"cursor,omitempty" json:"cursor,omitempty"`
+
+	// Limit Page size, 1–1000. Defaults to 1000 when omitted.
+	Limit *externalRef0.PaginationLimit `form:"limit,omitempty" json:"limit,omitempty"`
 }
 
 // ListEndpointReleasesParams defines parameters for ListEndpointReleases.
@@ -162,6 +219,11 @@ type ClientInterface interface {
 	// body, from a serverless template referenced by `templateId` (body
 	// fields override the template's), or both; `image` is required unless
 	// `templateId` is set. See `CreateEndpointRequest` for the full body.
+	// An image in a private Amazon ECR registry with no `registry`
+	// credential must be covered by one of your ECR delegations (see
+	// `registry`); otherwise the create returns 400 here rather than
+	// workers failing their image pull. A caller whose organization role
+	// cannot use ECR delegations gets 403.
 	//
 	// The CUDA constraints live on `gpu` — `gpu.allowedCudaVersions` and
 	// `gpu.minCudaVersion` — so a CPU create cannot express them and the
@@ -200,8 +262,8 @@ type ClientInterface interface {
 	//
 	// If your workload needs a specific card, pick the pool that holds it and
 	// exclude the rest of that pool with `gpu.excludedTypes`. Keep at least
-	// one type in the selection — upstream rejects a selection that leaves
-	// none.
+	// one type in the selection — a selection that leaves none is
+	// rejected.
 	//
 	// Takes any type of body and a specified content type.
 	//
@@ -215,6 +277,11 @@ type ClientInterface interface {
 	// body, from a serverless template referenced by `templateId` (body
 	// fields override the template's), or both; `image` is required unless
 	// `templateId` is set. See `CreateEndpointRequest` for the full body.
+	// An image in a private Amazon ECR registry with no `registry`
+	// credential must be covered by one of your ECR delegations (see
+	// `registry`); otherwise the create returns 400 here rather than
+	// workers failing their image pull. A caller whose organization role
+	// cannot use ECR delegations gets 403.
 	//
 	// The CUDA constraints live on `gpu` — `gpu.allowedCudaVersions` and
 	// `gpu.minCudaVersion` — so a CPU create cannot express them and the
@@ -253,8 +320,8 @@ type ClientInterface interface {
 	//
 	// If your workload needs a specific card, pick the pool that holds it and
 	// exclude the rest of that pool with `gpu.excludedTypes`. Keep at least
-	// one type in the selection — upstream rejects a selection that leaves
-	// none.
+	// one type in the selection — a selection that leaves none is
+	// rejected.
 	//
 	// Takes a body of the `application/json` content type.
 	//
@@ -287,7 +354,12 @@ type ClientInterface interface {
 	// `scaling` (`type`/`value`/`idleTimeout`), `dataCenterIds`,
 	// `networkVolumes`, `timeout`, `flashboot`, and the
 	// container settings (`image`, `args`, `disk`, `ports`, `env`,
-	// `registry`).
+	// `registry`). A patch that leaves the endpoint pulling a private
+	// Amazon ECR image with no `registry` credential is checked against
+	// your ECR delegations as on create (400 when none covers the
+	// repository, 403 when the caller's organization role cannot use
+	// delegations); a patch that changes neither `image` nor `registry`
+	// is not.
 	//
 	// Omitted compute preserves the current selection. `cpu` completely
 	// replaces a CPU endpoint's selection; compute family is immutable.
@@ -316,7 +388,12 @@ type ClientInterface interface {
 	// `scaling` (`type`/`value`/`idleTimeout`), `dataCenterIds`,
 	// `networkVolumes`, `timeout`, `flashboot`, and the
 	// container settings (`image`, `args`, `disk`, `ports`, `env`,
-	// `registry`).
+	// `registry`). A patch that leaves the endpoint pulling a private
+	// Amazon ECR image with no `registry` credential is checked against
+	// your ECR delegations as on create (400 when none covers the
+	// repository, 403 when the caller's organization role cannot use
+	// delegations); a patch that changes neither `image` nor `registry`
+	// is not.
 	//
 	// Omitted compute preserves the current selection. `cpu` completely
 	// replaces a CPU endpoint's selection; compute family is immutable.
@@ -354,6 +431,94 @@ type ClientInterface interface {
 	//
 	// Corresponds with GET /v2/serverless/{id}/builds/{buildId} (the `GetEndpointBuild` operationId).
 	GetEndpointBuild(ctx context.Context, id string, buildId string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetEndpointColdStartMetrics Get serverless endpoint cold start metrics
+	//
+	// Returns the cold start series shown on the endpoint's Metrics tab in the console.
+	//
+	// **Window.** `startTime` is inclusive and `endTime` is exclusive. Both are
+	// optional: `endTime` defaults to now and `startTime` to 24 hours before
+	// `endTime`, rounded down to the start of an `interval` bucket. An
+	// `endTime` in the future is treated as now. Metrics are kept for 90 days,
+	// so `startTime` must be within the last 90 days.
+	//
+	// **Interval.** Each record covers one `interval`-sized bucket, aligned to
+	// UTC.
+	//
+	// **Paging.** Records are oldest first, at most `limit` (default 1000) per
+	// page. Follow `pagination.nextCursor` while `pagination.hasNextPage` is
+	// true. The cursor keeps the first page's window, so `startTime`,
+	// `endTime`, and `interval` can be left out on later pages; if sent, they
+	// must match the first page or the cursor is rejected with 422.
+	//
+	// **Sparse series.** Buckets with no activity are omitted, not zero-filled,
+	// so `records` can be shorter than the number of buckets in the window, or
+	// empty.
+	//
+	// **Units.** `durationMs` is how long each cold start took, in milliseconds.
+	//
+	// Corresponds with GET /v2/serverless/{id}/metrics/cold-starts (the `GetEndpointColdStartMetrics` operationId).
+	GetEndpointColdStartMetrics(ctx context.Context, id string, params *GetEndpointColdStartMetricsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetEndpointRequestMetrics Get serverless endpoint request metrics
+	//
+	// Returns the request series shown on the endpoint's Metrics tab in the console.
+	//
+	// **Window.** `startTime` is inclusive and `endTime` is exclusive. Both are
+	// optional: `endTime` defaults to now and `startTime` to 24 hours before
+	// `endTime`, rounded down to the start of an `interval` bucket. An
+	// `endTime` in the future is treated as now. Metrics are kept for 90 days,
+	// so `startTime` must be within the last 90 days.
+	//
+	// **Interval.** Each record covers one `interval`-sized bucket, aligned to
+	// UTC.
+	//
+	// **Paging.** Records are oldest first, at most `limit` (default 1000) per
+	// page. Follow `pagination.nextCursor` while `pagination.hasNextPage` is
+	// true. The cursor keeps the first page's window, so `startTime`,
+	// `endTime`, and `interval` can be left out on later pages; if sent, they
+	// must match the first page or the cursor is rejected with 422.
+	//
+	// **Sparse series.** Buckets with no activity are omitted, not zero-filled,
+	// so `records` can be shorter than the number of buckets in the window, or
+	// empty.
+	//
+	// **Units.** Durations are milliseconds. `executionTimeMs` is the time a
+	// worker spent running a request; `delayTimeMs` is the time a request
+	// waited in the queue before a worker picked it up.
+	//
+	// Corresponds with GET /v2/serverless/{id}/metrics/requests (the `GetEndpointRequestMetrics` operationId).
+	GetEndpointRequestMetrics(ctx context.Context, id string, params *GetEndpointRequestMetricsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetEndpointWorkerMetrics Get serverless endpoint worker metrics
+	//
+	// Returns the worker state series shown on the endpoint's Metrics tab in the console.
+	// For the current worker list, use `GET /v2/serverless/{id}/workers`.
+	//
+	// **Window.** `startTime` is inclusive and `endTime` is exclusive. Both are
+	// optional: `endTime` defaults to now and `startTime` to 24 hours before
+	// `endTime`, rounded down to the start of an `interval` bucket. An
+	// `endTime` in the future is treated as now. Metrics are kept for 90 days,
+	// so `startTime` must be within the last 90 days.
+	//
+	// **Interval.** Each record covers one `interval`-sized bucket, aligned to
+	// UTC.
+	//
+	// **Paging.** Records are oldest first, at most `limit` (default 1000) per
+	// page. Follow `pagination.nextCursor` while `pagination.hasNextPage` is
+	// true. The cursor keeps the first page's window, so `startTime`,
+	// `endTime`, and `interval` can be left out on later pages; if sent, they
+	// must match the first page or the cursor is rejected with 422.
+	//
+	// **Sparse series.** Buckets with no activity are omitted, not zero-filled,
+	// so `records` can be shorter than the number of buckets in the window, or
+	// empty.
+	//
+	// **Snapshots.** Each record holds the last worker-count snapshot in its
+	// bucket, as point-in-time counts.
+	//
+	// Corresponds with GET /v2/serverless/{id}/metrics/workers (the `GetEndpointWorkerMetrics` operationId).
+	GetEndpointWorkerMetrics(ctx context.Context, id string, params *GetEndpointWorkerMetricsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// ListEndpointReleases List serverless endpoint releases
 	//
@@ -430,6 +595,11 @@ func (c *Client) ListEndpoints(ctx context.Context, params *ListEndpointsParams,
 // body, from a serverless template referenced by `templateId` (body
 // fields override the template's), or both; `image` is required unless
 // `templateId` is set. See `CreateEndpointRequest` for the full body.
+// An image in a private Amazon ECR registry with no `registry`
+// credential must be covered by one of your ECR delegations (see
+// `registry`); otherwise the create returns 400 here rather than
+// workers failing their image pull. A caller whose organization role
+// cannot use ECR delegations gets 403.
 //
 // The CUDA constraints live on `gpu` — `gpu.allowedCudaVersions` and
 // `gpu.minCudaVersion` — so a CPU create cannot express them and the
@@ -468,8 +638,8 @@ func (c *Client) ListEndpoints(ctx context.Context, params *ListEndpointsParams,
 //
 // If your workload needs a specific card, pick the pool that holds it and
 // exclude the rest of that pool with `gpu.excludedTypes`. Keep at least
-// one type in the selection — upstream rejects a selection that leaves
-// none.
+// one type in the selection — a selection that leaves none is
+// rejected.
 //
 // Takes any type of body and a specified content type.
 //
@@ -493,6 +663,11 @@ func (c *Client) CreateEndpointWithBody(ctx context.Context, contentType string,
 // body, from a serverless template referenced by `templateId` (body
 // fields override the template's), or both; `image` is required unless
 // `templateId` is set. See `CreateEndpointRequest` for the full body.
+// An image in a private Amazon ECR registry with no `registry`
+// credential must be covered by one of your ECR delegations (see
+// `registry`); otherwise the create returns 400 here rather than
+// workers failing their image pull. A caller whose organization role
+// cannot use ECR delegations gets 403.
 //
 // The CUDA constraints live on `gpu` — `gpu.allowedCudaVersions` and
 // `gpu.minCudaVersion` — so a CPU create cannot express them and the
@@ -531,8 +706,8 @@ func (c *Client) CreateEndpointWithBody(ctx context.Context, contentType string,
 //
 // If your workload needs a specific card, pick the pool that holds it and
 // exclude the rest of that pool with `gpu.excludedTypes`. Keep at least
-// one type in the selection — upstream rejects a selection that leaves
-// none.
+// one type in the selection — a selection that leaves none is
+// rejected.
 //
 // Takes a body of the `application/json` content type.
 //
@@ -595,7 +770,12 @@ func (c *Client) GetEndpoint(ctx context.Context, id string, reqEditors ...Reque
 // `scaling` (`type`/`value`/`idleTimeout`), `dataCenterIds`,
 // `networkVolumes`, `timeout`, `flashboot`, and the
 // container settings (`image`, `args`, `disk`, `ports`, `env`,
-// `registry`).
+// `registry`). A patch that leaves the endpoint pulling a private
+// Amazon ECR image with no `registry` credential is checked against
+// your ECR delegations as on create (400 when none covers the
+// repository, 403 when the caller's organization role cannot use
+// delegations); a patch that changes neither `image` nor `registry`
+// is not.
 //
 // Omitted compute preserves the current selection. `cpu` completely
 // replaces a CPU endpoint's selection; compute family is immutable.
@@ -634,7 +814,12 @@ func (c *Client) UpdateEndpointWithBody(ctx context.Context, id string, contentT
 // `scaling` (`type`/`value`/`idleTimeout`), `dataCenterIds`,
 // `networkVolumes`, `timeout`, `flashboot`, and the
 // container settings (`image`, `args`, `disk`, `ports`, `env`,
-// `registry`).
+// `registry`). A patch that leaves the endpoint pulling a private
+// Amazon ECR image with no `registry` credential is checked against
+// your ECR delegations as on create (400 when none covers the
+// repository, 403 when the caller's organization role cannot use
+// delegations); a patch that changes neither `image` nor `registry`
+// is not.
 //
 // Omitted compute preserves the current selection. `cpu` completely
 // replaces a CPU endpoint's selection; compute family is immutable.
@@ -693,6 +878,124 @@ func (c *Client) ListEndpointBuilds(ctx context.Context, id string, params *List
 // Corresponds with GET /v2/serverless/{id}/builds/{buildId} (the `GetEndpointBuild` operationId).
 func (c *Client) GetEndpointBuild(ctx context.Context, id string, buildId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetEndpointBuildRequest(c.Server, id, buildId)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// GetEndpointColdStartMetrics Get serverless endpoint cold start metrics
+//
+// Returns the cold start series shown on the endpoint's Metrics tab in the console.
+//
+// **Window.** `startTime` is inclusive and `endTime` is exclusive. Both are
+// optional: `endTime` defaults to now and `startTime` to 24 hours before
+// `endTime`, rounded down to the start of an `interval` bucket. An
+// `endTime` in the future is treated as now. Metrics are kept for 90 days,
+// so `startTime` must be within the last 90 days.
+//
+// **Interval.** Each record covers one `interval`-sized bucket, aligned to
+// UTC.
+//
+// **Paging.** Records are oldest first, at most `limit` (default 1000) per
+// page. Follow `pagination.nextCursor` while `pagination.hasNextPage` is
+// true. The cursor keeps the first page's window, so `startTime`,
+// `endTime`, and `interval` can be left out on later pages; if sent, they
+// must match the first page or the cursor is rejected with 422.
+//
+// **Sparse series.** Buckets with no activity are omitted, not zero-filled,
+// so `records` can be shorter than the number of buckets in the window, or
+// empty.
+//
+// **Units.** `durationMs` is how long each cold start took, in milliseconds.
+//
+// Corresponds with GET /v2/serverless/{id}/metrics/cold-starts (the `GetEndpointColdStartMetrics` operationId).
+func (c *Client) GetEndpointColdStartMetrics(ctx context.Context, id string, params *GetEndpointColdStartMetricsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetEndpointColdStartMetricsRequest(c.Server, id, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// GetEndpointRequestMetrics Get serverless endpoint request metrics
+//
+// Returns the request series shown on the endpoint's Metrics tab in the console.
+//
+// **Window.** `startTime` is inclusive and `endTime` is exclusive. Both are
+// optional: `endTime` defaults to now and `startTime` to 24 hours before
+// `endTime`, rounded down to the start of an `interval` bucket. An
+// `endTime` in the future is treated as now. Metrics are kept for 90 days,
+// so `startTime` must be within the last 90 days.
+//
+// **Interval.** Each record covers one `interval`-sized bucket, aligned to
+// UTC.
+//
+// **Paging.** Records are oldest first, at most `limit` (default 1000) per
+// page. Follow `pagination.nextCursor` while `pagination.hasNextPage` is
+// true. The cursor keeps the first page's window, so `startTime`,
+// `endTime`, and `interval` can be left out on later pages; if sent, they
+// must match the first page or the cursor is rejected with 422.
+//
+// **Sparse series.** Buckets with no activity are omitted, not zero-filled,
+// so `records` can be shorter than the number of buckets in the window, or
+// empty.
+//
+// **Units.** Durations are milliseconds. `executionTimeMs` is the time a
+// worker spent running a request; `delayTimeMs` is the time a request
+// waited in the queue before a worker picked it up.
+//
+// Corresponds with GET /v2/serverless/{id}/metrics/requests (the `GetEndpointRequestMetrics` operationId).
+func (c *Client) GetEndpointRequestMetrics(ctx context.Context, id string, params *GetEndpointRequestMetricsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetEndpointRequestMetricsRequest(c.Server, id, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// GetEndpointWorkerMetrics Get serverless endpoint worker metrics
+//
+// Returns the worker state series shown on the endpoint's Metrics tab in the console.
+// For the current worker list, use `GET /v2/serverless/{id}/workers`.
+//
+// **Window.** `startTime` is inclusive and `endTime` is exclusive. Both are
+// optional: `endTime` defaults to now and `startTime` to 24 hours before
+// `endTime`, rounded down to the start of an `interval` bucket. An
+// `endTime` in the future is treated as now. Metrics are kept for 90 days,
+// so `startTime` must be within the last 90 days.
+//
+// **Interval.** Each record covers one `interval`-sized bucket, aligned to
+// UTC.
+//
+// **Paging.** Records are oldest first, at most `limit` (default 1000) per
+// page. Follow `pagination.nextCursor` while `pagination.hasNextPage` is
+// true. The cursor keeps the first page's window, so `startTime`,
+// `endTime`, and `interval` can be left out on later pages; if sent, they
+// must match the first page or the cursor is rejected with 422.
+//
+// **Sparse series.** Buckets with no activity are omitted, not zero-filled,
+// so `records` can be shorter than the number of buckets in the window, or
+// empty.
+//
+// **Snapshots.** Each record holds the last worker-count snapshot in its
+// bucket, as point-in-time counts.
+//
+// Corresponds with GET /v2/serverless/{id}/metrics/workers (the `GetEndpointWorkerMetrics` operationId).
+func (c *Client) GetEndpointWorkerMetrics(ctx context.Context, id string, params *GetEndpointWorkerMetricsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetEndpointWorkerMetricsRequest(c.Server, id, params)
 	if err != nil {
 		return nil, err
 	}
@@ -808,6 +1111,16 @@ func NewListEndpointsRequest(server string, params *ListEndpointsParams) (*http.
 		// styled parameters, preserving literal commas as delimiters
 		// per the OpenAPI spec (e.g. "color=blue,black,brown").
 		var rawQueryFragments []string
+
+		if params.Filters != nil {
+
+			if queryParamBuf, err := json.Marshal(*params.Filters); err != nil {
+				return nil, err
+			} else {
+				queryValues.Add("filters", string(queryParamBuf))
+			}
+
+		}
 
 		if params.Cursor != nil {
 
@@ -1116,6 +1429,333 @@ func NewGetEndpointBuildRequest(server string, id string, buildId string) (*http
 	return req, nil
 }
 
+// NewGetEndpointColdStartMetricsRequest constructs an http.Request for the GetEndpointColdStartMetrics method
+func NewGetEndpointColdStartMetricsRequest(server string, id string, params *GetEndpointColdStartMetricsParams) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "id", id, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v2/serverless/%s/metrics/cold-starts", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		// queryValues collects non-styled parameters (passthrough, JSON)
+		// that are safe to round-trip through url.Values.Encode().
+		queryValues := queryURL.Query()
+		// rawQueryFragments collects pre-encoded query fragments from
+		// styled parameters, preserving literal commas as delimiters
+		// per the OpenAPI spec (e.g. "color=blue,black,brown").
+		var rawQueryFragments []string
+
+		if params.StartTime != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "startTime", *params.StartTime, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: "date-time"}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.EndTime != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "endTime", *params.EndTime, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: "date-time"}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.Interval != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "interval", *params.Interval, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.Cursor != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "cursor", *params.Cursor, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.Limit != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "limit", *params.Limit, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if encoded := queryValues.Encode(); encoded != "" {
+			rawQueryFragments = append(rawQueryFragments, encoded)
+		}
+		queryURL.RawQuery = strings.Join(rawQueryFragments, "&")
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewGetEndpointRequestMetricsRequest constructs an http.Request for the GetEndpointRequestMetrics method
+func NewGetEndpointRequestMetricsRequest(server string, id string, params *GetEndpointRequestMetricsParams) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "id", id, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v2/serverless/%s/metrics/requests", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		// queryValues collects non-styled parameters (passthrough, JSON)
+		// that are safe to round-trip through url.Values.Encode().
+		queryValues := queryURL.Query()
+		// rawQueryFragments collects pre-encoded query fragments from
+		// styled parameters, preserving literal commas as delimiters
+		// per the OpenAPI spec (e.g. "color=blue,black,brown").
+		var rawQueryFragments []string
+
+		if params.StartTime != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "startTime", *params.StartTime, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: "date-time"}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.EndTime != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "endTime", *params.EndTime, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: "date-time"}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.Interval != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "interval", *params.Interval, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.Cursor != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "cursor", *params.Cursor, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.Limit != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "limit", *params.Limit, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if encoded := queryValues.Encode(); encoded != "" {
+			rawQueryFragments = append(rawQueryFragments, encoded)
+		}
+		queryURL.RawQuery = strings.Join(rawQueryFragments, "&")
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewGetEndpointWorkerMetricsRequest constructs an http.Request for the GetEndpointWorkerMetrics method
+func NewGetEndpointWorkerMetricsRequest(server string, id string, params *GetEndpointWorkerMetricsParams) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "id", id, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v2/serverless/%s/metrics/workers", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		// queryValues collects non-styled parameters (passthrough, JSON)
+		// that are safe to round-trip through url.Values.Encode().
+		queryValues := queryURL.Query()
+		// rawQueryFragments collects pre-encoded query fragments from
+		// styled parameters, preserving literal commas as delimiters
+		// per the OpenAPI spec (e.g. "color=blue,black,brown").
+		var rawQueryFragments []string
+
+		if params.StartTime != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "startTime", *params.StartTime, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: "date-time"}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.EndTime != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "endTime", *params.EndTime, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: "date-time"}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.Interval != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "interval", *params.Interval, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.Cursor != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "cursor", *params.Cursor, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.Limit != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "limit", *params.Limit, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if encoded := queryValues.Encode(); encoded != "" {
+			rawQueryFragments = append(rawQueryFragments, encoded)
+		}
+		queryURL.RawQuery = strings.Join(rawQueryFragments, "&")
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
 // NewListEndpointReleasesRequest constructs an http.Request for the ListEndpointReleases method
 func NewListEndpointReleasesRequest(server string, id string, params *ListEndpointReleasesParams) (*http.Request, error) {
 	var err error
@@ -1392,6 +2032,11 @@ type ClientWithResponsesInterface interface {
 	// body, from a serverless template referenced by `templateId` (body
 	// fields override the template's), or both; `image` is required unless
 	// `templateId` is set. See `CreateEndpointRequest` for the full body.
+	// An image in a private Amazon ECR registry with no `registry`
+	// credential must be covered by one of your ECR delegations (see
+	// `registry`); otherwise the create returns 400 here rather than
+	// workers failing their image pull. A caller whose organization role
+	// cannot use ECR delegations gets 403.
 	//
 	// The CUDA constraints live on `gpu` — `gpu.allowedCudaVersions` and
 	// `gpu.minCudaVersion` — so a CPU create cannot express them and the
@@ -1430,8 +2075,8 @@ type ClientWithResponsesInterface interface {
 	//
 	// If your workload needs a specific card, pick the pool that holds it and
 	// exclude the rest of that pool with `gpu.excludedTypes`. Keep at least
-	// one type in the selection — upstream rejects a selection that leaves
-	// none.
+	// one type in the selection — a selection that leaves none is
+	// rejected.
 	//
 	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
 	//
@@ -1445,6 +2090,11 @@ type ClientWithResponsesInterface interface {
 	// body, from a serverless template referenced by `templateId` (body
 	// fields override the template's), or both; `image` is required unless
 	// `templateId` is set. See `CreateEndpointRequest` for the full body.
+	// An image in a private Amazon ECR registry with no `registry`
+	// credential must be covered by one of your ECR delegations (see
+	// `registry`); otherwise the create returns 400 here rather than
+	// workers failing their image pull. A caller whose organization role
+	// cannot use ECR delegations gets 403.
 	//
 	// The CUDA constraints live on `gpu` — `gpu.allowedCudaVersions` and
 	// `gpu.minCudaVersion` — so a CPU create cannot express them and the
@@ -1483,8 +2133,8 @@ type ClientWithResponsesInterface interface {
 	//
 	// If your workload needs a specific card, pick the pool that holds it and
 	// exclude the rest of that pool with `gpu.excludedTypes`. Keep at least
-	// one type in the selection — upstream rejects a selection that leaves
-	// none.
+	// one type in the selection — a selection that leaves none is
+	// rejected.
 	//
 	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
 	//
@@ -1521,7 +2171,12 @@ type ClientWithResponsesInterface interface {
 	// `scaling` (`type`/`value`/`idleTimeout`), `dataCenterIds`,
 	// `networkVolumes`, `timeout`, `flashboot`, and the
 	// container settings (`image`, `args`, `disk`, `ports`, `env`,
-	// `registry`).
+	// `registry`). A patch that leaves the endpoint pulling a private
+	// Amazon ECR image with no `registry` credential is checked against
+	// your ECR delegations as on create (400 when none covers the
+	// repository, 403 when the caller's organization role cannot use
+	// delegations); a patch that changes neither `image` nor `registry`
+	// is not.
 	//
 	// Omitted compute preserves the current selection. `cpu` completely
 	// replaces a CPU endpoint's selection; compute family is immutable.
@@ -1550,7 +2205,12 @@ type ClientWithResponsesInterface interface {
 	// `scaling` (`type`/`value`/`idleTimeout`), `dataCenterIds`,
 	// `networkVolumes`, `timeout`, `flashboot`, and the
 	// container settings (`image`, `args`, `disk`, `ports`, `env`,
-	// `registry`).
+	// `registry`). A patch that leaves the endpoint pulling a private
+	// Amazon ECR image with no `registry` credential is checked against
+	// your ECR delegations as on create (400 when none covers the
+	// repository, 403 when the caller's organization role cannot use
+	// delegations); a patch that changes neither `image` nor `registry`
+	// is not.
 	//
 	// Omitted compute preserves the current selection. `cpu` completely
 	// replaces a CPU endpoint's selection; compute family is immutable.
@@ -1592,6 +2252,100 @@ type ClientWithResponsesInterface interface {
 	//
 	// Corresponds with GET /v2/serverless/{id}/builds/{buildId} (the `GetEndpointBuild` operationId).
 	GetEndpointBuildWithResponse(ctx context.Context, id string, buildId string, reqEditors ...RequestEditorFn) (*GetEndpointBuildResult, error)
+
+	// GetEndpointColdStartMetricsWithResponse Get serverless endpoint cold start metrics
+	//
+	// Returns the cold start series shown on the endpoint's Metrics tab in the console.
+	//
+	// **Window.** `startTime` is inclusive and `endTime` is exclusive. Both are
+	// optional: `endTime` defaults to now and `startTime` to 24 hours before
+	// `endTime`, rounded down to the start of an `interval` bucket. An
+	// `endTime` in the future is treated as now. Metrics are kept for 90 days,
+	// so `startTime` must be within the last 90 days.
+	//
+	// **Interval.** Each record covers one `interval`-sized bucket, aligned to
+	// UTC.
+	//
+	// **Paging.** Records are oldest first, at most `limit` (default 1000) per
+	// page. Follow `pagination.nextCursor` while `pagination.hasNextPage` is
+	// true. The cursor keeps the first page's window, so `startTime`,
+	// `endTime`, and `interval` can be left out on later pages; if sent, they
+	// must match the first page or the cursor is rejected with 422.
+	//
+	// **Sparse series.** Buckets with no activity are omitted, not zero-filled,
+	// so `records` can be shorter than the number of buckets in the window, or
+	// empty.
+	//
+	// **Units.** `durationMs` is how long each cold start took, in milliseconds.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /v2/serverless/{id}/metrics/cold-starts (the `GetEndpointColdStartMetrics` operationId).
+	GetEndpointColdStartMetricsWithResponse(ctx context.Context, id string, params *GetEndpointColdStartMetricsParams, reqEditors ...RequestEditorFn) (*GetEndpointColdStartMetricsResult, error)
+
+	// GetEndpointRequestMetricsWithResponse Get serverless endpoint request metrics
+	//
+	// Returns the request series shown on the endpoint's Metrics tab in the console.
+	//
+	// **Window.** `startTime` is inclusive and `endTime` is exclusive. Both are
+	// optional: `endTime` defaults to now and `startTime` to 24 hours before
+	// `endTime`, rounded down to the start of an `interval` bucket. An
+	// `endTime` in the future is treated as now. Metrics are kept for 90 days,
+	// so `startTime` must be within the last 90 days.
+	//
+	// **Interval.** Each record covers one `interval`-sized bucket, aligned to
+	// UTC.
+	//
+	// **Paging.** Records are oldest first, at most `limit` (default 1000) per
+	// page. Follow `pagination.nextCursor` while `pagination.hasNextPage` is
+	// true. The cursor keeps the first page's window, so `startTime`,
+	// `endTime`, and `interval` can be left out on later pages; if sent, they
+	// must match the first page or the cursor is rejected with 422.
+	//
+	// **Sparse series.** Buckets with no activity are omitted, not zero-filled,
+	// so `records` can be shorter than the number of buckets in the window, or
+	// empty.
+	//
+	// **Units.** Durations are milliseconds. `executionTimeMs` is the time a
+	// worker spent running a request; `delayTimeMs` is the time a request
+	// waited in the queue before a worker picked it up.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /v2/serverless/{id}/metrics/requests (the `GetEndpointRequestMetrics` operationId).
+	GetEndpointRequestMetricsWithResponse(ctx context.Context, id string, params *GetEndpointRequestMetricsParams, reqEditors ...RequestEditorFn) (*GetEndpointRequestMetricsResult, error)
+
+	// GetEndpointWorkerMetricsWithResponse Get serverless endpoint worker metrics
+	//
+	// Returns the worker state series shown on the endpoint's Metrics tab in the console.
+	// For the current worker list, use `GET /v2/serverless/{id}/workers`.
+	//
+	// **Window.** `startTime` is inclusive and `endTime` is exclusive. Both are
+	// optional: `endTime` defaults to now and `startTime` to 24 hours before
+	// `endTime`, rounded down to the start of an `interval` bucket. An
+	// `endTime` in the future is treated as now. Metrics are kept for 90 days,
+	// so `startTime` must be within the last 90 days.
+	//
+	// **Interval.** Each record covers one `interval`-sized bucket, aligned to
+	// UTC.
+	//
+	// **Paging.** Records are oldest first, at most `limit` (default 1000) per
+	// page. Follow `pagination.nextCursor` while `pagination.hasNextPage` is
+	// true. The cursor keeps the first page's window, so `startTime`,
+	// `endTime`, and `interval` can be left out on later pages; if sent, they
+	// must match the first page or the cursor is rejected with 422.
+	//
+	// **Sparse series.** Buckets with no activity are omitted, not zero-filled,
+	// so `records` can be shorter than the number of buckets in the window, or
+	// empty.
+	//
+	// **Snapshots.** Each record holds the last worker-count snapshot in its
+	// bucket, as point-in-time counts.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /v2/serverless/{id}/metrics/workers (the `GetEndpointWorkerMetrics` operationId).
+	GetEndpointWorkerMetricsWithResponse(ctx context.Context, id string, params *GetEndpointWorkerMetricsParams, reqEditors ...RequestEditorFn) (*GetEndpointWorkerMetricsResult, error)
 
 	// ListEndpointReleasesWithResponse List serverless endpoint releases
 	//
@@ -1666,6 +2420,12 @@ type ListEndpointsResult413Headers struct {
 	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
 }
 
+// ListEndpointsResult422Headers the declared response headers of an HTTP 422 response for ListEndpoints
+type ListEndpointsResult422Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
 // ListEndpointsResult429Headers the declared response headers of an HTTP 429 response for ListEndpoints
 type ListEndpointsResult429Headers struct {
 	RateLimit       *externalRef0.RateLimitHeader
@@ -1690,6 +2450,8 @@ type ListEndpointsResult struct {
 	ApplicationproblemJSON403 *externalRef0.ErrorResponse
 	// ApplicationproblemJSON413 the response for an HTTP 413 `application/problem+json` response
 	ApplicationproblemJSON413 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON422 the response for an HTTP 422 `application/problem+json` response
+	ApplicationproblemJSON422 *externalRef0.ErrorResponse
 	// ApplicationproblemJSON429 the response for an HTTP 429 `application/problem+json` response
 	ApplicationproblemJSON429 *externalRef0.ErrorResponse
 	// ApplicationproblemJSONDefault the response for an HTTP default `application/problem+json` response
@@ -1700,6 +2462,8 @@ type ListEndpointsResult struct {
 	Headers403 *ListEndpointsResult403Headers
 	// Headers413 the parsed response headers for an HTTP 413 response
 	Headers413 *ListEndpointsResult413Headers
+	// Headers422 the parsed response headers for an HTTP 422 response
+	Headers422 *ListEndpointsResult422Headers
 	// Headers429 the parsed response headers for an HTTP 429 response
 	Headers429 *ListEndpointsResult429Headers
 	// HeadersDefault the parsed response headers for an HTTP default response
@@ -1724,6 +2488,11 @@ func (r ListEndpointsResult) GetApplicationproblemJSON403() *externalRef0.ErrorR
 // GetApplicationproblemJSON413 returns the response for an HTTP 413 `application/problem+json` response
 func (r ListEndpointsResult) GetApplicationproblemJSON413() *externalRef0.ErrorResponse {
 	return r.ApplicationproblemJSON413
+}
+
+// GetApplicationproblemJSON422 returns the response for an HTTP 422 `application/problem+json` response
+func (r ListEndpointsResult) GetApplicationproblemJSON422() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON422
 }
 
 // GetApplicationproblemJSON429 returns the response for an HTTP 429 `application/problem+json` response
@@ -2565,6 +3334,492 @@ func (r GetEndpointBuildResult) ContentType() string {
 	return ""
 }
 
+// GetEndpointColdStartMetricsResult200Headers the declared response headers of an HTTP 200 response for GetEndpointColdStartMetrics
+type GetEndpointColdStartMetricsResult200Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+// GetEndpointColdStartMetricsResult400Headers the declared response headers of an HTTP 400 response for GetEndpointColdStartMetrics
+type GetEndpointColdStartMetricsResult400Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+// GetEndpointColdStartMetricsResult403Headers the declared response headers of an HTTP 403 response for GetEndpointColdStartMetrics
+type GetEndpointColdStartMetricsResult403Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+// GetEndpointColdStartMetricsResult404Headers the declared response headers of an HTTP 404 response for GetEndpointColdStartMetrics
+type GetEndpointColdStartMetricsResult404Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+// GetEndpointColdStartMetricsResult413Headers the declared response headers of an HTTP 413 response for GetEndpointColdStartMetrics
+type GetEndpointColdStartMetricsResult413Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+// GetEndpointColdStartMetricsResult422Headers the declared response headers of an HTTP 422 response for GetEndpointColdStartMetrics
+type GetEndpointColdStartMetricsResult422Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+// GetEndpointColdStartMetricsResult429Headers the declared response headers of an HTTP 429 response for GetEndpointColdStartMetrics
+type GetEndpointColdStartMetricsResult429Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+	RetryAfter      *int
+}
+
+// GetEndpointColdStartMetricsResultDefaultHeaders the declared response headers of an HTTP default response for GetEndpointColdStartMetrics
+type GetEndpointColdStartMetricsResultDefaultHeaders struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+type GetEndpointColdStartMetricsResult struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *externalRef0.EndpointColdStartMetricsResponse
+	// ApplicationproblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationproblemJSON400 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationproblemJSON401 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationproblemJSON403 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON404 the response for an HTTP 404 `application/problem+json` response
+	ApplicationproblemJSON404 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON413 the response for an HTTP 413 `application/problem+json` response
+	ApplicationproblemJSON413 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON422 the response for an HTTP 422 `application/problem+json` response
+	ApplicationproblemJSON422 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON429 the response for an HTTP 429 `application/problem+json` response
+	ApplicationproblemJSON429 *externalRef0.ErrorResponse
+	// ApplicationproblemJSONDefault the response for an HTTP default `application/problem+json` response
+	ApplicationproblemJSONDefault *externalRef0.ErrorResponse
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *GetEndpointColdStartMetricsResult200Headers
+	// Headers400 the parsed response headers for an HTTP 400 response
+	Headers400 *GetEndpointColdStartMetricsResult400Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *GetEndpointColdStartMetricsResult403Headers
+	// Headers404 the parsed response headers for an HTTP 404 response
+	Headers404 *GetEndpointColdStartMetricsResult404Headers
+	// Headers413 the parsed response headers for an HTTP 413 response
+	Headers413 *GetEndpointColdStartMetricsResult413Headers
+	// Headers422 the parsed response headers for an HTTP 422 response
+	Headers422 *GetEndpointColdStartMetricsResult422Headers
+	// Headers429 the parsed response headers for an HTTP 429 response
+	Headers429 *GetEndpointColdStartMetricsResult429Headers
+	// HeadersDefault the parsed response headers for an HTTP default response
+	HeadersDefault *GetEndpointColdStartMetricsResultDefaultHeaders
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r GetEndpointColdStartMetricsResult) GetJSON200() *externalRef0.EndpointColdStartMetricsResponse {
+	return r.JSON200
+}
+
+// GetApplicationproblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r GetEndpointColdStartMetricsResult) GetApplicationproblemJSON400() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON400
+}
+
+// GetApplicationproblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r GetEndpointColdStartMetricsResult) GetApplicationproblemJSON401() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON401
+}
+
+// GetApplicationproblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r GetEndpointColdStartMetricsResult) GetApplicationproblemJSON403() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON403
+}
+
+// GetApplicationproblemJSON404 returns the response for an HTTP 404 `application/problem+json` response
+func (r GetEndpointColdStartMetricsResult) GetApplicationproblemJSON404() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON404
+}
+
+// GetApplicationproblemJSON413 returns the response for an HTTP 413 `application/problem+json` response
+func (r GetEndpointColdStartMetricsResult) GetApplicationproblemJSON413() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON413
+}
+
+// GetApplicationproblemJSON422 returns the response for an HTTP 422 `application/problem+json` response
+func (r GetEndpointColdStartMetricsResult) GetApplicationproblemJSON422() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON422
+}
+
+// GetApplicationproblemJSON429 returns the response for an HTTP 429 `application/problem+json` response
+func (r GetEndpointColdStartMetricsResult) GetApplicationproblemJSON429() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON429
+}
+
+// GetApplicationproblemJSONDefault returns the response for an HTTP default `application/problem+json` response
+func (r GetEndpointColdStartMetricsResult) GetApplicationproblemJSONDefault() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSONDefault
+}
+
+// GetBody returns the raw response body bytes
+func (r GetEndpointColdStartMetricsResult) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r GetEndpointColdStartMetricsResult) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetEndpointColdStartMetricsResult) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r GetEndpointColdStartMetricsResult) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// GetEndpointRequestMetricsResult200Headers the declared response headers of an HTTP 200 response for GetEndpointRequestMetrics
+type GetEndpointRequestMetricsResult200Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+// GetEndpointRequestMetricsResult400Headers the declared response headers of an HTTP 400 response for GetEndpointRequestMetrics
+type GetEndpointRequestMetricsResult400Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+// GetEndpointRequestMetricsResult403Headers the declared response headers of an HTTP 403 response for GetEndpointRequestMetrics
+type GetEndpointRequestMetricsResult403Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+// GetEndpointRequestMetricsResult404Headers the declared response headers of an HTTP 404 response for GetEndpointRequestMetrics
+type GetEndpointRequestMetricsResult404Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+// GetEndpointRequestMetricsResult413Headers the declared response headers of an HTTP 413 response for GetEndpointRequestMetrics
+type GetEndpointRequestMetricsResult413Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+// GetEndpointRequestMetricsResult422Headers the declared response headers of an HTTP 422 response for GetEndpointRequestMetrics
+type GetEndpointRequestMetricsResult422Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+// GetEndpointRequestMetricsResult429Headers the declared response headers of an HTTP 429 response for GetEndpointRequestMetrics
+type GetEndpointRequestMetricsResult429Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+	RetryAfter      *int
+}
+
+// GetEndpointRequestMetricsResultDefaultHeaders the declared response headers of an HTTP default response for GetEndpointRequestMetrics
+type GetEndpointRequestMetricsResultDefaultHeaders struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+type GetEndpointRequestMetricsResult struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *externalRef0.EndpointRequestMetricsResponse
+	// ApplicationproblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationproblemJSON400 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationproblemJSON401 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationproblemJSON403 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON404 the response for an HTTP 404 `application/problem+json` response
+	ApplicationproblemJSON404 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON413 the response for an HTTP 413 `application/problem+json` response
+	ApplicationproblemJSON413 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON422 the response for an HTTP 422 `application/problem+json` response
+	ApplicationproblemJSON422 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON429 the response for an HTTP 429 `application/problem+json` response
+	ApplicationproblemJSON429 *externalRef0.ErrorResponse
+	// ApplicationproblemJSONDefault the response for an HTTP default `application/problem+json` response
+	ApplicationproblemJSONDefault *externalRef0.ErrorResponse
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *GetEndpointRequestMetricsResult200Headers
+	// Headers400 the parsed response headers for an HTTP 400 response
+	Headers400 *GetEndpointRequestMetricsResult400Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *GetEndpointRequestMetricsResult403Headers
+	// Headers404 the parsed response headers for an HTTP 404 response
+	Headers404 *GetEndpointRequestMetricsResult404Headers
+	// Headers413 the parsed response headers for an HTTP 413 response
+	Headers413 *GetEndpointRequestMetricsResult413Headers
+	// Headers422 the parsed response headers for an HTTP 422 response
+	Headers422 *GetEndpointRequestMetricsResult422Headers
+	// Headers429 the parsed response headers for an HTTP 429 response
+	Headers429 *GetEndpointRequestMetricsResult429Headers
+	// HeadersDefault the parsed response headers for an HTTP default response
+	HeadersDefault *GetEndpointRequestMetricsResultDefaultHeaders
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r GetEndpointRequestMetricsResult) GetJSON200() *externalRef0.EndpointRequestMetricsResponse {
+	return r.JSON200
+}
+
+// GetApplicationproblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r GetEndpointRequestMetricsResult) GetApplicationproblemJSON400() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON400
+}
+
+// GetApplicationproblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r GetEndpointRequestMetricsResult) GetApplicationproblemJSON401() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON401
+}
+
+// GetApplicationproblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r GetEndpointRequestMetricsResult) GetApplicationproblemJSON403() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON403
+}
+
+// GetApplicationproblemJSON404 returns the response for an HTTP 404 `application/problem+json` response
+func (r GetEndpointRequestMetricsResult) GetApplicationproblemJSON404() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON404
+}
+
+// GetApplicationproblemJSON413 returns the response for an HTTP 413 `application/problem+json` response
+func (r GetEndpointRequestMetricsResult) GetApplicationproblemJSON413() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON413
+}
+
+// GetApplicationproblemJSON422 returns the response for an HTTP 422 `application/problem+json` response
+func (r GetEndpointRequestMetricsResult) GetApplicationproblemJSON422() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON422
+}
+
+// GetApplicationproblemJSON429 returns the response for an HTTP 429 `application/problem+json` response
+func (r GetEndpointRequestMetricsResult) GetApplicationproblemJSON429() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON429
+}
+
+// GetApplicationproblemJSONDefault returns the response for an HTTP default `application/problem+json` response
+func (r GetEndpointRequestMetricsResult) GetApplicationproblemJSONDefault() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSONDefault
+}
+
+// GetBody returns the raw response body bytes
+func (r GetEndpointRequestMetricsResult) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r GetEndpointRequestMetricsResult) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetEndpointRequestMetricsResult) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r GetEndpointRequestMetricsResult) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// GetEndpointWorkerMetricsResult200Headers the declared response headers of an HTTP 200 response for GetEndpointWorkerMetrics
+type GetEndpointWorkerMetricsResult200Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+// GetEndpointWorkerMetricsResult400Headers the declared response headers of an HTTP 400 response for GetEndpointWorkerMetrics
+type GetEndpointWorkerMetricsResult400Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+// GetEndpointWorkerMetricsResult403Headers the declared response headers of an HTTP 403 response for GetEndpointWorkerMetrics
+type GetEndpointWorkerMetricsResult403Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+// GetEndpointWorkerMetricsResult404Headers the declared response headers of an HTTP 404 response for GetEndpointWorkerMetrics
+type GetEndpointWorkerMetricsResult404Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+// GetEndpointWorkerMetricsResult413Headers the declared response headers of an HTTP 413 response for GetEndpointWorkerMetrics
+type GetEndpointWorkerMetricsResult413Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+// GetEndpointWorkerMetricsResult422Headers the declared response headers of an HTTP 422 response for GetEndpointWorkerMetrics
+type GetEndpointWorkerMetricsResult422Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+// GetEndpointWorkerMetricsResult429Headers the declared response headers of an HTTP 429 response for GetEndpointWorkerMetrics
+type GetEndpointWorkerMetricsResult429Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+	RetryAfter      *int
+}
+
+// GetEndpointWorkerMetricsResultDefaultHeaders the declared response headers of an HTTP default response for GetEndpointWorkerMetrics
+type GetEndpointWorkerMetricsResultDefaultHeaders struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+type GetEndpointWorkerMetricsResult struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *externalRef0.EndpointWorkerMetricsResponse
+	// ApplicationproblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationproblemJSON400 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationproblemJSON401 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationproblemJSON403 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON404 the response for an HTTP 404 `application/problem+json` response
+	ApplicationproblemJSON404 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON413 the response for an HTTP 413 `application/problem+json` response
+	ApplicationproblemJSON413 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON422 the response for an HTTP 422 `application/problem+json` response
+	ApplicationproblemJSON422 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON429 the response for an HTTP 429 `application/problem+json` response
+	ApplicationproblemJSON429 *externalRef0.ErrorResponse
+	// ApplicationproblemJSONDefault the response for an HTTP default `application/problem+json` response
+	ApplicationproblemJSONDefault *externalRef0.ErrorResponse
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *GetEndpointWorkerMetricsResult200Headers
+	// Headers400 the parsed response headers for an HTTP 400 response
+	Headers400 *GetEndpointWorkerMetricsResult400Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *GetEndpointWorkerMetricsResult403Headers
+	// Headers404 the parsed response headers for an HTTP 404 response
+	Headers404 *GetEndpointWorkerMetricsResult404Headers
+	// Headers413 the parsed response headers for an HTTP 413 response
+	Headers413 *GetEndpointWorkerMetricsResult413Headers
+	// Headers422 the parsed response headers for an HTTP 422 response
+	Headers422 *GetEndpointWorkerMetricsResult422Headers
+	// Headers429 the parsed response headers for an HTTP 429 response
+	Headers429 *GetEndpointWorkerMetricsResult429Headers
+	// HeadersDefault the parsed response headers for an HTTP default response
+	HeadersDefault *GetEndpointWorkerMetricsResultDefaultHeaders
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r GetEndpointWorkerMetricsResult) GetJSON200() *externalRef0.EndpointWorkerMetricsResponse {
+	return r.JSON200
+}
+
+// GetApplicationproblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r GetEndpointWorkerMetricsResult) GetApplicationproblemJSON400() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON400
+}
+
+// GetApplicationproblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r GetEndpointWorkerMetricsResult) GetApplicationproblemJSON401() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON401
+}
+
+// GetApplicationproblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r GetEndpointWorkerMetricsResult) GetApplicationproblemJSON403() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON403
+}
+
+// GetApplicationproblemJSON404 returns the response for an HTTP 404 `application/problem+json` response
+func (r GetEndpointWorkerMetricsResult) GetApplicationproblemJSON404() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON404
+}
+
+// GetApplicationproblemJSON413 returns the response for an HTTP 413 `application/problem+json` response
+func (r GetEndpointWorkerMetricsResult) GetApplicationproblemJSON413() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON413
+}
+
+// GetApplicationproblemJSON422 returns the response for an HTTP 422 `application/problem+json` response
+func (r GetEndpointWorkerMetricsResult) GetApplicationproblemJSON422() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON422
+}
+
+// GetApplicationproblemJSON429 returns the response for an HTTP 429 `application/problem+json` response
+func (r GetEndpointWorkerMetricsResult) GetApplicationproblemJSON429() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON429
+}
+
+// GetApplicationproblemJSONDefault returns the response for an HTTP default `application/problem+json` response
+func (r GetEndpointWorkerMetricsResult) GetApplicationproblemJSONDefault() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSONDefault
+}
+
+// GetBody returns the raw response body bytes
+func (r GetEndpointWorkerMetricsResult) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r GetEndpointWorkerMetricsResult) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetEndpointWorkerMetricsResult) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r GetEndpointWorkerMetricsResult) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
 // ListEndpointReleasesResult200Headers the declared response headers of an HTTP 200 response for ListEndpointReleases
 type ListEndpointReleasesResult200Headers struct {
 	RateLimit       *externalRef0.RateLimitHeader
@@ -2951,6 +4206,11 @@ func (c *ClientWithResponses) ListEndpointsWithResponse(ctx context.Context, par
 // body, from a serverless template referenced by `templateId` (body
 // fields override the template's), or both; `image` is required unless
 // `templateId` is set. See `CreateEndpointRequest` for the full body.
+// An image in a private Amazon ECR registry with no `registry`
+// credential must be covered by one of your ECR delegations (see
+// `registry`); otherwise the create returns 400 here rather than
+// workers failing their image pull. A caller whose organization role
+// cannot use ECR delegations gets 403.
 //
 // The CUDA constraints live on `gpu` — `gpu.allowedCudaVersions` and
 // `gpu.minCudaVersion` — so a CPU create cannot express them and the
@@ -2989,8 +4249,8 @@ func (c *ClientWithResponses) ListEndpointsWithResponse(ctx context.Context, par
 //
 // If your workload needs a specific card, pick the pool that holds it and
 // exclude the rest of that pool with `gpu.excludedTypes`. Keep at least
-// one type in the selection — upstream rejects a selection that leaves
-// none.
+// one type in the selection — a selection that leaves none is
+// rejected.
 //
 // Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
 //
@@ -3010,6 +4270,11 @@ func (c *ClientWithResponses) CreateEndpointWithBodyWithResponse(ctx context.Con
 // body, from a serverless template referenced by `templateId` (body
 // fields override the template's), or both; `image` is required unless
 // `templateId` is set. See `CreateEndpointRequest` for the full body.
+// An image in a private Amazon ECR registry with no `registry`
+// credential must be covered by one of your ECR delegations (see
+// `registry`); otherwise the create returns 400 here rather than
+// workers failing their image pull. A caller whose organization role
+// cannot use ECR delegations gets 403.
 //
 // The CUDA constraints live on `gpu` — `gpu.allowedCudaVersions` and
 // `gpu.minCudaVersion` — so a CPU create cannot express them and the
@@ -3048,8 +4313,8 @@ func (c *ClientWithResponses) CreateEndpointWithBodyWithResponse(ctx context.Con
 //
 // If your workload needs a specific card, pick the pool that holds it and
 // exclude the rest of that pool with `gpu.excludedTypes`. Keep at least
-// one type in the selection — upstream rejects a selection that leaves
-// none.
+// one type in the selection — a selection that leaves none is
+// rejected.
 //
 // Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
 //
@@ -3104,7 +4369,12 @@ func (c *ClientWithResponses) GetEndpointWithResponse(ctx context.Context, id st
 // `scaling` (`type`/`value`/`idleTimeout`), `dataCenterIds`,
 // `networkVolumes`, `timeout`, `flashboot`, and the
 // container settings (`image`, `args`, `disk`, `ports`, `env`,
-// `registry`).
+// `registry`). A patch that leaves the endpoint pulling a private
+// Amazon ECR image with no `registry` credential is checked against
+// your ECR delegations as on create (400 when none covers the
+// repository, 403 when the caller's organization role cannot use
+// delegations); a patch that changes neither `image` nor `registry`
+// is not.
 //
 // Omitted compute preserves the current selection. `cpu` completely
 // replaces a CPU endpoint's selection; compute family is immutable.
@@ -3139,7 +4409,12 @@ func (c *ClientWithResponses) UpdateEndpointWithBodyWithResponse(ctx context.Con
 // `scaling` (`type`/`value`/`idleTimeout`), `dataCenterIds`,
 // `networkVolumes`, `timeout`, `flashboot`, and the
 // container settings (`image`, `args`, `disk`, `ports`, `env`,
-// `registry`).
+// `registry`). A patch that leaves the endpoint pulling a private
+// Amazon ECR image with no `registry` credential is checked against
+// your ECR delegations as on create (400 when none covers the
+// repository, 403 when the caller's organization role cannot use
+// delegations); a patch that changes neither `image` nor `registry`
+// is not.
 //
 // Omitted compute preserves the current selection. `cpu` completely
 // replaces a CPU endpoint's selection; compute family is immutable.
@@ -3198,6 +4473,118 @@ func (c *ClientWithResponses) GetEndpointBuildWithResponse(ctx context.Context, 
 		return nil, err
 	}
 	return ParseGetEndpointBuildResult(rsp)
+}
+
+// GetEndpointColdStartMetricsWithResponse Get serverless endpoint cold start metrics
+//
+// Returns the cold start series shown on the endpoint's Metrics tab in the console.
+//
+// **Window.** `startTime` is inclusive and `endTime` is exclusive. Both are
+// optional: `endTime` defaults to now and `startTime` to 24 hours before
+// `endTime`, rounded down to the start of an `interval` bucket. An
+// `endTime` in the future is treated as now. Metrics are kept for 90 days,
+// so `startTime` must be within the last 90 days.
+//
+// **Interval.** Each record covers one `interval`-sized bucket, aligned to
+// UTC.
+//
+// **Paging.** Records are oldest first, at most `limit` (default 1000) per
+// page. Follow `pagination.nextCursor` while `pagination.hasNextPage` is
+// true. The cursor keeps the first page's window, so `startTime`,
+// `endTime`, and `interval` can be left out on later pages; if sent, they
+// must match the first page or the cursor is rejected with 422.
+//
+// **Sparse series.** Buckets with no activity are omitted, not zero-filled,
+// so `records` can be shorter than the number of buckets in the window, or
+// empty.
+//
+// **Units.** `durationMs` is how long each cold start took, in milliseconds.
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /v2/serverless/{id}/metrics/cold-starts (the `GetEndpointColdStartMetrics` operationId).
+func (c *ClientWithResponses) GetEndpointColdStartMetricsWithResponse(ctx context.Context, id string, params *GetEndpointColdStartMetricsParams, reqEditors ...RequestEditorFn) (*GetEndpointColdStartMetricsResult, error) {
+	rsp, err := c.GetEndpointColdStartMetrics(ctx, id, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetEndpointColdStartMetricsResult(rsp)
+}
+
+// GetEndpointRequestMetricsWithResponse Get serverless endpoint request metrics
+//
+// Returns the request series shown on the endpoint's Metrics tab in the console.
+//
+// **Window.** `startTime` is inclusive and `endTime` is exclusive. Both are
+// optional: `endTime` defaults to now and `startTime` to 24 hours before
+// `endTime`, rounded down to the start of an `interval` bucket. An
+// `endTime` in the future is treated as now. Metrics are kept for 90 days,
+// so `startTime` must be within the last 90 days.
+//
+// **Interval.** Each record covers one `interval`-sized bucket, aligned to
+// UTC.
+//
+// **Paging.** Records are oldest first, at most `limit` (default 1000) per
+// page. Follow `pagination.nextCursor` while `pagination.hasNextPage` is
+// true. The cursor keeps the first page's window, so `startTime`,
+// `endTime`, and `interval` can be left out on later pages; if sent, they
+// must match the first page or the cursor is rejected with 422.
+//
+// **Sparse series.** Buckets with no activity are omitted, not zero-filled,
+// so `records` can be shorter than the number of buckets in the window, or
+// empty.
+//
+// **Units.** Durations are milliseconds. `executionTimeMs` is the time a
+// worker spent running a request; `delayTimeMs` is the time a request
+// waited in the queue before a worker picked it up.
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /v2/serverless/{id}/metrics/requests (the `GetEndpointRequestMetrics` operationId).
+func (c *ClientWithResponses) GetEndpointRequestMetricsWithResponse(ctx context.Context, id string, params *GetEndpointRequestMetricsParams, reqEditors ...RequestEditorFn) (*GetEndpointRequestMetricsResult, error) {
+	rsp, err := c.GetEndpointRequestMetrics(ctx, id, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetEndpointRequestMetricsResult(rsp)
+}
+
+// GetEndpointWorkerMetricsWithResponse Get serverless endpoint worker metrics
+//
+// Returns the worker state series shown on the endpoint's Metrics tab in the console.
+// For the current worker list, use `GET /v2/serverless/{id}/workers`.
+//
+// **Window.** `startTime` is inclusive and `endTime` is exclusive. Both are
+// optional: `endTime` defaults to now and `startTime` to 24 hours before
+// `endTime`, rounded down to the start of an `interval` bucket. An
+// `endTime` in the future is treated as now. Metrics are kept for 90 days,
+// so `startTime` must be within the last 90 days.
+//
+// **Interval.** Each record covers one `interval`-sized bucket, aligned to
+// UTC.
+//
+// **Paging.** Records are oldest first, at most `limit` (default 1000) per
+// page. Follow `pagination.nextCursor` while `pagination.hasNextPage` is
+// true. The cursor keeps the first page's window, so `startTime`,
+// `endTime`, and `interval` can be left out on later pages; if sent, they
+// must match the first page or the cursor is rejected with 422.
+//
+// **Sparse series.** Buckets with no activity are omitted, not zero-filled,
+// so `records` can be shorter than the number of buckets in the window, or
+// empty.
+//
+// **Snapshots.** Each record holds the last worker-count snapshot in its
+// bucket, as point-in-time counts.
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /v2/serverless/{id}/metrics/workers (the `GetEndpointWorkerMetrics` operationId).
+func (c *ClientWithResponses) GetEndpointWorkerMetricsWithResponse(ctx context.Context, id string, params *GetEndpointWorkerMetricsParams, reqEditors ...RequestEditorFn) (*GetEndpointWorkerMetricsResult, error) {
+	rsp, err := c.GetEndpointWorkerMetrics(ctx, id, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetEndpointWorkerMetricsResult(rsp)
 }
 
 // ListEndpointReleasesWithResponse List serverless endpoint releases
@@ -3314,6 +4701,13 @@ func ParseListEndpointsResult(rsp *http.Response) (*ListEndpointsResult, error) 
 		}
 		response.ApplicationproblemJSON413 = &dest
 
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON422 = &dest
+
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
 		var dest externalRef0.ErrorResponse
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
@@ -3382,6 +4776,23 @@ func ParseListEndpointsResult(rsp *http.Response) (*ListEndpointsResult, error) 
 			headers.RateLimitPolicy = &value
 		}
 		response.Headers413 = &headers
+	case rsp.StatusCode == 422:
+		var headers ListEndpointsResult422Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers422 = &headers
 	case rsp.StatusCode == 429:
 		var headers ListEndpointsResult429Headers
 		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
@@ -4508,6 +5919,690 @@ func ParseGetEndpointBuildResult(rsp *http.Response) (*GetEndpointBuildResult, e
 		response.Headers429 = &headers
 	case true:
 		var headers GetEndpointBuildResultDefaultHeaders
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.HeadersDefault = &headers
+	}
+
+	return response, nil
+}
+
+// ParseGetEndpointColdStartMetricsResult parses an HTTP response from a GetEndpointColdStartMetricsWithResponse call
+func ParseGetEndpointColdStartMetricsResult(rsp *http.Response) (*GetEndpointColdStartMetricsResult, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetEndpointColdStartMetricsResult{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest externalRef0.EndpointColdStartMetricsResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 413:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON413 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON422 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON429 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSONDefault = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers GetEndpointColdStartMetricsResult200Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers200 = &headers
+	case rsp.StatusCode == 400:
+		var headers GetEndpointColdStartMetricsResult400Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers400 = &headers
+	case rsp.StatusCode == 403:
+		var headers GetEndpointColdStartMetricsResult403Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 404:
+		var headers GetEndpointColdStartMetricsResult404Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers404 = &headers
+	case rsp.StatusCode == 413:
+		var headers GetEndpointColdStartMetricsResult413Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers413 = &headers
+	case rsp.StatusCode == 422:
+		var headers GetEndpointColdStartMetricsResult422Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers422 = &headers
+	case rsp.StatusCode == 429:
+		var headers GetEndpointColdStartMetricsResult429Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		response.Headers429 = &headers
+	case true:
+		var headers GetEndpointColdStartMetricsResultDefaultHeaders
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.HeadersDefault = &headers
+	}
+
+	return response, nil
+}
+
+// ParseGetEndpointRequestMetricsResult parses an HTTP response from a GetEndpointRequestMetricsWithResponse call
+func ParseGetEndpointRequestMetricsResult(rsp *http.Response) (*GetEndpointRequestMetricsResult, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetEndpointRequestMetricsResult{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest externalRef0.EndpointRequestMetricsResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 413:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON413 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON422 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON429 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSONDefault = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers GetEndpointRequestMetricsResult200Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers200 = &headers
+	case rsp.StatusCode == 400:
+		var headers GetEndpointRequestMetricsResult400Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers400 = &headers
+	case rsp.StatusCode == 403:
+		var headers GetEndpointRequestMetricsResult403Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 404:
+		var headers GetEndpointRequestMetricsResult404Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers404 = &headers
+	case rsp.StatusCode == 413:
+		var headers GetEndpointRequestMetricsResult413Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers413 = &headers
+	case rsp.StatusCode == 422:
+		var headers GetEndpointRequestMetricsResult422Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers422 = &headers
+	case rsp.StatusCode == 429:
+		var headers GetEndpointRequestMetricsResult429Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		response.Headers429 = &headers
+	case true:
+		var headers GetEndpointRequestMetricsResultDefaultHeaders
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.HeadersDefault = &headers
+	}
+
+	return response, nil
+}
+
+// ParseGetEndpointWorkerMetricsResult parses an HTTP response from a GetEndpointWorkerMetricsWithResponse call
+func ParseGetEndpointWorkerMetricsResult(rsp *http.Response) (*GetEndpointWorkerMetricsResult, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetEndpointWorkerMetricsResult{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest externalRef0.EndpointWorkerMetricsResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 413:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON413 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON422 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON429 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSONDefault = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers GetEndpointWorkerMetricsResult200Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers200 = &headers
+	case rsp.StatusCode == 400:
+		var headers GetEndpointWorkerMetricsResult400Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers400 = &headers
+	case rsp.StatusCode == 403:
+		var headers GetEndpointWorkerMetricsResult403Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 404:
+		var headers GetEndpointWorkerMetricsResult404Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers404 = &headers
+	case rsp.StatusCode == 413:
+		var headers GetEndpointWorkerMetricsResult413Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers413 = &headers
+	case rsp.StatusCode == 422:
+		var headers GetEndpointWorkerMetricsResult422Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers422 = &headers
+	case rsp.StatusCode == 429:
+		var headers GetEndpointWorkerMetricsResult429Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		response.Headers429 = &headers
+	case true:
+		var headers GetEndpointWorkerMetricsResultDefaultHeaders
 		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
 			var value externalRef0.RateLimitHeader
 			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {

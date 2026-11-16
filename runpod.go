@@ -20,12 +20,14 @@ import (
 	"github.com/runpod/go-sdk/v2/lib/billing"
 	"github.com/runpod/go-sdk/v2/lib/catalog"
 	"github.com/runpod/go-sdk/v2/lib/clusters"
+	"github.com/runpod/go-sdk/v2/lib/costcenters"
 	"github.com/runpod/go-sdk/v2/lib/globalvolumes"
 	"github.com/runpod/go-sdk/v2/lib/networkvolumes"
 	"github.com/runpod/go-sdk/v2/lib/organization"
 	"github.com/runpod/go-sdk/v2/lib/pods"
 	"github.com/runpod/go-sdk/v2/lib/registries"
 	"github.com/runpod/go-sdk/v2/lib/serverless"
+	"github.com/runpod/go-sdk/v2/lib/signup"
 	"github.com/runpod/go-sdk/v2/lib/templates"
 	"github.com/runpod/go-sdk/v2/transport"
 )
@@ -61,6 +63,8 @@ type Client struct {
 	Account        *account.ClientWithResponses
 	Organization   *organization.ClientWithResponses
 	AuditLogs      *auditlogs.ClientWithResponses
+	CostCenters    *costcenters.ClientWithResponses
+	Signup         *signup.ClientWithResponses
 }
 
 type options struct {
@@ -173,6 +177,14 @@ func New(opts ...Option) (*Client, error) {
 	if c.AuditLogs, err = auditlogs.NewClientWithResponses(o.baseURL,
 		auditlogs.WithHTTPClient(o.httpClient), auditlogs.WithRequestEditorFn(auth)); err != nil {
 		return nil, fmt.Errorf("runpod: audit logs client: %w", err)
+	}
+	if c.CostCenters, err = costcenters.NewClientWithResponses(o.baseURL,
+		costcenters.WithHTTPClient(o.httpClient), costcenters.WithRequestEditorFn(auth)); err != nil {
+		return nil, fmt.Errorf("runpod: cost centers client: %w", err)
+	}
+	if c.Signup, err = signup.NewClientWithResponses(o.baseURL,
+		signup.WithHTTPClient(o.httpClient), signup.WithRequestEditorFn(auth)); err != nil {
+		return nil, fmt.Errorf("runpod: signup client: %w", err)
 	}
 	return c, nil
 }

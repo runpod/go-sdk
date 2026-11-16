@@ -106,6 +106,13 @@ func WithRequestEditorFn(fn RequestEditorFn) ClientOption {
 // The interface specification for the client above.
 type ClientInterface interface {
 
+	// GetAccount Get your account
+	//
+	// Returns the account the API key belongs to.
+	//
+	// Corresponds with GET /v2/account (the `GetAccount` operationId).
+	GetAccount(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// ListSecrets List secrets
 	//
 	// Returns the account's secrets — encrypted strings referenced from pod, serverless, and template environment variables with the `{{ RUNPOD_SECRET_<name> }}` placeholder syntax, substituted with the secret's value when the pod or worker boots. Secret values are write-only and are never returned.
@@ -230,6 +237,23 @@ type ClientInterface interface {
 	//
 	// Corresponds with PUT /v2/account/ssh-keys (the `UpdateSshKeys` operationId).
 	UpdateSshKeys(ctx context.Context, body UpdateSshKeysJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+}
+
+// GetAccount Get your account
+//
+// Returns the account the API key belongs to.
+//
+// Corresponds with GET /v2/account (the `GetAccount` operationId).
+func (c *Client) GetAccount(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetAccountRequest(c.Server)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
 }
 
 // ListSecrets List secrets
@@ -455,6 +479,33 @@ func (c *Client) UpdateSshKeys(ctx context.Context, body UpdateSshKeysJSONReques
 		return nil, err
 	}
 	return c.Client.Do(req)
+}
+
+// NewGetAccountRequest constructs an http.Request for the GetAccount method
+func NewGetAccountRequest(server string) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v2/account")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
 }
 
 // NewListSecretsRequest constructs an http.Request for the ListSecrets method
@@ -777,6 +828,15 @@ func WithBaseURL(baseURL string) ClientOption {
 // ClientWithResponsesInterface is the interface specification for the client with responses above.
 type ClientWithResponsesInterface interface {
 
+	// GetAccountWithResponse Get your account
+	//
+	// Returns the account the API key belongs to.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /v2/account (the `GetAccount` operationId).
+	GetAccountWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetAccountResult, error)
+
 	// ListSecretsWithResponse List secrets
 	//
 	// Returns the account's secrets — encrypted strings referenced from pod, serverless, and template environment variables with the `{{ RUNPOD_SECRET_<name> }}` placeholder syntax, substituted with the secret's value when the pod or worker boots. Secret values are write-only and are never returned.
@@ -909,6 +969,108 @@ type ClientWithResponsesInterface interface {
 	//
 	// Corresponds with PUT /v2/account/ssh-keys (the `UpdateSshKeys` operationId).
 	UpdateSshKeysWithResponse(ctx context.Context, body UpdateSshKeysJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateSshKeysResult, error)
+}
+
+// GetAccountResult200Headers the declared response headers of an HTTP 200 response for GetAccount
+type GetAccountResult200Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+// GetAccountResult403Headers the declared response headers of an HTTP 403 response for GetAccount
+type GetAccountResult403Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+// GetAccountResult429Headers the declared response headers of an HTTP 429 response for GetAccount
+type GetAccountResult429Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+	RetryAfter      *int
+}
+
+// GetAccountResultDefaultHeaders the declared response headers of an HTTP default response for GetAccount
+type GetAccountResultDefaultHeaders struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+type GetAccountResult struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *externalRef0.Account
+	// ApplicationproblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationproblemJSON401 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationproblemJSON403 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON429 the response for an HTTP 429 `application/problem+json` response
+	ApplicationproblemJSON429 *externalRef0.ErrorResponse
+	// ApplicationproblemJSONDefault the response for an HTTP default `application/problem+json` response
+	ApplicationproblemJSONDefault *externalRef0.ErrorResponse
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *GetAccountResult200Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *GetAccountResult403Headers
+	// Headers429 the parsed response headers for an HTTP 429 response
+	Headers429 *GetAccountResult429Headers
+	// HeadersDefault the parsed response headers for an HTTP default response
+	HeadersDefault *GetAccountResultDefaultHeaders
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r GetAccountResult) GetJSON200() *externalRef0.Account {
+	return r.JSON200
+}
+
+// GetApplicationproblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r GetAccountResult) GetApplicationproblemJSON401() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON401
+}
+
+// GetApplicationproblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r GetAccountResult) GetApplicationproblemJSON403() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON403
+}
+
+// GetApplicationproblemJSON429 returns the response for an HTTP 429 `application/problem+json` response
+func (r GetAccountResult) GetApplicationproblemJSON429() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON429
+}
+
+// GetApplicationproblemJSONDefault returns the response for an HTTP default `application/problem+json` response
+func (r GetAccountResult) GetApplicationproblemJSONDefault() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSONDefault
+}
+
+// GetBody returns the raw response body bytes
+func (r GetAccountResult) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r GetAccountResult) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetAccountResult) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r GetAccountResult) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
 }
 
 // ListSecretsResult200Headers the declared response headers of an HTTP 200 response for ListSecrets
@@ -1805,6 +1967,21 @@ func (r UpdateSshKeysResult) ContentType() string {
 	return ""
 }
 
+// GetAccountWithResponse Get your account
+//
+// Returns the account the API key belongs to.
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /v2/account (the `GetAccount` operationId).
+func (c *ClientWithResponses) GetAccountWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetAccountResult, error) {
+	rsp, err := c.GetAccount(ctx, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetAccountResult(rsp)
+}
+
 // ListSecretsWithResponse List secrets
 //
 // Returns the account's secrets — encrypted strings referenced from pod, serverless, and template environment variables with the `{{ RUNPOD_SECRET_<name> }}` placeholder syntax, substituted with the secret's value when the pod or worker boots. Secret values are write-only and are never returned.
@@ -1996,6 +2173,138 @@ func (c *ClientWithResponses) UpdateSshKeysWithResponse(ctx context.Context, bod
 		return nil, err
 	}
 	return ParseUpdateSshKeysResult(rsp)
+}
+
+// ParseGetAccountResult parses an HTTP response from a GetAccountWithResponse call
+func ParseGetAccountResult(rsp *http.Response) (*GetAccountResult, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetAccountResult{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest externalRef0.Account
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON429 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSONDefault = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers GetAccountResult200Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers200 = &headers
+	case rsp.StatusCode == 403:
+		var headers GetAccountResult403Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 429:
+		var headers GetAccountResult429Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		response.Headers429 = &headers
+	case true:
+		var headers GetAccountResultDefaultHeaders
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.HeadersDefault = &headers
+	}
+
+	return response, nil
 }
 
 // ParseListSecretsResult parses an HTTP response from a ListSecretsWithResponse call

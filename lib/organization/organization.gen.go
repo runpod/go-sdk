@@ -4,6 +4,7 @@
 package organization
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -15,6 +16,54 @@ import (
 	"github.com/oapi-codegen/runtime"
 	externalRef0 "github.com/runpod/go-sdk/v2/lib/types"
 )
+
+// ListOrganizationGroupsParams defines parameters for ListOrganizationGroups.
+type ListOrganizationGroupsParams struct {
+	// Name Optional case-insensitive substring of the group name. An empty value applies no filter.
+	Name *string `form:"name,omitempty" json:"name,omitempty"`
+
+	// Cursor Opaque resume cursor — pass the previous response's `pagination.nextCursor` through verbatim; omit for the first page. A cursor is only valid for the operation and parameters that issued it; a malformed or foreign cursor is rejected with 422.
+	Cursor *externalRef0.PaginationCursor `form:"cursor,omitempty" json:"cursor,omitempty"`
+
+	// Limit Page size, 1–100. Defaults to 100 when omitted.
+	Limit *externalRef0.PaginationLimitOrganizationGroups `form:"limit,omitempty" json:"limit,omitempty"`
+}
+
+// ListOrganizationGroupMembersParams defines parameters for ListOrganizationGroupMembers.
+type ListOrganizationGroupMembersParams struct {
+	// Cursor Opaque resume cursor — pass the previous response's `pagination.nextCursor` through verbatim; omit for the first page. A cursor is only valid for the operation and parameters that issued it; a malformed or foreign cursor is rejected with 422.
+	Cursor *externalRef0.PaginationCursor `form:"cursor,omitempty" json:"cursor,omitempty"`
+
+	// Limit Page size, 1–100. Defaults to 100 when omitted.
+	Limit *externalRef0.PaginationLimitOrganizationGroups `form:"limit,omitempty" json:"limit,omitempty"`
+}
+
+// GetOrganizationRoleCapabilitiesParams defines parameters for GetOrganizationRoleCapabilities.
+type GetOrganizationRoleCapabilitiesParams struct {
+	// Family Only return these capability families, matched exactly. Comma-separated; a family matching any listed value is returned. An empty value is ignored.
+	Family *externalRef0.OrganizationCapabilityFamilyFilter `form:"family,omitempty" json:"family,omitempty"`
+
+	// Verb Only return these verbs, matched exactly. Comma-separated. Each family lists only the requested verbs it has, and a family with none of them is left out. An empty value is ignored.
+	Verb *externalRef0.OrganizationCapabilityVerbFilter `form:"verb,omitempty" json:"verb,omitempty"`
+}
+
+// CreateOrganizationGroupJSONRequestBody defines body for CreateOrganizationGroup for application/json ContentType.
+type CreateOrganizationGroupJSONRequestBody = externalRef0.CreateOrganizationGroupRequest
+
+// UpdateOrganizationGroupJSONRequestBody defines body for UpdateOrganizationGroup for application/json ContentType.
+type UpdateOrganizationGroupJSONRequestBody = externalRef0.UpdateOrganizationGroupRequest
+
+// CreateOrganizationInviteJSONRequestBody defines body for CreateOrganizationInvite for application/json ContentType.
+type CreateOrganizationInviteJSONRequestBody = externalRef0.CreateOrganizationInviteRequest
+
+// CreateOrganizationRoleJSONRequestBody defines body for CreateOrganizationRole for application/json ContentType.
+type CreateOrganizationRoleJSONRequestBody = externalRef0.CreateOrganizationRoleRequest
+
+// UpdateOrganizationRoleJSONRequestBody defines body for UpdateOrganizationRole for application/json ContentType.
+type UpdateOrganizationRoleJSONRequestBody = externalRef0.UpdateOrganizationRoleRequest
+
+// UpdateOrganizationUserJSONRequestBody defines body for UpdateOrganizationUser for application/json ContentType.
+type UpdateOrganizationUserJSONRequestBody = externalRef0.UpdateOrganizationUserRequest
 
 // RequestEditorFn is the function signature for the RequestEditor callback function
 type RequestEditorFn func(ctx context.Context, req *http.Request) error
@@ -96,6 +145,218 @@ type ClientInterface interface {
 	//
 	// Corresponds with GET /v2/organization (the `GetOrganization` operationId).
 	GetOrganization(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ListOrganizationGroups List groups in your current organization
+	//
+	// Returns groups without their members or roles, ordered by creation time descending and then ID descending for deterministic pagination.
+	//
+	// Corresponds with GET /v2/organization/groups (the `ListOrganizationGroups` operationId).
+	ListOrganizationGroups(ctx context.Context, params *ListOrganizationGroupsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// CreateOrganizationGroupWithBody Create a group in your current organization
+	//
+	// Takes any type of body and a specified content type.
+	//
+	// Corresponds with POST /v2/organization/groups (the `CreateOrganizationGroup` operationId).
+	CreateOrganizationGroupWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// CreateOrganizationGroup Create a group in your current organization
+	//
+	// Takes a body of the `application/json` content type.
+	//
+	// Corresponds with POST /v2/organization/groups (the `CreateOrganizationGroup` operationId).
+	CreateOrganizationGroup(ctx context.Context, body CreateOrganizationGroupJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// DeleteOrganizationGroup Delete a group in your current organization
+	//
+	// Permanently deletes the group and its group memberships. Organization members are not removed. Returns 404 when the group does not exist in your current organization, including when it has already been deleted.
+	//
+	// Corresponds with DELETE /v2/organization/groups/{id} (the `DeleteOrganizationGroup` operationId).
+	DeleteOrganizationGroup(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetOrganizationGroup Get a group in your current organization
+	//
+	// Returns the group without its members. Returns 404 when the ID is unknown or belongs to another organization, or when the caller does not belong to an organization.
+	//
+	// Corresponds with GET /v2/organization/groups/{id} (the `GetOrganizationGroup` operationId).
+	GetOrganizationGroup(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// UpdateOrganizationGroupWithBody Rename a group in your current organization
+	//
+	// Takes any type of body and a specified content type.
+	//
+	// Corresponds with PATCH /v2/organization/groups/{id} (the `UpdateOrganizationGroup` operationId).
+	UpdateOrganizationGroupWithBody(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// UpdateOrganizationGroup Rename a group in your current organization
+	//
+	// Takes a body of the `application/json` content type.
+	//
+	// Corresponds with PATCH /v2/organization/groups/{id} (the `UpdateOrganizationGroup` operationId).
+	UpdateOrganizationGroup(ctx context.Context, id string, body UpdateOrganizationGroupJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ListOrganizationGroupMembers List members of a group
+	//
+	// Members are ordered newest first by membership creation time, with a unique upstream tie-breaker. Returns 404 when the group does not exist in the current organization, or when the caller does not belong to an organization.
+	//
+	// Corresponds with GET /v2/organization/groups/{id}/members (the `ListOrganizationGroupMembers` operationId).
+	ListOrganizationGroupMembers(ctx context.Context, id string, params *ListOrganizationGroupMembersParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// RemoveOrganizationGroupMember Remove a member from a group
+	//
+	// Removes the organization member from the group. The group and user must belong to the current organization. Returns 404 when the membership is absent, including repeated deletion, or when the group is unknown or belongs to another organization.
+	//
+	// Corresponds with DELETE /v2/organization/groups/{id}/members/{userId} (the `RemoveOrganizationGroupMember` operationId).
+	RemoveOrganizationGroupMember(ctx context.Context, id string, userId string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// AddOrganizationGroupMember Add a member to a group
+	//
+	// Adds the organization member to the group. The group and user must belong to the current organization. Adding an existing member is idempotent and returns the same no-content response.
+	//
+	// Corresponds with PUT /v2/organization/groups/{id}/members/{userId} (the `AddOrganizationGroupMember` operationId).
+	AddOrganizationGroupMember(ctx context.Context, id string, userId string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ListOrganizationInvites List pending organization invites
+	//
+	// Returns the pending invitations to the authenticated caller's organization, newest first. Only unexpired invites are pending: an invite leaves the list once it is accepted, revoked or expired. The list is complete and takes no pagination parameters, because an organization's pending invites are capped. Reading invites requires the organization's invite-management capability, which the built-in admin role holds; other members receive 403. Returns 404 when the caller does not belong to an organization, or 403 when organizations are unavailable to the caller.
+	//
+	// Corresponds with GET /v2/organization/invites (the `ListOrganizationInvites` operationId).
+	ListOrganizationInvites(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// CreateOrganizationInviteWithBody Invite a user to your organization
+	//
+	// Sends an invitation to join the authenticated caller's organization and returns the pending invite; `expiresAt` is when it lapses. The invitee receives an email carrying the acceptance link, which is never returned here. Returns 409 when the address already belongs to a member or to a pending invite, or when the organization has reached its pending-invite limit; 404 when the role is unknown to the organization; and 403 when the caller does not hold every capability the role grants. Inviting requires the organization's invite-management capability, which the built-in admin role holds; other members, and callers outside an organization, receive 403, as does a caller for whom organizations are unavailable.
+	//
+	// Takes any type of body and a specified content type.
+	//
+	// Corresponds with POST /v2/organization/invites (the `CreateOrganizationInvite` operationId).
+	CreateOrganizationInviteWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// CreateOrganizationInvite Invite a user to your organization
+	//
+	// Sends an invitation to join the authenticated caller's organization and returns the pending invite; `expiresAt` is when it lapses. The invitee receives an email carrying the acceptance link, which is never returned here. Returns 409 when the address already belongs to a member or to a pending invite, or when the organization has reached its pending-invite limit; 404 when the role is unknown to the organization; and 403 when the caller does not hold every capability the role grants. Inviting requires the organization's invite-management capability, which the built-in admin role holds; other members, and callers outside an organization, receive 403, as does a caller for whom organizations are unavailable.
+	//
+	// Takes a body of the `application/json` content type.
+	//
+	// Corresponds with POST /v2/organization/invites (the `CreateOrganizationInvite` operationId).
+	CreateOrganizationInvite(ctx context.Context, body CreateOrganizationInviteJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// DeleteOrganizationInvite Cancel an organization invite
+	//
+	// Cancels one invitation to the authenticated caller's organization; the invitee can no longer accept it. Returns 404 when the ID is unknown to the caller's organization: never issued, already accepted, already cancelled, or issued by another organization. An expired invite can still be cancelled. Cancelling invites requires the organization's invite-management capability, which the built-in admin role holds; other members, and callers outside an organization, receive 403, as does a caller for whom organizations are unavailable.
+	//
+	// Corresponds with DELETE /v2/organization/invites/{id} (the `DeleteOrganizationInvite` operationId).
+	DeleteOrganizationInvite(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetOrganizationInvite Get a pending organization invite
+	//
+	// Returns one pending invitation to the authenticated caller's organization. Only unexpired invites are pending: an invite that has expired, been accepted or been revoked returns 404, as does an ID from another organization. Reading invites requires the organization's invite-management capability, which the built-in admin role holds; other members receive 403. Returns 404 when the caller does not belong to an organization, or 403 when organizations are unavailable to the caller.
+	//
+	// Corresponds with GET /v2/organization/invites/{id} (the `GetOrganizationInvite` operationId).
+	GetOrganizationInvite(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ListOrganizationRoles List organization roles
+	//
+	// Returns every role a member or invite of the authenticated caller's organization can hold: Runpod's built-in roles and the organization's custom roles, oldest first. The list is complete and takes no pagination parameters, because an organization's custom roles are capped. Returns 404 when the caller does not belong to an organization, or 403 when organizations are unavailable to the caller.
+	//
+	// Corresponds with GET /v2/organization/roles (the `ListOrganizationRoles` operationId).
+	ListOrganizationRoles(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// CreateOrganizationRoleWithBody Create a custom organization role
+	//
+	// Creates a custom role in the authenticated caller's organization and returns it. Returns 409 when the organization already has a role with this name or has reached its custom-role limit; 422 when a capability is unknown or the name is reserved; and 403 when the caller does not hold every capability the role grants. Creating roles requires the organization's role-management capability, which the built-in admin role holds; other members, and callers outside an organization, receive 403, as does a caller for whom organizations are unavailable.
+	//
+	// Takes any type of body and a specified content type.
+	//
+	// Corresponds with POST /v2/organization/roles (the `CreateOrganizationRole` operationId).
+	CreateOrganizationRoleWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// CreateOrganizationRole Create a custom organization role
+	//
+	// Creates a custom role in the authenticated caller's organization and returns it. Returns 409 when the organization already has a role with this name or has reached its custom-role limit; 422 when a capability is unknown or the name is reserved; and 403 when the caller does not hold every capability the role grants. Creating roles requires the organization's role-management capability, which the built-in admin role holds; other members, and callers outside an organization, receive 403, as does a caller for whom organizations are unavailable.
+	//
+	// Takes a body of the `application/json` content type.
+	//
+	// Corresponds with POST /v2/organization/roles (the `CreateOrganizationRole` operationId).
+	CreateOrganizationRole(ctx context.Context, body CreateOrganizationRoleJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetOrganizationRoleCapabilities List grantable role capabilities
+	//
+	// Returns the capabilities a custom role can grant, grouped by family: each capability is a family and one of its verbs, written `FAMILY:VERB`. This is the set role creation accepts, not filtered to the caller's own access; saving a role also requires the caller to hold every capability it grants. `family` and `verb` narrow the result and apply together; with neither, the whole catalog is returned. Reading the catalog requires organization membership; other callers receive 403.
+	//
+	// Corresponds with GET /v2/organization/roles/capabilities (the `GetOrganizationRoleCapabilities` operationId).
+	GetOrganizationRoleCapabilities(ctx context.Context, params *GetOrganizationRoleCapabilitiesParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// DeleteOrganizationRole Delete a custom organization role
+	//
+	// Deletes a custom role from the authenticated caller's organization. Returns 409 while a member or a pending invite holds the role: reassign those members and cancel those invites first, since deleting never changes anyone's role. Expired invites do not block deletion. Returns 400 for a built-in role, which cannot be deleted; 404 when the ID is unknown, names another organization's role, or was already deleted. Deleting roles requires the organization's role-management capability, which the built-in admin role holds; other members, and callers outside an organization, receive 403, as does a caller for whom organizations are unavailable.
+	//
+	// Corresponds with DELETE /v2/organization/roles/{id} (the `DeleteOrganizationRole` operationId).
+	DeleteOrganizationRole(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetOrganizationRole Get an organization role
+	//
+	// Returns one role a member or invite of the authenticated caller's organization can hold: a built-in role, or one of the organization's custom roles. Returns 404 when the ID is unknown or names another organization's custom role, or when the caller does not belong to an organization; 403 when the caller may not view the organization's roles or organizations are unavailable to the caller.
+	//
+	// Corresponds with GET /v2/organization/roles/{id} (the `GetOrganizationRole` operationId).
+	GetOrganizationRole(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// UpdateOrganizationRoleWithBody Update a custom organization role
+	//
+	// Changes a custom role's name, its capabilities, or both, and returns the role. Sent capabilities replace the whole grant set. Returns 400 for a built-in role, which cannot be changed; 404 when the ID is unknown or names another organization's role; 403 when the caller does not hold every capability the role grants, before or after the change; 409 when the organization already has a role with the new name; and 422 when a capability is unknown or the name is reserved. Updating roles requires the organization's role-management capability, which the built-in admin role holds; other members, and callers outside an organization, receive 403, as does a caller for whom organizations are unavailable.
+	//
+	// Takes any type of body and a specified content type.
+	//
+	// Corresponds with PATCH /v2/organization/roles/{id} (the `UpdateOrganizationRole` operationId).
+	UpdateOrganizationRoleWithBody(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// UpdateOrganizationRole Update a custom organization role
+	//
+	// Changes a custom role's name, its capabilities, or both, and returns the role. Sent capabilities replace the whole grant set. Returns 400 for a built-in role, which cannot be changed; 404 when the ID is unknown or names another organization's role; 403 when the caller does not hold every capability the role grants, before or after the change; 409 when the organization already has a role with the new name; and 422 when a capability is unknown or the name is reserved. Updating roles requires the organization's role-management capability, which the built-in admin role holds; other members, and callers outside an organization, receive 403, as does a caller for whom organizations are unavailable.
+	//
+	// Takes a body of the `application/json` content type.
+	//
+	// Corresponds with PATCH /v2/organization/roles/{id} (the `UpdateOrganizationRole` operationId).
+	UpdateOrganizationRole(ctx context.Context, id string, body UpdateOrganizationRoleJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ListOrganizationUsers List organization members
+	//
+	// Returns every member of the authenticated caller's organization with the role each holds. Any member can read the roster. The list is complete and takes no pagination parameters. Returns 404 when the caller does not belong to an organization, or 403 when organizations are unavailable to the caller.
+	//
+	// Corresponds with GET /v2/organization/users (the `ListOrganizationUsers` operationId).
+	ListOrganizationUsers(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// DeleteOrganizationUser Remove an organization member
+	//
+	// Removes one member from the authenticated caller's organization by user ID. Their group memberships end and the API keys attributed to them within the organization are revoked; the resources they created stay with the organization. Removing another member requires the organization's member-removal capability, which the built-in admin role holds; any member can remove themselves. The organization keeps at least one member with the built-in admin role, so removing the last one returns 409. A user who is not a member, including one from another organization, returns 404. A member without the capability removing someone else, a caller outside an organization, and a caller for whom organizations are unavailable receive 403.
+	//
+	// Corresponds with DELETE /v2/organization/users/{id} (the `DeleteOrganizationUser` operationId).
+	DeleteOrganizationUser(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetOrganizationUser Get an organization member
+	//
+	// Returns one member of the authenticated caller's organization by user ID, with the role they hold. Any member can read it. A user who is not a member, including one from another organization, returns 404. Returns 404 when the caller does not belong to an organization, or 403 when organizations are unavailable to the caller.
+	//
+	// Corresponds with GET /v2/organization/users/{id} (the `GetOrganizationUser` operationId).
+	GetOrganizationUser(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// UpdateOrganizationUserWithBody Update an organization member
+	//
+	// Changes one member of the authenticated caller's organization by user ID: assigns a role, replaces their set of groups, or both, applied together or not at all. Send at least one field; an omitted field is left as it is, and an empty `groups` list removes the member from every group. Updating members requires the organization's member-management capability, which the built-in admin role holds; other members, and callers outside an organization, receive 403, as does a caller for whom organizations are unavailable. Returns 403 when the caller changes their own role or assigns a role granting a capability the caller lacks; 409 when the change would leave the organization without a member in the built-in admin role; and 404 when the user is not a member or the role or a group is unknown to the organization, with the detail naming which.
+	//
+	// Takes any type of body and a specified content type.
+	//
+	// Corresponds with PATCH /v2/organization/users/{id} (the `UpdateOrganizationUser` operationId).
+	UpdateOrganizationUserWithBody(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// UpdateOrganizationUser Update an organization member
+	//
+	// Changes one member of the authenticated caller's organization by user ID: assigns a role, replaces their set of groups, or both, applied together or not at all. Send at least one field; an omitted field is left as it is, and an empty `groups` list removes the member from every group. Updating members requires the organization's member-management capability, which the built-in admin role holds; other members, and callers outside an organization, receive 403, as does a caller for whom organizations are unavailable. Returns 403 when the caller changes their own role or assigns a role granting a capability the caller lacks; 409 when the change would leave the organization without a member in the built-in admin role; and 404 when the user is not a member or the role or a group is unknown to the organization, with the detail naming which.
+	//
+	// Takes a body of the `application/json` content type.
+	//
+	// Corresponds with PATCH /v2/organization/users/{id} (the `UpdateOrganizationUser` operationId).
+	UpdateOrganizationUser(ctx context.Context, id string, body UpdateOrganizationUserJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 }
 
 // GetOrganization Get your current organization
@@ -105,6 +366,498 @@ type ClientInterface interface {
 // Corresponds with GET /v2/organization (the `GetOrganization` operationId).
 func (c *Client) GetOrganization(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetOrganizationRequest(c.Server)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// ListOrganizationGroups List groups in your current organization
+//
+// Returns groups without their members or roles, ordered by creation time descending and then ID descending for deterministic pagination.
+//
+// Corresponds with GET /v2/organization/groups (the `ListOrganizationGroups` operationId).
+func (c *Client) ListOrganizationGroups(ctx context.Context, params *ListOrganizationGroupsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListOrganizationGroupsRequest(c.Server, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// CreateOrganizationGroupWithBody Create a group in your current organization
+//
+// Takes any type of body and a specified content type.
+//
+// Corresponds with POST /v2/organization/groups (the `CreateOrganizationGroup` operationId).
+func (c *Client) CreateOrganizationGroupWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateOrganizationGroupRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// CreateOrganizationGroup Create a group in your current organization
+//
+// Takes a body of the `application/json` content type.
+//
+// Corresponds with POST /v2/organization/groups (the `CreateOrganizationGroup` operationId).
+func (c *Client) CreateOrganizationGroup(ctx context.Context, body CreateOrganizationGroupJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateOrganizationGroupRequest(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// DeleteOrganizationGroup Delete a group in your current organization
+//
+// Permanently deletes the group and its group memberships. Organization members are not removed. Returns 404 when the group does not exist in your current organization, including when it has already been deleted.
+//
+// Corresponds with DELETE /v2/organization/groups/{id} (the `DeleteOrganizationGroup` operationId).
+func (c *Client) DeleteOrganizationGroup(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewDeleteOrganizationGroupRequest(c.Server, id)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// GetOrganizationGroup Get a group in your current organization
+//
+// Returns the group without its members. Returns 404 when the ID is unknown or belongs to another organization, or when the caller does not belong to an organization.
+//
+// Corresponds with GET /v2/organization/groups/{id} (the `GetOrganizationGroup` operationId).
+func (c *Client) GetOrganizationGroup(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetOrganizationGroupRequest(c.Server, id)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// UpdateOrganizationGroupWithBody Rename a group in your current organization
+//
+// Takes any type of body and a specified content type.
+//
+// Corresponds with PATCH /v2/organization/groups/{id} (the `UpdateOrganizationGroup` operationId).
+func (c *Client) UpdateOrganizationGroupWithBody(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewUpdateOrganizationGroupRequestWithBody(c.Server, id, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// UpdateOrganizationGroup Rename a group in your current organization
+//
+// Takes a body of the `application/json` content type.
+//
+// Corresponds with PATCH /v2/organization/groups/{id} (the `UpdateOrganizationGroup` operationId).
+func (c *Client) UpdateOrganizationGroup(ctx context.Context, id string, body UpdateOrganizationGroupJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewUpdateOrganizationGroupRequest(c.Server, id, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// ListOrganizationGroupMembers List members of a group
+//
+// Members are ordered newest first by membership creation time, with a unique upstream tie-breaker. Returns 404 when the group does not exist in the current organization, or when the caller does not belong to an organization.
+//
+// Corresponds with GET /v2/organization/groups/{id}/members (the `ListOrganizationGroupMembers` operationId).
+func (c *Client) ListOrganizationGroupMembers(ctx context.Context, id string, params *ListOrganizationGroupMembersParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListOrganizationGroupMembersRequest(c.Server, id, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// RemoveOrganizationGroupMember Remove a member from a group
+//
+// Removes the organization member from the group. The group and user must belong to the current organization. Returns 404 when the membership is absent, including repeated deletion, or when the group is unknown or belongs to another organization.
+//
+// Corresponds with DELETE /v2/organization/groups/{id}/members/{userId} (the `RemoveOrganizationGroupMember` operationId).
+func (c *Client) RemoveOrganizationGroupMember(ctx context.Context, id string, userId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewRemoveOrganizationGroupMemberRequest(c.Server, id, userId)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// AddOrganizationGroupMember Add a member to a group
+//
+// Adds the organization member to the group. The group and user must belong to the current organization. Adding an existing member is idempotent and returns the same no-content response.
+//
+// Corresponds with PUT /v2/organization/groups/{id}/members/{userId} (the `AddOrganizationGroupMember` operationId).
+func (c *Client) AddOrganizationGroupMember(ctx context.Context, id string, userId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewAddOrganizationGroupMemberRequest(c.Server, id, userId)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// ListOrganizationInvites List pending organization invites
+//
+// Returns the pending invitations to the authenticated caller's organization, newest first. Only unexpired invites are pending: an invite leaves the list once it is accepted, revoked or expired. The list is complete and takes no pagination parameters, because an organization's pending invites are capped. Reading invites requires the organization's invite-management capability, which the built-in admin role holds; other members receive 403. Returns 404 when the caller does not belong to an organization, or 403 when organizations are unavailable to the caller.
+//
+// Corresponds with GET /v2/organization/invites (the `ListOrganizationInvites` operationId).
+func (c *Client) ListOrganizationInvites(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListOrganizationInvitesRequest(c.Server)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// CreateOrganizationInviteWithBody Invite a user to your organization
+//
+// Sends an invitation to join the authenticated caller's organization and returns the pending invite; `expiresAt` is when it lapses. The invitee receives an email carrying the acceptance link, which is never returned here. Returns 409 when the address already belongs to a member or to a pending invite, or when the organization has reached its pending-invite limit; 404 when the role is unknown to the organization; and 403 when the caller does not hold every capability the role grants. Inviting requires the organization's invite-management capability, which the built-in admin role holds; other members, and callers outside an organization, receive 403, as does a caller for whom organizations are unavailable.
+//
+// Takes any type of body and a specified content type.
+//
+// Corresponds with POST /v2/organization/invites (the `CreateOrganizationInvite` operationId).
+func (c *Client) CreateOrganizationInviteWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateOrganizationInviteRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// CreateOrganizationInvite Invite a user to your organization
+//
+// Sends an invitation to join the authenticated caller's organization and returns the pending invite; `expiresAt` is when it lapses. The invitee receives an email carrying the acceptance link, which is never returned here. Returns 409 when the address already belongs to a member or to a pending invite, or when the organization has reached its pending-invite limit; 404 when the role is unknown to the organization; and 403 when the caller does not hold every capability the role grants. Inviting requires the organization's invite-management capability, which the built-in admin role holds; other members, and callers outside an organization, receive 403, as does a caller for whom organizations are unavailable.
+//
+// Takes a body of the `application/json` content type.
+//
+// Corresponds with POST /v2/organization/invites (the `CreateOrganizationInvite` operationId).
+func (c *Client) CreateOrganizationInvite(ctx context.Context, body CreateOrganizationInviteJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateOrganizationInviteRequest(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// DeleteOrganizationInvite Cancel an organization invite
+//
+// Cancels one invitation to the authenticated caller's organization; the invitee can no longer accept it. Returns 404 when the ID is unknown to the caller's organization: never issued, already accepted, already cancelled, or issued by another organization. An expired invite can still be cancelled. Cancelling invites requires the organization's invite-management capability, which the built-in admin role holds; other members, and callers outside an organization, receive 403, as does a caller for whom organizations are unavailable.
+//
+// Corresponds with DELETE /v2/organization/invites/{id} (the `DeleteOrganizationInvite` operationId).
+func (c *Client) DeleteOrganizationInvite(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewDeleteOrganizationInviteRequest(c.Server, id)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// GetOrganizationInvite Get a pending organization invite
+//
+// Returns one pending invitation to the authenticated caller's organization. Only unexpired invites are pending: an invite that has expired, been accepted or been revoked returns 404, as does an ID from another organization. Reading invites requires the organization's invite-management capability, which the built-in admin role holds; other members receive 403. Returns 404 when the caller does not belong to an organization, or 403 when organizations are unavailable to the caller.
+//
+// Corresponds with GET /v2/organization/invites/{id} (the `GetOrganizationInvite` operationId).
+func (c *Client) GetOrganizationInvite(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetOrganizationInviteRequest(c.Server, id)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// ListOrganizationRoles List organization roles
+//
+// Returns every role a member or invite of the authenticated caller's organization can hold: Runpod's built-in roles and the organization's custom roles, oldest first. The list is complete and takes no pagination parameters, because an organization's custom roles are capped. Returns 404 when the caller does not belong to an organization, or 403 when organizations are unavailable to the caller.
+//
+// Corresponds with GET /v2/organization/roles (the `ListOrganizationRoles` operationId).
+func (c *Client) ListOrganizationRoles(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListOrganizationRolesRequest(c.Server)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// CreateOrganizationRoleWithBody Create a custom organization role
+//
+// Creates a custom role in the authenticated caller's organization and returns it. Returns 409 when the organization already has a role with this name or has reached its custom-role limit; 422 when a capability is unknown or the name is reserved; and 403 when the caller does not hold every capability the role grants. Creating roles requires the organization's role-management capability, which the built-in admin role holds; other members, and callers outside an organization, receive 403, as does a caller for whom organizations are unavailable.
+//
+// Takes any type of body and a specified content type.
+//
+// Corresponds with POST /v2/organization/roles (the `CreateOrganizationRole` operationId).
+func (c *Client) CreateOrganizationRoleWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateOrganizationRoleRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// CreateOrganizationRole Create a custom organization role
+//
+// Creates a custom role in the authenticated caller's organization and returns it. Returns 409 when the organization already has a role with this name or has reached its custom-role limit; 422 when a capability is unknown or the name is reserved; and 403 when the caller does not hold every capability the role grants. Creating roles requires the organization's role-management capability, which the built-in admin role holds; other members, and callers outside an organization, receive 403, as does a caller for whom organizations are unavailable.
+//
+// Takes a body of the `application/json` content type.
+//
+// Corresponds with POST /v2/organization/roles (the `CreateOrganizationRole` operationId).
+func (c *Client) CreateOrganizationRole(ctx context.Context, body CreateOrganizationRoleJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateOrganizationRoleRequest(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// GetOrganizationRoleCapabilities List grantable role capabilities
+//
+// Returns the capabilities a custom role can grant, grouped by family: each capability is a family and one of its verbs, written `FAMILY:VERB`. This is the set role creation accepts, not filtered to the caller's own access; saving a role also requires the caller to hold every capability it grants. `family` and `verb` narrow the result and apply together; with neither, the whole catalog is returned. Reading the catalog requires organization membership; other callers receive 403.
+//
+// Corresponds with GET /v2/organization/roles/capabilities (the `GetOrganizationRoleCapabilities` operationId).
+func (c *Client) GetOrganizationRoleCapabilities(ctx context.Context, params *GetOrganizationRoleCapabilitiesParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetOrganizationRoleCapabilitiesRequest(c.Server, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// DeleteOrganizationRole Delete a custom organization role
+//
+// Deletes a custom role from the authenticated caller's organization. Returns 409 while a member or a pending invite holds the role: reassign those members and cancel those invites first, since deleting never changes anyone's role. Expired invites do not block deletion. Returns 400 for a built-in role, which cannot be deleted; 404 when the ID is unknown, names another organization's role, or was already deleted. Deleting roles requires the organization's role-management capability, which the built-in admin role holds; other members, and callers outside an organization, receive 403, as does a caller for whom organizations are unavailable.
+//
+// Corresponds with DELETE /v2/organization/roles/{id} (the `DeleteOrganizationRole` operationId).
+func (c *Client) DeleteOrganizationRole(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewDeleteOrganizationRoleRequest(c.Server, id)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// GetOrganizationRole Get an organization role
+//
+// Returns one role a member or invite of the authenticated caller's organization can hold: a built-in role, or one of the organization's custom roles. Returns 404 when the ID is unknown or names another organization's custom role, or when the caller does not belong to an organization; 403 when the caller may not view the organization's roles or organizations are unavailable to the caller.
+//
+// Corresponds with GET /v2/organization/roles/{id} (the `GetOrganizationRole` operationId).
+func (c *Client) GetOrganizationRole(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetOrganizationRoleRequest(c.Server, id)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// UpdateOrganizationRoleWithBody Update a custom organization role
+//
+// Changes a custom role's name, its capabilities, or both, and returns the role. Sent capabilities replace the whole grant set. Returns 400 for a built-in role, which cannot be changed; 404 when the ID is unknown or names another organization's role; 403 when the caller does not hold every capability the role grants, before or after the change; 409 when the organization already has a role with the new name; and 422 when a capability is unknown or the name is reserved. Updating roles requires the organization's role-management capability, which the built-in admin role holds; other members, and callers outside an organization, receive 403, as does a caller for whom organizations are unavailable.
+//
+// Takes any type of body and a specified content type.
+//
+// Corresponds with PATCH /v2/organization/roles/{id} (the `UpdateOrganizationRole` operationId).
+func (c *Client) UpdateOrganizationRoleWithBody(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewUpdateOrganizationRoleRequestWithBody(c.Server, id, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// UpdateOrganizationRole Update a custom organization role
+//
+// Changes a custom role's name, its capabilities, or both, and returns the role. Sent capabilities replace the whole grant set. Returns 400 for a built-in role, which cannot be changed; 404 when the ID is unknown or names another organization's role; 403 when the caller does not hold every capability the role grants, before or after the change; 409 when the organization already has a role with the new name; and 422 when a capability is unknown or the name is reserved. Updating roles requires the organization's role-management capability, which the built-in admin role holds; other members, and callers outside an organization, receive 403, as does a caller for whom organizations are unavailable.
+//
+// Takes a body of the `application/json` content type.
+//
+// Corresponds with PATCH /v2/organization/roles/{id} (the `UpdateOrganizationRole` operationId).
+func (c *Client) UpdateOrganizationRole(ctx context.Context, id string, body UpdateOrganizationRoleJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewUpdateOrganizationRoleRequest(c.Server, id, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// ListOrganizationUsers List organization members
+//
+// Returns every member of the authenticated caller's organization with the role each holds. Any member can read the roster. The list is complete and takes no pagination parameters. Returns 404 when the caller does not belong to an organization, or 403 when organizations are unavailable to the caller.
+//
+// Corresponds with GET /v2/organization/users (the `ListOrganizationUsers` operationId).
+func (c *Client) ListOrganizationUsers(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListOrganizationUsersRequest(c.Server)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// DeleteOrganizationUser Remove an organization member
+//
+// Removes one member from the authenticated caller's organization by user ID. Their group memberships end and the API keys attributed to them within the organization are revoked; the resources they created stay with the organization. Removing another member requires the organization's member-removal capability, which the built-in admin role holds; any member can remove themselves. The organization keeps at least one member with the built-in admin role, so removing the last one returns 409. A user who is not a member, including one from another organization, returns 404. A member without the capability removing someone else, a caller outside an organization, and a caller for whom organizations are unavailable receive 403.
+//
+// Corresponds with DELETE /v2/organization/users/{id} (the `DeleteOrganizationUser` operationId).
+func (c *Client) DeleteOrganizationUser(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewDeleteOrganizationUserRequest(c.Server, id)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// GetOrganizationUser Get an organization member
+//
+// Returns one member of the authenticated caller's organization by user ID, with the role they hold. Any member can read it. A user who is not a member, including one from another organization, returns 404. Returns 404 when the caller does not belong to an organization, or 403 when organizations are unavailable to the caller.
+//
+// Corresponds with GET /v2/organization/users/{id} (the `GetOrganizationUser` operationId).
+func (c *Client) GetOrganizationUser(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetOrganizationUserRequest(c.Server, id)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// UpdateOrganizationUserWithBody Update an organization member
+//
+// Changes one member of the authenticated caller's organization by user ID: assigns a role, replaces their set of groups, or both, applied together or not at all. Send at least one field; an omitted field is left as it is, and an empty `groups` list removes the member from every group. Updating members requires the organization's member-management capability, which the built-in admin role holds; other members, and callers outside an organization, receive 403, as does a caller for whom organizations are unavailable. Returns 403 when the caller changes their own role or assigns a role granting a capability the caller lacks; 409 when the change would leave the organization without a member in the built-in admin role; and 404 when the user is not a member or the role or a group is unknown to the organization, with the detail naming which.
+//
+// Takes any type of body and a specified content type.
+//
+// Corresponds with PATCH /v2/organization/users/{id} (the `UpdateOrganizationUser` operationId).
+func (c *Client) UpdateOrganizationUserWithBody(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewUpdateOrganizationUserRequestWithBody(c.Server, id, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// UpdateOrganizationUser Update an organization member
+//
+// Changes one member of the authenticated caller's organization by user ID: assigns a role, replaces their set of groups, or both, applied together or not at all. Send at least one field; an omitted field is left as it is, and an empty `groups` list removes the member from every group. Updating members requires the organization's member-management capability, which the built-in admin role holds; other members, and callers outside an organization, receive 403, as does a caller for whom organizations are unavailable. Returns 403 when the caller changes their own role or assigns a role granting a capability the caller lacks; 409 when the change would leave the organization without a member in the built-in admin role; and 404 when the user is not a member or the role or a group is unknown to the organization, with the detail naming which.
+//
+// Takes a body of the `application/json` content type.
+//
+// Corresponds with PATCH /v2/organization/users/{id} (the `UpdateOrganizationUser` operationId).
+func (c *Client) UpdateOrganizationUser(ctx context.Context, id string, body UpdateOrganizationUserJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewUpdateOrganizationUserRequest(c.Server, id, body)
 	if err != nil {
 		return nil, err
 	}
@@ -138,6 +891,919 @@ func NewGetOrganizationRequest(server string) (*http.Request, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	return req, nil
+}
+
+// NewListOrganizationGroupsRequest constructs an http.Request for the ListOrganizationGroups method
+func NewListOrganizationGroupsRequest(server string, params *ListOrganizationGroupsParams) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v2/organization/groups")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		// queryValues collects non-styled parameters (passthrough, JSON)
+		// that are safe to round-trip through url.Values.Encode().
+		queryValues := queryURL.Query()
+		// rawQueryFragments collects pre-encoded query fragments from
+		// styled parameters, preserving literal commas as delimiters
+		// per the OpenAPI spec (e.g. "color=blue,black,brown").
+		var rawQueryFragments []string
+
+		if params.Name != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "name", *params.Name, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.Cursor != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "cursor", *params.Cursor, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.Limit != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "limit", *params.Limit, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if encoded := queryValues.Encode(); encoded != "" {
+			rawQueryFragments = append(rawQueryFragments, encoded)
+		}
+		queryURL.RawQuery = strings.Join(rawQueryFragments, "&")
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewCreateOrganizationGroupRequest calls the generic CreateOrganizationGroup builder with application/json body
+func NewCreateOrganizationGroupRequest(server string, body CreateOrganizationGroupJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewCreateOrganizationGroupRequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewCreateOrganizationGroupRequestWithBody constructs an http.Request for the CreateOrganizationGroup method, with any body, and a specified content type
+func NewCreateOrganizationGroupRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v2/organization/groups")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewDeleteOrganizationGroupRequest constructs an http.Request for the DeleteOrganizationGroup method
+func NewDeleteOrganizationGroupRequest(server string, id string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "id", id, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v2/organization/groups/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodDelete, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewGetOrganizationGroupRequest constructs an http.Request for the GetOrganizationGroup method
+func NewGetOrganizationGroupRequest(server string, id string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "id", id, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v2/organization/groups/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewUpdateOrganizationGroupRequest calls the generic UpdateOrganizationGroup builder with application/json body
+func NewUpdateOrganizationGroupRequest(server string, id string, body UpdateOrganizationGroupJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewUpdateOrganizationGroupRequestWithBody(server, id, "application/json", bodyReader)
+}
+
+// NewUpdateOrganizationGroupRequestWithBody constructs an http.Request for the UpdateOrganizationGroup method, with any body, and a specified content type
+func NewUpdateOrganizationGroupRequestWithBody(server string, id string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "id", id, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v2/organization/groups/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPatch, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewListOrganizationGroupMembersRequest constructs an http.Request for the ListOrganizationGroupMembers method
+func NewListOrganizationGroupMembersRequest(server string, id string, params *ListOrganizationGroupMembersParams) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "id", id, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v2/organization/groups/%s/members", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		// queryValues collects non-styled parameters (passthrough, JSON)
+		// that are safe to round-trip through url.Values.Encode().
+		queryValues := queryURL.Query()
+		// rawQueryFragments collects pre-encoded query fragments from
+		// styled parameters, preserving literal commas as delimiters
+		// per the OpenAPI spec (e.g. "color=blue,black,brown").
+		var rawQueryFragments []string
+
+		if params.Cursor != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "cursor", *params.Cursor, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.Limit != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "limit", *params.Limit, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if encoded := queryValues.Encode(); encoded != "" {
+			rawQueryFragments = append(rawQueryFragments, encoded)
+		}
+		queryURL.RawQuery = strings.Join(rawQueryFragments, "&")
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewRemoveOrganizationGroupMemberRequest constructs an http.Request for the RemoveOrganizationGroupMember method
+func NewRemoveOrganizationGroupMemberRequest(server string, id string, userId string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "id", id, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithOptions("simple", false, "userId", userId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v2/organization/groups/%s/members/%s", pathParam0, pathParam1)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodDelete, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewAddOrganizationGroupMemberRequest constructs an http.Request for the AddOrganizationGroupMember method
+func NewAddOrganizationGroupMemberRequest(server string, id string, userId string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "id", id, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithOptions("simple", false, "userId", userId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v2/organization/groups/%s/members/%s", pathParam0, pathParam1)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPut, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewListOrganizationInvitesRequest constructs an http.Request for the ListOrganizationInvites method
+func NewListOrganizationInvitesRequest(server string) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v2/organization/invites")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewCreateOrganizationInviteRequest calls the generic CreateOrganizationInvite builder with application/json body
+func NewCreateOrganizationInviteRequest(server string, body CreateOrganizationInviteJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewCreateOrganizationInviteRequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewCreateOrganizationInviteRequestWithBody constructs an http.Request for the CreateOrganizationInvite method, with any body, and a specified content type
+func NewCreateOrganizationInviteRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v2/organization/invites")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewDeleteOrganizationInviteRequest constructs an http.Request for the DeleteOrganizationInvite method
+func NewDeleteOrganizationInviteRequest(server string, id string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "id", id, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v2/organization/invites/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodDelete, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewGetOrganizationInviteRequest constructs an http.Request for the GetOrganizationInvite method
+func NewGetOrganizationInviteRequest(server string, id string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "id", id, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v2/organization/invites/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewListOrganizationRolesRequest constructs an http.Request for the ListOrganizationRoles method
+func NewListOrganizationRolesRequest(server string) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v2/organization/roles")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewCreateOrganizationRoleRequest calls the generic CreateOrganizationRole builder with application/json body
+func NewCreateOrganizationRoleRequest(server string, body CreateOrganizationRoleJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewCreateOrganizationRoleRequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewCreateOrganizationRoleRequestWithBody constructs an http.Request for the CreateOrganizationRole method, with any body, and a specified content type
+func NewCreateOrganizationRoleRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v2/organization/roles")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewGetOrganizationRoleCapabilitiesRequest constructs an http.Request for the GetOrganizationRoleCapabilities method
+func NewGetOrganizationRoleCapabilitiesRequest(server string, params *GetOrganizationRoleCapabilitiesParams) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v2/organization/roles/capabilities")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		// queryValues collects non-styled parameters (passthrough, JSON)
+		// that are safe to round-trip through url.Values.Encode().
+		queryValues := queryURL.Query()
+		// rawQueryFragments collects pre-encoded query fragments from
+		// styled parameters, preserving literal commas as delimiters
+		// per the OpenAPI spec (e.g. "color=blue,black,brown").
+		var rawQueryFragments []string
+
+		if params.Family != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", false, "family", *params.Family, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "array", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.Verb != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", false, "verb", *params.Verb, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "array", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if encoded := queryValues.Encode(); encoded != "" {
+			rawQueryFragments = append(rawQueryFragments, encoded)
+		}
+		queryURL.RawQuery = strings.Join(rawQueryFragments, "&")
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewDeleteOrganizationRoleRequest constructs an http.Request for the DeleteOrganizationRole method
+func NewDeleteOrganizationRoleRequest(server string, id string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "id", id, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v2/organization/roles/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodDelete, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewGetOrganizationRoleRequest constructs an http.Request for the GetOrganizationRole method
+func NewGetOrganizationRoleRequest(server string, id string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "id", id, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v2/organization/roles/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewUpdateOrganizationRoleRequest calls the generic UpdateOrganizationRole builder with application/json body
+func NewUpdateOrganizationRoleRequest(server string, id string, body UpdateOrganizationRoleJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewUpdateOrganizationRoleRequestWithBody(server, id, "application/json", bodyReader)
+}
+
+// NewUpdateOrganizationRoleRequestWithBody constructs an http.Request for the UpdateOrganizationRole method, with any body, and a specified content type
+func NewUpdateOrganizationRoleRequestWithBody(server string, id string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "id", id, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v2/organization/roles/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPatch, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewListOrganizationUsersRequest constructs an http.Request for the ListOrganizationUsers method
+func NewListOrganizationUsersRequest(server string) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v2/organization/users")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewDeleteOrganizationUserRequest constructs an http.Request for the DeleteOrganizationUser method
+func NewDeleteOrganizationUserRequest(server string, id string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "id", id, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v2/organization/users/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodDelete, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewGetOrganizationUserRequest constructs an http.Request for the GetOrganizationUser method
+func NewGetOrganizationUserRequest(server string, id string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "id", id, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v2/organization/users/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewUpdateOrganizationUserRequest calls the generic UpdateOrganizationUser builder with application/json body
+func NewUpdateOrganizationUserRequest(server string, id string, body UpdateOrganizationUserJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewUpdateOrganizationUserRequestWithBody(server, id, "application/json", bodyReader)
+}
+
+// NewUpdateOrganizationUserRequestWithBody constructs an http.Request for the UpdateOrganizationUser method, with any body, and a specified content type
+func NewUpdateOrganizationUserRequestWithBody(server string, id string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "id", id, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v2/organization/users/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPatch, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
 
 	return req, nil
 }
@@ -194,6 +1860,250 @@ type ClientWithResponsesInterface interface {
 	//
 	// Corresponds with GET /v2/organization (the `GetOrganization` operationId).
 	GetOrganizationWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetOrganizationResult, error)
+
+	// ListOrganizationGroupsWithResponse List groups in your current organization
+	//
+	// Returns groups without their members or roles, ordered by creation time descending and then ID descending for deterministic pagination.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /v2/organization/groups (the `ListOrganizationGroups` operationId).
+	ListOrganizationGroupsWithResponse(ctx context.Context, params *ListOrganizationGroupsParams, reqEditors ...RequestEditorFn) (*ListOrganizationGroupsResult, error)
+
+	// CreateOrganizationGroupWithBodyWithResponse Create a group in your current organization
+	//
+	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /v2/organization/groups (the `CreateOrganizationGroup` operationId).
+	CreateOrganizationGroupWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateOrganizationGroupResult, error)
+
+	// CreateOrganizationGroupWithResponse Create a group in your current organization
+	//
+	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /v2/organization/groups (the `CreateOrganizationGroup` operationId).
+	CreateOrganizationGroupWithResponse(ctx context.Context, body CreateOrganizationGroupJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateOrganizationGroupResult, error)
+
+	// DeleteOrganizationGroupWithResponse Delete a group in your current organization
+	//
+	// Permanently deletes the group and its group memberships. Organization members are not removed. Returns 404 when the group does not exist in your current organization, including when it has already been deleted.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with DELETE /v2/organization/groups/{id} (the `DeleteOrganizationGroup` operationId).
+	DeleteOrganizationGroupWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*DeleteOrganizationGroupResult, error)
+
+	// GetOrganizationGroupWithResponse Get a group in your current organization
+	//
+	// Returns the group without its members. Returns 404 when the ID is unknown or belongs to another organization, or when the caller does not belong to an organization.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /v2/organization/groups/{id} (the `GetOrganizationGroup` operationId).
+	GetOrganizationGroupWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*GetOrganizationGroupResult, error)
+
+	// UpdateOrganizationGroupWithBodyWithResponse Rename a group in your current organization
+	//
+	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with PATCH /v2/organization/groups/{id} (the `UpdateOrganizationGroup` operationId).
+	UpdateOrganizationGroupWithBodyWithResponse(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateOrganizationGroupResult, error)
+
+	// UpdateOrganizationGroupWithResponse Rename a group in your current organization
+	//
+	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with PATCH /v2/organization/groups/{id} (the `UpdateOrganizationGroup` operationId).
+	UpdateOrganizationGroupWithResponse(ctx context.Context, id string, body UpdateOrganizationGroupJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateOrganizationGroupResult, error)
+
+	// ListOrganizationGroupMembersWithResponse List members of a group
+	//
+	// Members are ordered newest first by membership creation time, with a unique upstream tie-breaker. Returns 404 when the group does not exist in the current organization, or when the caller does not belong to an organization.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /v2/organization/groups/{id}/members (the `ListOrganizationGroupMembers` operationId).
+	ListOrganizationGroupMembersWithResponse(ctx context.Context, id string, params *ListOrganizationGroupMembersParams, reqEditors ...RequestEditorFn) (*ListOrganizationGroupMembersResult, error)
+
+	// RemoveOrganizationGroupMemberWithResponse Remove a member from a group
+	//
+	// Removes the organization member from the group. The group and user must belong to the current organization. Returns 404 when the membership is absent, including repeated deletion, or when the group is unknown or belongs to another organization.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with DELETE /v2/organization/groups/{id}/members/{userId} (the `RemoveOrganizationGroupMember` operationId).
+	RemoveOrganizationGroupMemberWithResponse(ctx context.Context, id string, userId string, reqEditors ...RequestEditorFn) (*RemoveOrganizationGroupMemberResult, error)
+
+	// AddOrganizationGroupMemberWithResponse Add a member to a group
+	//
+	// Adds the organization member to the group. The group and user must belong to the current organization. Adding an existing member is idempotent and returns the same no-content response.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with PUT /v2/organization/groups/{id}/members/{userId} (the `AddOrganizationGroupMember` operationId).
+	AddOrganizationGroupMemberWithResponse(ctx context.Context, id string, userId string, reqEditors ...RequestEditorFn) (*AddOrganizationGroupMemberResult, error)
+
+	// ListOrganizationInvitesWithResponse List pending organization invites
+	//
+	// Returns the pending invitations to the authenticated caller's organization, newest first. Only unexpired invites are pending: an invite leaves the list once it is accepted, revoked or expired. The list is complete and takes no pagination parameters, because an organization's pending invites are capped. Reading invites requires the organization's invite-management capability, which the built-in admin role holds; other members receive 403. Returns 404 when the caller does not belong to an organization, or 403 when organizations are unavailable to the caller.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /v2/organization/invites (the `ListOrganizationInvites` operationId).
+	ListOrganizationInvitesWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListOrganizationInvitesResult, error)
+
+	// CreateOrganizationInviteWithBodyWithResponse Invite a user to your organization
+	//
+	// Sends an invitation to join the authenticated caller's organization and returns the pending invite; `expiresAt` is when it lapses. The invitee receives an email carrying the acceptance link, which is never returned here. Returns 409 when the address already belongs to a member or to a pending invite, or when the organization has reached its pending-invite limit; 404 when the role is unknown to the organization; and 403 when the caller does not hold every capability the role grants. Inviting requires the organization's invite-management capability, which the built-in admin role holds; other members, and callers outside an organization, receive 403, as does a caller for whom organizations are unavailable.
+	//
+	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /v2/organization/invites (the `CreateOrganizationInvite` operationId).
+	CreateOrganizationInviteWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateOrganizationInviteResult, error)
+
+	// CreateOrganizationInviteWithResponse Invite a user to your organization
+	//
+	// Sends an invitation to join the authenticated caller's organization and returns the pending invite; `expiresAt` is when it lapses. The invitee receives an email carrying the acceptance link, which is never returned here. Returns 409 when the address already belongs to a member or to a pending invite, or when the organization has reached its pending-invite limit; 404 when the role is unknown to the organization; and 403 when the caller does not hold every capability the role grants. Inviting requires the organization's invite-management capability, which the built-in admin role holds; other members, and callers outside an organization, receive 403, as does a caller for whom organizations are unavailable.
+	//
+	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /v2/organization/invites (the `CreateOrganizationInvite` operationId).
+	CreateOrganizationInviteWithResponse(ctx context.Context, body CreateOrganizationInviteJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateOrganizationInviteResult, error)
+
+	// DeleteOrganizationInviteWithResponse Cancel an organization invite
+	//
+	// Cancels one invitation to the authenticated caller's organization; the invitee can no longer accept it. Returns 404 when the ID is unknown to the caller's organization: never issued, already accepted, already cancelled, or issued by another organization. An expired invite can still be cancelled. Cancelling invites requires the organization's invite-management capability, which the built-in admin role holds; other members, and callers outside an organization, receive 403, as does a caller for whom organizations are unavailable.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with DELETE /v2/organization/invites/{id} (the `DeleteOrganizationInvite` operationId).
+	DeleteOrganizationInviteWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*DeleteOrganizationInviteResult, error)
+
+	// GetOrganizationInviteWithResponse Get a pending organization invite
+	//
+	// Returns one pending invitation to the authenticated caller's organization. Only unexpired invites are pending: an invite that has expired, been accepted or been revoked returns 404, as does an ID from another organization. Reading invites requires the organization's invite-management capability, which the built-in admin role holds; other members receive 403. Returns 404 when the caller does not belong to an organization, or 403 when organizations are unavailable to the caller.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /v2/organization/invites/{id} (the `GetOrganizationInvite` operationId).
+	GetOrganizationInviteWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*GetOrganizationInviteResult, error)
+
+	// ListOrganizationRolesWithResponse List organization roles
+	//
+	// Returns every role a member or invite of the authenticated caller's organization can hold: Runpod's built-in roles and the organization's custom roles, oldest first. The list is complete and takes no pagination parameters, because an organization's custom roles are capped. Returns 404 when the caller does not belong to an organization, or 403 when organizations are unavailable to the caller.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /v2/organization/roles (the `ListOrganizationRoles` operationId).
+	ListOrganizationRolesWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListOrganizationRolesResult, error)
+
+	// CreateOrganizationRoleWithBodyWithResponse Create a custom organization role
+	//
+	// Creates a custom role in the authenticated caller's organization and returns it. Returns 409 when the organization already has a role with this name or has reached its custom-role limit; 422 when a capability is unknown or the name is reserved; and 403 when the caller does not hold every capability the role grants. Creating roles requires the organization's role-management capability, which the built-in admin role holds; other members, and callers outside an organization, receive 403, as does a caller for whom organizations are unavailable.
+	//
+	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /v2/organization/roles (the `CreateOrganizationRole` operationId).
+	CreateOrganizationRoleWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateOrganizationRoleResult, error)
+
+	// CreateOrganizationRoleWithResponse Create a custom organization role
+	//
+	// Creates a custom role in the authenticated caller's organization and returns it. Returns 409 when the organization already has a role with this name or has reached its custom-role limit; 422 when a capability is unknown or the name is reserved; and 403 when the caller does not hold every capability the role grants. Creating roles requires the organization's role-management capability, which the built-in admin role holds; other members, and callers outside an organization, receive 403, as does a caller for whom organizations are unavailable.
+	//
+	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /v2/organization/roles (the `CreateOrganizationRole` operationId).
+	CreateOrganizationRoleWithResponse(ctx context.Context, body CreateOrganizationRoleJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateOrganizationRoleResult, error)
+
+	// GetOrganizationRoleCapabilitiesWithResponse List grantable role capabilities
+	//
+	// Returns the capabilities a custom role can grant, grouped by family: each capability is a family and one of its verbs, written `FAMILY:VERB`. This is the set role creation accepts, not filtered to the caller's own access; saving a role also requires the caller to hold every capability it grants. `family` and `verb` narrow the result and apply together; with neither, the whole catalog is returned. Reading the catalog requires organization membership; other callers receive 403.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /v2/organization/roles/capabilities (the `GetOrganizationRoleCapabilities` operationId).
+	GetOrganizationRoleCapabilitiesWithResponse(ctx context.Context, params *GetOrganizationRoleCapabilitiesParams, reqEditors ...RequestEditorFn) (*GetOrganizationRoleCapabilitiesResult, error)
+
+	// DeleteOrganizationRoleWithResponse Delete a custom organization role
+	//
+	// Deletes a custom role from the authenticated caller's organization. Returns 409 while a member or a pending invite holds the role: reassign those members and cancel those invites first, since deleting never changes anyone's role. Expired invites do not block deletion. Returns 400 for a built-in role, which cannot be deleted; 404 when the ID is unknown, names another organization's role, or was already deleted. Deleting roles requires the organization's role-management capability, which the built-in admin role holds; other members, and callers outside an organization, receive 403, as does a caller for whom organizations are unavailable.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with DELETE /v2/organization/roles/{id} (the `DeleteOrganizationRole` operationId).
+	DeleteOrganizationRoleWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*DeleteOrganizationRoleResult, error)
+
+	// GetOrganizationRoleWithResponse Get an organization role
+	//
+	// Returns one role a member or invite of the authenticated caller's organization can hold: a built-in role, or one of the organization's custom roles. Returns 404 when the ID is unknown or names another organization's custom role, or when the caller does not belong to an organization; 403 when the caller may not view the organization's roles or organizations are unavailable to the caller.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /v2/organization/roles/{id} (the `GetOrganizationRole` operationId).
+	GetOrganizationRoleWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*GetOrganizationRoleResult, error)
+
+	// UpdateOrganizationRoleWithBodyWithResponse Update a custom organization role
+	//
+	// Changes a custom role's name, its capabilities, or both, and returns the role. Sent capabilities replace the whole grant set. Returns 400 for a built-in role, which cannot be changed; 404 when the ID is unknown or names another organization's role; 403 when the caller does not hold every capability the role grants, before or after the change; 409 when the organization already has a role with the new name; and 422 when a capability is unknown or the name is reserved. Updating roles requires the organization's role-management capability, which the built-in admin role holds; other members, and callers outside an organization, receive 403, as does a caller for whom organizations are unavailable.
+	//
+	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with PATCH /v2/organization/roles/{id} (the `UpdateOrganizationRole` operationId).
+	UpdateOrganizationRoleWithBodyWithResponse(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateOrganizationRoleResult, error)
+
+	// UpdateOrganizationRoleWithResponse Update a custom organization role
+	//
+	// Changes a custom role's name, its capabilities, or both, and returns the role. Sent capabilities replace the whole grant set. Returns 400 for a built-in role, which cannot be changed; 404 when the ID is unknown or names another organization's role; 403 when the caller does not hold every capability the role grants, before or after the change; 409 when the organization already has a role with the new name; and 422 when a capability is unknown or the name is reserved. Updating roles requires the organization's role-management capability, which the built-in admin role holds; other members, and callers outside an organization, receive 403, as does a caller for whom organizations are unavailable.
+	//
+	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with PATCH /v2/organization/roles/{id} (the `UpdateOrganizationRole` operationId).
+	UpdateOrganizationRoleWithResponse(ctx context.Context, id string, body UpdateOrganizationRoleJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateOrganizationRoleResult, error)
+
+	// ListOrganizationUsersWithResponse List organization members
+	//
+	// Returns every member of the authenticated caller's organization with the role each holds. Any member can read the roster. The list is complete and takes no pagination parameters. Returns 404 when the caller does not belong to an organization, or 403 when organizations are unavailable to the caller.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /v2/organization/users (the `ListOrganizationUsers` operationId).
+	ListOrganizationUsersWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListOrganizationUsersResult, error)
+
+	// DeleteOrganizationUserWithResponse Remove an organization member
+	//
+	// Removes one member from the authenticated caller's organization by user ID. Their group memberships end and the API keys attributed to them within the organization are revoked; the resources they created stay with the organization. Removing another member requires the organization's member-removal capability, which the built-in admin role holds; any member can remove themselves. The organization keeps at least one member with the built-in admin role, so removing the last one returns 409. A user who is not a member, including one from another organization, returns 404. A member without the capability removing someone else, a caller outside an organization, and a caller for whom organizations are unavailable receive 403.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with DELETE /v2/organization/users/{id} (the `DeleteOrganizationUser` operationId).
+	DeleteOrganizationUserWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*DeleteOrganizationUserResult, error)
+
+	// GetOrganizationUserWithResponse Get an organization member
+	//
+	// Returns one member of the authenticated caller's organization by user ID, with the role they hold. Any member can read it. A user who is not a member, including one from another organization, returns 404. Returns 404 when the caller does not belong to an organization, or 403 when organizations are unavailable to the caller.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /v2/organization/users/{id} (the `GetOrganizationUser` operationId).
+	GetOrganizationUserWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*GetOrganizationUserResult, error)
+
+	// UpdateOrganizationUserWithBodyWithResponse Update an organization member
+	//
+	// Changes one member of the authenticated caller's organization by user ID: assigns a role, replaces their set of groups, or both, applied together or not at all. Send at least one field; an omitted field is left as it is, and an empty `groups` list removes the member from every group. Updating members requires the organization's member-management capability, which the built-in admin role holds; other members, and callers outside an organization, receive 403, as does a caller for whom organizations are unavailable. Returns 403 when the caller changes their own role or assigns a role granting a capability the caller lacks; 409 when the change would leave the organization without a member in the built-in admin role; and 404 when the user is not a member or the role or a group is unknown to the organization, with the detail naming which.
+	//
+	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with PATCH /v2/organization/users/{id} (the `UpdateOrganizationUser` operationId).
+	UpdateOrganizationUserWithBodyWithResponse(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateOrganizationUserResult, error)
+
+	// UpdateOrganizationUserWithResponse Update an organization member
+	//
+	// Changes one member of the authenticated caller's organization by user ID: assigns a role, replaces their set of groups, or both, applied together or not at all. Send at least one field; an omitted field is left as it is, and an empty `groups` list removes the member from every group. Updating members requires the organization's member-management capability, which the built-in admin role holds; other members, and callers outside an organization, receive 403, as does a caller for whom organizations are unavailable. Returns 403 when the caller changes their own role or assigns a role granting a capability the caller lacks; 409 when the change would leave the organization without a member in the built-in admin role; and 404 when the user is not a member or the role or a group is unknown to the organization, with the detail naming which.
+	//
+	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with PATCH /v2/organization/users/{id} (the `UpdateOrganizationUser` operationId).
+	UpdateOrganizationUserWithResponse(ctx context.Context, id string, body UpdateOrganizationUserJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateOrganizationUserResult, error)
 }
 
 // GetOrganizationResult200Headers the declared response headers of an HTTP 200 response for GetOrganization
@@ -313,6 +2223,3014 @@ func (r GetOrganizationResult) ContentType() string {
 	return ""
 }
 
+// ListOrganizationGroupsResult200Headers the declared response headers of an HTTP 200 response for ListOrganizationGroups
+type ListOrganizationGroupsResult200Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+// ListOrganizationGroupsResult403Headers the declared response headers of an HTTP 403 response for ListOrganizationGroups
+type ListOrganizationGroupsResult403Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+// ListOrganizationGroupsResult404Headers the declared response headers of an HTTP 404 response for ListOrganizationGroups
+type ListOrganizationGroupsResult404Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+// ListOrganizationGroupsResult413Headers the declared response headers of an HTTP 413 response for ListOrganizationGroups
+type ListOrganizationGroupsResult413Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+// ListOrganizationGroupsResult422Headers the declared response headers of an HTTP 422 response for ListOrganizationGroups
+type ListOrganizationGroupsResult422Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+// ListOrganizationGroupsResult429Headers the declared response headers of an HTTP 429 response for ListOrganizationGroups
+type ListOrganizationGroupsResult429Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+	RetryAfter      *int
+}
+
+// ListOrganizationGroupsResultDefaultHeaders the declared response headers of an HTTP default response for ListOrganizationGroups
+type ListOrganizationGroupsResultDefaultHeaders struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+type ListOrganizationGroupsResult struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *externalRef0.ListOrganizationGroupsResponse
+	// ApplicationproblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationproblemJSON401 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationproblemJSON403 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON404 the response for an HTTP 404 `application/problem+json` response
+	ApplicationproblemJSON404 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON413 the response for an HTTP 413 `application/problem+json` response
+	ApplicationproblemJSON413 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON422 the response for an HTTP 422 `application/problem+json` response
+	ApplicationproblemJSON422 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON429 the response for an HTTP 429 `application/problem+json` response
+	ApplicationproblemJSON429 *externalRef0.ErrorResponse
+	// ApplicationproblemJSONDefault the response for an HTTP default `application/problem+json` response
+	ApplicationproblemJSONDefault *externalRef0.ErrorResponse
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *ListOrganizationGroupsResult200Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *ListOrganizationGroupsResult403Headers
+	// Headers404 the parsed response headers for an HTTP 404 response
+	Headers404 *ListOrganizationGroupsResult404Headers
+	// Headers413 the parsed response headers for an HTTP 413 response
+	Headers413 *ListOrganizationGroupsResult413Headers
+	// Headers422 the parsed response headers for an HTTP 422 response
+	Headers422 *ListOrganizationGroupsResult422Headers
+	// Headers429 the parsed response headers for an HTTP 429 response
+	Headers429 *ListOrganizationGroupsResult429Headers
+	// HeadersDefault the parsed response headers for an HTTP default response
+	HeadersDefault *ListOrganizationGroupsResultDefaultHeaders
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r ListOrganizationGroupsResult) GetJSON200() *externalRef0.ListOrganizationGroupsResponse {
+	return r.JSON200
+}
+
+// GetApplicationproblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r ListOrganizationGroupsResult) GetApplicationproblemJSON401() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON401
+}
+
+// GetApplicationproblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r ListOrganizationGroupsResult) GetApplicationproblemJSON403() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON403
+}
+
+// GetApplicationproblemJSON404 returns the response for an HTTP 404 `application/problem+json` response
+func (r ListOrganizationGroupsResult) GetApplicationproblemJSON404() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON404
+}
+
+// GetApplicationproblemJSON413 returns the response for an HTTP 413 `application/problem+json` response
+func (r ListOrganizationGroupsResult) GetApplicationproblemJSON413() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON413
+}
+
+// GetApplicationproblemJSON422 returns the response for an HTTP 422 `application/problem+json` response
+func (r ListOrganizationGroupsResult) GetApplicationproblemJSON422() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON422
+}
+
+// GetApplicationproblemJSON429 returns the response for an HTTP 429 `application/problem+json` response
+func (r ListOrganizationGroupsResult) GetApplicationproblemJSON429() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON429
+}
+
+// GetApplicationproblemJSONDefault returns the response for an HTTP default `application/problem+json` response
+func (r ListOrganizationGroupsResult) GetApplicationproblemJSONDefault() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSONDefault
+}
+
+// GetBody returns the raw response body bytes
+func (r ListOrganizationGroupsResult) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r ListOrganizationGroupsResult) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ListOrganizationGroupsResult) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r ListOrganizationGroupsResult) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// CreateOrganizationGroupResult201Headers the declared response headers of an HTTP 201 response for CreateOrganizationGroup
+type CreateOrganizationGroupResult201Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+// CreateOrganizationGroupResult400Headers the declared response headers of an HTTP 400 response for CreateOrganizationGroup
+type CreateOrganizationGroupResult400Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+// CreateOrganizationGroupResult403Headers the declared response headers of an HTTP 403 response for CreateOrganizationGroup
+type CreateOrganizationGroupResult403Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+// CreateOrganizationGroupResult413Headers the declared response headers of an HTTP 413 response for CreateOrganizationGroup
+type CreateOrganizationGroupResult413Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+// CreateOrganizationGroupResult422Headers the declared response headers of an HTTP 422 response for CreateOrganizationGroup
+type CreateOrganizationGroupResult422Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+// CreateOrganizationGroupResult429Headers the declared response headers of an HTTP 429 response for CreateOrganizationGroup
+type CreateOrganizationGroupResult429Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+	RetryAfter      *int
+}
+
+// CreateOrganizationGroupResultDefaultHeaders the declared response headers of an HTTP default response for CreateOrganizationGroup
+type CreateOrganizationGroupResultDefaultHeaders struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+type CreateOrganizationGroupResult struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON201 the response for an HTTP 201 `application/json` response
+	JSON201 *externalRef0.OrganizationGroup
+	// ApplicationproblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationproblemJSON400 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationproblemJSON401 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationproblemJSON403 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON409 the response for an HTTP 409 `application/problem+json` response
+	ApplicationproblemJSON409 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON413 the response for an HTTP 413 `application/problem+json` response
+	ApplicationproblemJSON413 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON422 the response for an HTTP 422 `application/problem+json` response
+	ApplicationproblemJSON422 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON429 the response for an HTTP 429 `application/problem+json` response
+	ApplicationproblemJSON429 *externalRef0.ErrorResponse
+	// ApplicationproblemJSONDefault the response for an HTTP default `application/problem+json` response
+	ApplicationproblemJSONDefault *externalRef0.ErrorResponse
+	// Headers201 the parsed response headers for an HTTP 201 response
+	Headers201 *CreateOrganizationGroupResult201Headers
+	// Headers400 the parsed response headers for an HTTP 400 response
+	Headers400 *CreateOrganizationGroupResult400Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *CreateOrganizationGroupResult403Headers
+	// Headers413 the parsed response headers for an HTTP 413 response
+	Headers413 *CreateOrganizationGroupResult413Headers
+	// Headers422 the parsed response headers for an HTTP 422 response
+	Headers422 *CreateOrganizationGroupResult422Headers
+	// Headers429 the parsed response headers for an HTTP 429 response
+	Headers429 *CreateOrganizationGroupResult429Headers
+	// HeadersDefault the parsed response headers for an HTTP default response
+	HeadersDefault *CreateOrganizationGroupResultDefaultHeaders
+}
+
+// GetJSON201 returns the response for an HTTP 201 `application/json` response
+func (r CreateOrganizationGroupResult) GetJSON201() *externalRef0.OrganizationGroup {
+	return r.JSON201
+}
+
+// GetApplicationproblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r CreateOrganizationGroupResult) GetApplicationproblemJSON400() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON400
+}
+
+// GetApplicationproblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r CreateOrganizationGroupResult) GetApplicationproblemJSON401() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON401
+}
+
+// GetApplicationproblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r CreateOrganizationGroupResult) GetApplicationproblemJSON403() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON403
+}
+
+// GetApplicationproblemJSON409 returns the response for an HTTP 409 `application/problem+json` response
+func (r CreateOrganizationGroupResult) GetApplicationproblemJSON409() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON409
+}
+
+// GetApplicationproblemJSON413 returns the response for an HTTP 413 `application/problem+json` response
+func (r CreateOrganizationGroupResult) GetApplicationproblemJSON413() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON413
+}
+
+// GetApplicationproblemJSON422 returns the response for an HTTP 422 `application/problem+json` response
+func (r CreateOrganizationGroupResult) GetApplicationproblemJSON422() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON422
+}
+
+// GetApplicationproblemJSON429 returns the response for an HTTP 429 `application/problem+json` response
+func (r CreateOrganizationGroupResult) GetApplicationproblemJSON429() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON429
+}
+
+// GetApplicationproblemJSONDefault returns the response for an HTTP default `application/problem+json` response
+func (r CreateOrganizationGroupResult) GetApplicationproblemJSONDefault() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSONDefault
+}
+
+// GetBody returns the raw response body bytes
+func (r CreateOrganizationGroupResult) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r CreateOrganizationGroupResult) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r CreateOrganizationGroupResult) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r CreateOrganizationGroupResult) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// DeleteOrganizationGroupResult204Headers the declared response headers of an HTTP 204 response for DeleteOrganizationGroup
+type DeleteOrganizationGroupResult204Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+// DeleteOrganizationGroupResult400Headers the declared response headers of an HTTP 400 response for DeleteOrganizationGroup
+type DeleteOrganizationGroupResult400Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+// DeleteOrganizationGroupResult403Headers the declared response headers of an HTTP 403 response for DeleteOrganizationGroup
+type DeleteOrganizationGroupResult403Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+// DeleteOrganizationGroupResult404Headers the declared response headers of an HTTP 404 response for DeleteOrganizationGroup
+type DeleteOrganizationGroupResult404Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+// DeleteOrganizationGroupResult422Headers the declared response headers of an HTTP 422 response for DeleteOrganizationGroup
+type DeleteOrganizationGroupResult422Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+// DeleteOrganizationGroupResult429Headers the declared response headers of an HTTP 429 response for DeleteOrganizationGroup
+type DeleteOrganizationGroupResult429Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+	RetryAfter      *int
+}
+
+// DeleteOrganizationGroupResultDefaultHeaders the declared response headers of an HTTP default response for DeleteOrganizationGroup
+type DeleteOrganizationGroupResultDefaultHeaders struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+type DeleteOrganizationGroupResult struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// ApplicationproblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationproblemJSON400 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationproblemJSON401 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationproblemJSON403 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON404 the response for an HTTP 404 `application/problem+json` response
+	ApplicationproblemJSON404 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON422 the response for an HTTP 422 `application/problem+json` response
+	ApplicationproblemJSON422 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON429 the response for an HTTP 429 `application/problem+json` response
+	ApplicationproblemJSON429 *externalRef0.ErrorResponse
+	// ApplicationproblemJSONDefault the response for an HTTP default `application/problem+json` response
+	ApplicationproblemJSONDefault *externalRef0.ErrorResponse
+	// Headers204 the parsed response headers for an HTTP 204 response
+	Headers204 *DeleteOrganizationGroupResult204Headers
+	// Headers400 the parsed response headers for an HTTP 400 response
+	Headers400 *DeleteOrganizationGroupResult400Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *DeleteOrganizationGroupResult403Headers
+	// Headers404 the parsed response headers for an HTTP 404 response
+	Headers404 *DeleteOrganizationGroupResult404Headers
+	// Headers422 the parsed response headers for an HTTP 422 response
+	Headers422 *DeleteOrganizationGroupResult422Headers
+	// Headers429 the parsed response headers for an HTTP 429 response
+	Headers429 *DeleteOrganizationGroupResult429Headers
+	// HeadersDefault the parsed response headers for an HTTP default response
+	HeadersDefault *DeleteOrganizationGroupResultDefaultHeaders
+}
+
+// GetApplicationproblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r DeleteOrganizationGroupResult) GetApplicationproblemJSON400() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON400
+}
+
+// GetApplicationproblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r DeleteOrganizationGroupResult) GetApplicationproblemJSON401() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON401
+}
+
+// GetApplicationproblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r DeleteOrganizationGroupResult) GetApplicationproblemJSON403() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON403
+}
+
+// GetApplicationproblemJSON404 returns the response for an HTTP 404 `application/problem+json` response
+func (r DeleteOrganizationGroupResult) GetApplicationproblemJSON404() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON404
+}
+
+// GetApplicationproblemJSON422 returns the response for an HTTP 422 `application/problem+json` response
+func (r DeleteOrganizationGroupResult) GetApplicationproblemJSON422() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON422
+}
+
+// GetApplicationproblemJSON429 returns the response for an HTTP 429 `application/problem+json` response
+func (r DeleteOrganizationGroupResult) GetApplicationproblemJSON429() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON429
+}
+
+// GetApplicationproblemJSONDefault returns the response for an HTTP default `application/problem+json` response
+func (r DeleteOrganizationGroupResult) GetApplicationproblemJSONDefault() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSONDefault
+}
+
+// GetBody returns the raw response body bytes
+func (r DeleteOrganizationGroupResult) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r DeleteOrganizationGroupResult) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r DeleteOrganizationGroupResult) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r DeleteOrganizationGroupResult) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// GetOrganizationGroupResult200Headers the declared response headers of an HTTP 200 response for GetOrganizationGroup
+type GetOrganizationGroupResult200Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+// GetOrganizationGroupResult403Headers the declared response headers of an HTTP 403 response for GetOrganizationGroup
+type GetOrganizationGroupResult403Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+// GetOrganizationGroupResult404Headers the declared response headers of an HTTP 404 response for GetOrganizationGroup
+type GetOrganizationGroupResult404Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+// GetOrganizationGroupResult429Headers the declared response headers of an HTTP 429 response for GetOrganizationGroup
+type GetOrganizationGroupResult429Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+	RetryAfter      *int
+}
+
+// GetOrganizationGroupResultDefaultHeaders the declared response headers of an HTTP default response for GetOrganizationGroup
+type GetOrganizationGroupResultDefaultHeaders struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+type GetOrganizationGroupResult struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *externalRef0.OrganizationGroup
+	// ApplicationproblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationproblemJSON401 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationproblemJSON403 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON404 the response for an HTTP 404 `application/problem+json` response
+	ApplicationproblemJSON404 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON429 the response for an HTTP 429 `application/problem+json` response
+	ApplicationproblemJSON429 *externalRef0.ErrorResponse
+	// ApplicationproblemJSONDefault the response for an HTTP default `application/problem+json` response
+	ApplicationproblemJSONDefault *externalRef0.ErrorResponse
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *GetOrganizationGroupResult200Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *GetOrganizationGroupResult403Headers
+	// Headers404 the parsed response headers for an HTTP 404 response
+	Headers404 *GetOrganizationGroupResult404Headers
+	// Headers429 the parsed response headers for an HTTP 429 response
+	Headers429 *GetOrganizationGroupResult429Headers
+	// HeadersDefault the parsed response headers for an HTTP default response
+	HeadersDefault *GetOrganizationGroupResultDefaultHeaders
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r GetOrganizationGroupResult) GetJSON200() *externalRef0.OrganizationGroup {
+	return r.JSON200
+}
+
+// GetApplicationproblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r GetOrganizationGroupResult) GetApplicationproblemJSON401() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON401
+}
+
+// GetApplicationproblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r GetOrganizationGroupResult) GetApplicationproblemJSON403() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON403
+}
+
+// GetApplicationproblemJSON404 returns the response for an HTTP 404 `application/problem+json` response
+func (r GetOrganizationGroupResult) GetApplicationproblemJSON404() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON404
+}
+
+// GetApplicationproblemJSON429 returns the response for an HTTP 429 `application/problem+json` response
+func (r GetOrganizationGroupResult) GetApplicationproblemJSON429() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON429
+}
+
+// GetApplicationproblemJSONDefault returns the response for an HTTP default `application/problem+json` response
+func (r GetOrganizationGroupResult) GetApplicationproblemJSONDefault() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSONDefault
+}
+
+// GetBody returns the raw response body bytes
+func (r GetOrganizationGroupResult) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r GetOrganizationGroupResult) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetOrganizationGroupResult) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r GetOrganizationGroupResult) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// UpdateOrganizationGroupResult200Headers the declared response headers of an HTTP 200 response for UpdateOrganizationGroup
+type UpdateOrganizationGroupResult200Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+// UpdateOrganizationGroupResult400Headers the declared response headers of an HTTP 400 response for UpdateOrganizationGroup
+type UpdateOrganizationGroupResult400Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+// UpdateOrganizationGroupResult403Headers the declared response headers of an HTTP 403 response for UpdateOrganizationGroup
+type UpdateOrganizationGroupResult403Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+// UpdateOrganizationGroupResult404Headers the declared response headers of an HTTP 404 response for UpdateOrganizationGroup
+type UpdateOrganizationGroupResult404Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+// UpdateOrganizationGroupResult413Headers the declared response headers of an HTTP 413 response for UpdateOrganizationGroup
+type UpdateOrganizationGroupResult413Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+// UpdateOrganizationGroupResult422Headers the declared response headers of an HTTP 422 response for UpdateOrganizationGroup
+type UpdateOrganizationGroupResult422Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+// UpdateOrganizationGroupResult429Headers the declared response headers of an HTTP 429 response for UpdateOrganizationGroup
+type UpdateOrganizationGroupResult429Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+	RetryAfter      *int
+}
+
+// UpdateOrganizationGroupResultDefaultHeaders the declared response headers of an HTTP default response for UpdateOrganizationGroup
+type UpdateOrganizationGroupResultDefaultHeaders struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+type UpdateOrganizationGroupResult struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *externalRef0.OrganizationGroup
+	// ApplicationproblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationproblemJSON400 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationproblemJSON401 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationproblemJSON403 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON404 the response for an HTTP 404 `application/problem+json` response
+	ApplicationproblemJSON404 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON409 the response for an HTTP 409 `application/problem+json` response
+	ApplicationproblemJSON409 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON413 the response for an HTTP 413 `application/problem+json` response
+	ApplicationproblemJSON413 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON422 the response for an HTTP 422 `application/problem+json` response
+	ApplicationproblemJSON422 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON429 the response for an HTTP 429 `application/problem+json` response
+	ApplicationproblemJSON429 *externalRef0.ErrorResponse
+	// ApplicationproblemJSONDefault the response for an HTTP default `application/problem+json` response
+	ApplicationproblemJSONDefault *externalRef0.ErrorResponse
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *UpdateOrganizationGroupResult200Headers
+	// Headers400 the parsed response headers for an HTTP 400 response
+	Headers400 *UpdateOrganizationGroupResult400Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *UpdateOrganizationGroupResult403Headers
+	// Headers404 the parsed response headers for an HTTP 404 response
+	Headers404 *UpdateOrganizationGroupResult404Headers
+	// Headers413 the parsed response headers for an HTTP 413 response
+	Headers413 *UpdateOrganizationGroupResult413Headers
+	// Headers422 the parsed response headers for an HTTP 422 response
+	Headers422 *UpdateOrganizationGroupResult422Headers
+	// Headers429 the parsed response headers for an HTTP 429 response
+	Headers429 *UpdateOrganizationGroupResult429Headers
+	// HeadersDefault the parsed response headers for an HTTP default response
+	HeadersDefault *UpdateOrganizationGroupResultDefaultHeaders
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r UpdateOrganizationGroupResult) GetJSON200() *externalRef0.OrganizationGroup {
+	return r.JSON200
+}
+
+// GetApplicationproblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r UpdateOrganizationGroupResult) GetApplicationproblemJSON400() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON400
+}
+
+// GetApplicationproblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r UpdateOrganizationGroupResult) GetApplicationproblemJSON401() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON401
+}
+
+// GetApplicationproblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r UpdateOrganizationGroupResult) GetApplicationproblemJSON403() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON403
+}
+
+// GetApplicationproblemJSON404 returns the response for an HTTP 404 `application/problem+json` response
+func (r UpdateOrganizationGroupResult) GetApplicationproblemJSON404() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON404
+}
+
+// GetApplicationproblemJSON409 returns the response for an HTTP 409 `application/problem+json` response
+func (r UpdateOrganizationGroupResult) GetApplicationproblemJSON409() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON409
+}
+
+// GetApplicationproblemJSON413 returns the response for an HTTP 413 `application/problem+json` response
+func (r UpdateOrganizationGroupResult) GetApplicationproblemJSON413() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON413
+}
+
+// GetApplicationproblemJSON422 returns the response for an HTTP 422 `application/problem+json` response
+func (r UpdateOrganizationGroupResult) GetApplicationproblemJSON422() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON422
+}
+
+// GetApplicationproblemJSON429 returns the response for an HTTP 429 `application/problem+json` response
+func (r UpdateOrganizationGroupResult) GetApplicationproblemJSON429() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON429
+}
+
+// GetApplicationproblemJSONDefault returns the response for an HTTP default `application/problem+json` response
+func (r UpdateOrganizationGroupResult) GetApplicationproblemJSONDefault() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSONDefault
+}
+
+// GetBody returns the raw response body bytes
+func (r UpdateOrganizationGroupResult) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r UpdateOrganizationGroupResult) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r UpdateOrganizationGroupResult) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r UpdateOrganizationGroupResult) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// ListOrganizationGroupMembersResult200Headers the declared response headers of an HTTP 200 response for ListOrganizationGroupMembers
+type ListOrganizationGroupMembersResult200Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+// ListOrganizationGroupMembersResult403Headers the declared response headers of an HTTP 403 response for ListOrganizationGroupMembers
+type ListOrganizationGroupMembersResult403Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+// ListOrganizationGroupMembersResult404Headers the declared response headers of an HTTP 404 response for ListOrganizationGroupMembers
+type ListOrganizationGroupMembersResult404Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+// ListOrganizationGroupMembersResult413Headers the declared response headers of an HTTP 413 response for ListOrganizationGroupMembers
+type ListOrganizationGroupMembersResult413Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+// ListOrganizationGroupMembersResult422Headers the declared response headers of an HTTP 422 response for ListOrganizationGroupMembers
+type ListOrganizationGroupMembersResult422Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+// ListOrganizationGroupMembersResult429Headers the declared response headers of an HTTP 429 response for ListOrganizationGroupMembers
+type ListOrganizationGroupMembersResult429Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+	RetryAfter      *int
+}
+
+// ListOrganizationGroupMembersResultDefaultHeaders the declared response headers of an HTTP default response for ListOrganizationGroupMembers
+type ListOrganizationGroupMembersResultDefaultHeaders struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+type ListOrganizationGroupMembersResult struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *externalRef0.ListOrganizationGroupMembersResponse
+	// ApplicationproblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationproblemJSON401 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationproblemJSON403 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON404 the response for an HTTP 404 `application/problem+json` response
+	ApplicationproblemJSON404 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON413 the response for an HTTP 413 `application/problem+json` response
+	ApplicationproblemJSON413 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON422 the response for an HTTP 422 `application/problem+json` response
+	ApplicationproblemJSON422 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON429 the response for an HTTP 429 `application/problem+json` response
+	ApplicationproblemJSON429 *externalRef0.ErrorResponse
+	// ApplicationproblemJSONDefault the response for an HTTP default `application/problem+json` response
+	ApplicationproblemJSONDefault *externalRef0.ErrorResponse
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *ListOrganizationGroupMembersResult200Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *ListOrganizationGroupMembersResult403Headers
+	// Headers404 the parsed response headers for an HTTP 404 response
+	Headers404 *ListOrganizationGroupMembersResult404Headers
+	// Headers413 the parsed response headers for an HTTP 413 response
+	Headers413 *ListOrganizationGroupMembersResult413Headers
+	// Headers422 the parsed response headers for an HTTP 422 response
+	Headers422 *ListOrganizationGroupMembersResult422Headers
+	// Headers429 the parsed response headers for an HTTP 429 response
+	Headers429 *ListOrganizationGroupMembersResult429Headers
+	// HeadersDefault the parsed response headers for an HTTP default response
+	HeadersDefault *ListOrganizationGroupMembersResultDefaultHeaders
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r ListOrganizationGroupMembersResult) GetJSON200() *externalRef0.ListOrganizationGroupMembersResponse {
+	return r.JSON200
+}
+
+// GetApplicationproblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r ListOrganizationGroupMembersResult) GetApplicationproblemJSON401() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON401
+}
+
+// GetApplicationproblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r ListOrganizationGroupMembersResult) GetApplicationproblemJSON403() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON403
+}
+
+// GetApplicationproblemJSON404 returns the response for an HTTP 404 `application/problem+json` response
+func (r ListOrganizationGroupMembersResult) GetApplicationproblemJSON404() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON404
+}
+
+// GetApplicationproblemJSON413 returns the response for an HTTP 413 `application/problem+json` response
+func (r ListOrganizationGroupMembersResult) GetApplicationproblemJSON413() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON413
+}
+
+// GetApplicationproblemJSON422 returns the response for an HTTP 422 `application/problem+json` response
+func (r ListOrganizationGroupMembersResult) GetApplicationproblemJSON422() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON422
+}
+
+// GetApplicationproblemJSON429 returns the response for an HTTP 429 `application/problem+json` response
+func (r ListOrganizationGroupMembersResult) GetApplicationproblemJSON429() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON429
+}
+
+// GetApplicationproblemJSONDefault returns the response for an HTTP default `application/problem+json` response
+func (r ListOrganizationGroupMembersResult) GetApplicationproblemJSONDefault() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSONDefault
+}
+
+// GetBody returns the raw response body bytes
+func (r ListOrganizationGroupMembersResult) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r ListOrganizationGroupMembersResult) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ListOrganizationGroupMembersResult) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r ListOrganizationGroupMembersResult) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// RemoveOrganizationGroupMemberResult204Headers the declared response headers of an HTTP 204 response for RemoveOrganizationGroupMember
+type RemoveOrganizationGroupMemberResult204Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+// RemoveOrganizationGroupMemberResult400Headers the declared response headers of an HTTP 400 response for RemoveOrganizationGroupMember
+type RemoveOrganizationGroupMemberResult400Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+// RemoveOrganizationGroupMemberResult403Headers the declared response headers of an HTTP 403 response for RemoveOrganizationGroupMember
+type RemoveOrganizationGroupMemberResult403Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+// RemoveOrganizationGroupMemberResult404Headers the declared response headers of an HTTP 404 response for RemoveOrganizationGroupMember
+type RemoveOrganizationGroupMemberResult404Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+// RemoveOrganizationGroupMemberResult422Headers the declared response headers of an HTTP 422 response for RemoveOrganizationGroupMember
+type RemoveOrganizationGroupMemberResult422Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+// RemoveOrganizationGroupMemberResult429Headers the declared response headers of an HTTP 429 response for RemoveOrganizationGroupMember
+type RemoveOrganizationGroupMemberResult429Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+	RetryAfter      *int
+}
+
+// RemoveOrganizationGroupMemberResultDefaultHeaders the declared response headers of an HTTP default response for RemoveOrganizationGroupMember
+type RemoveOrganizationGroupMemberResultDefaultHeaders struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+type RemoveOrganizationGroupMemberResult struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// ApplicationproblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationproblemJSON400 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationproblemJSON401 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationproblemJSON403 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON404 the response for an HTTP 404 `application/problem+json` response
+	ApplicationproblemJSON404 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON422 the response for an HTTP 422 `application/problem+json` response
+	ApplicationproblemJSON422 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON429 the response for an HTTP 429 `application/problem+json` response
+	ApplicationproblemJSON429 *externalRef0.ErrorResponse
+	// ApplicationproblemJSONDefault the response for an HTTP default `application/problem+json` response
+	ApplicationproblemJSONDefault *externalRef0.ErrorResponse
+	// Headers204 the parsed response headers for an HTTP 204 response
+	Headers204 *RemoveOrganizationGroupMemberResult204Headers
+	// Headers400 the parsed response headers for an HTTP 400 response
+	Headers400 *RemoveOrganizationGroupMemberResult400Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *RemoveOrganizationGroupMemberResult403Headers
+	// Headers404 the parsed response headers for an HTTP 404 response
+	Headers404 *RemoveOrganizationGroupMemberResult404Headers
+	// Headers422 the parsed response headers for an HTTP 422 response
+	Headers422 *RemoveOrganizationGroupMemberResult422Headers
+	// Headers429 the parsed response headers for an HTTP 429 response
+	Headers429 *RemoveOrganizationGroupMemberResult429Headers
+	// HeadersDefault the parsed response headers for an HTTP default response
+	HeadersDefault *RemoveOrganizationGroupMemberResultDefaultHeaders
+}
+
+// GetApplicationproblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r RemoveOrganizationGroupMemberResult) GetApplicationproblemJSON400() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON400
+}
+
+// GetApplicationproblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r RemoveOrganizationGroupMemberResult) GetApplicationproblemJSON401() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON401
+}
+
+// GetApplicationproblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r RemoveOrganizationGroupMemberResult) GetApplicationproblemJSON403() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON403
+}
+
+// GetApplicationproblemJSON404 returns the response for an HTTP 404 `application/problem+json` response
+func (r RemoveOrganizationGroupMemberResult) GetApplicationproblemJSON404() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON404
+}
+
+// GetApplicationproblemJSON422 returns the response for an HTTP 422 `application/problem+json` response
+func (r RemoveOrganizationGroupMemberResult) GetApplicationproblemJSON422() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON422
+}
+
+// GetApplicationproblemJSON429 returns the response for an HTTP 429 `application/problem+json` response
+func (r RemoveOrganizationGroupMemberResult) GetApplicationproblemJSON429() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON429
+}
+
+// GetApplicationproblemJSONDefault returns the response for an HTTP default `application/problem+json` response
+func (r RemoveOrganizationGroupMemberResult) GetApplicationproblemJSONDefault() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSONDefault
+}
+
+// GetBody returns the raw response body bytes
+func (r RemoveOrganizationGroupMemberResult) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r RemoveOrganizationGroupMemberResult) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r RemoveOrganizationGroupMemberResult) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r RemoveOrganizationGroupMemberResult) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// AddOrganizationGroupMemberResult204Headers the declared response headers of an HTTP 204 response for AddOrganizationGroupMember
+type AddOrganizationGroupMemberResult204Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+// AddOrganizationGroupMemberResult400Headers the declared response headers of an HTTP 400 response for AddOrganizationGroupMember
+type AddOrganizationGroupMemberResult400Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+// AddOrganizationGroupMemberResult403Headers the declared response headers of an HTTP 403 response for AddOrganizationGroupMember
+type AddOrganizationGroupMemberResult403Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+// AddOrganizationGroupMemberResult404Headers the declared response headers of an HTTP 404 response for AddOrganizationGroupMember
+type AddOrganizationGroupMemberResult404Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+// AddOrganizationGroupMemberResult413Headers the declared response headers of an HTTP 413 response for AddOrganizationGroupMember
+type AddOrganizationGroupMemberResult413Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+// AddOrganizationGroupMemberResult422Headers the declared response headers of an HTTP 422 response for AddOrganizationGroupMember
+type AddOrganizationGroupMemberResult422Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+// AddOrganizationGroupMemberResult429Headers the declared response headers of an HTTP 429 response for AddOrganizationGroupMember
+type AddOrganizationGroupMemberResult429Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+	RetryAfter      *int
+}
+
+// AddOrganizationGroupMemberResultDefaultHeaders the declared response headers of an HTTP default response for AddOrganizationGroupMember
+type AddOrganizationGroupMemberResultDefaultHeaders struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+type AddOrganizationGroupMemberResult struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// ApplicationproblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationproblemJSON400 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationproblemJSON401 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationproblemJSON403 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON404 the response for an HTTP 404 `application/problem+json` response
+	ApplicationproblemJSON404 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON413 the response for an HTTP 413 `application/problem+json` response
+	ApplicationproblemJSON413 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON422 the response for an HTTP 422 `application/problem+json` response
+	ApplicationproblemJSON422 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON429 the response for an HTTP 429 `application/problem+json` response
+	ApplicationproblemJSON429 *externalRef0.ErrorResponse
+	// ApplicationproblemJSONDefault the response for an HTTP default `application/problem+json` response
+	ApplicationproblemJSONDefault *externalRef0.ErrorResponse
+	// Headers204 the parsed response headers for an HTTP 204 response
+	Headers204 *AddOrganizationGroupMemberResult204Headers
+	// Headers400 the parsed response headers for an HTTP 400 response
+	Headers400 *AddOrganizationGroupMemberResult400Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *AddOrganizationGroupMemberResult403Headers
+	// Headers404 the parsed response headers for an HTTP 404 response
+	Headers404 *AddOrganizationGroupMemberResult404Headers
+	// Headers413 the parsed response headers for an HTTP 413 response
+	Headers413 *AddOrganizationGroupMemberResult413Headers
+	// Headers422 the parsed response headers for an HTTP 422 response
+	Headers422 *AddOrganizationGroupMemberResult422Headers
+	// Headers429 the parsed response headers for an HTTP 429 response
+	Headers429 *AddOrganizationGroupMemberResult429Headers
+	// HeadersDefault the parsed response headers for an HTTP default response
+	HeadersDefault *AddOrganizationGroupMemberResultDefaultHeaders
+}
+
+// GetApplicationproblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r AddOrganizationGroupMemberResult) GetApplicationproblemJSON400() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON400
+}
+
+// GetApplicationproblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r AddOrganizationGroupMemberResult) GetApplicationproblemJSON401() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON401
+}
+
+// GetApplicationproblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r AddOrganizationGroupMemberResult) GetApplicationproblemJSON403() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON403
+}
+
+// GetApplicationproblemJSON404 returns the response for an HTTP 404 `application/problem+json` response
+func (r AddOrganizationGroupMemberResult) GetApplicationproblemJSON404() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON404
+}
+
+// GetApplicationproblemJSON413 returns the response for an HTTP 413 `application/problem+json` response
+func (r AddOrganizationGroupMemberResult) GetApplicationproblemJSON413() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON413
+}
+
+// GetApplicationproblemJSON422 returns the response for an HTTP 422 `application/problem+json` response
+func (r AddOrganizationGroupMemberResult) GetApplicationproblemJSON422() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON422
+}
+
+// GetApplicationproblemJSON429 returns the response for an HTTP 429 `application/problem+json` response
+func (r AddOrganizationGroupMemberResult) GetApplicationproblemJSON429() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON429
+}
+
+// GetApplicationproblemJSONDefault returns the response for an HTTP default `application/problem+json` response
+func (r AddOrganizationGroupMemberResult) GetApplicationproblemJSONDefault() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSONDefault
+}
+
+// GetBody returns the raw response body bytes
+func (r AddOrganizationGroupMemberResult) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r AddOrganizationGroupMemberResult) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r AddOrganizationGroupMemberResult) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r AddOrganizationGroupMemberResult) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// ListOrganizationInvitesResult200Headers the declared response headers of an HTTP 200 response for ListOrganizationInvites
+type ListOrganizationInvitesResult200Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+// ListOrganizationInvitesResult403Headers the declared response headers of an HTTP 403 response for ListOrganizationInvites
+type ListOrganizationInvitesResult403Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+// ListOrganizationInvitesResult404Headers the declared response headers of an HTTP 404 response for ListOrganizationInvites
+type ListOrganizationInvitesResult404Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+// ListOrganizationInvitesResult429Headers the declared response headers of an HTTP 429 response for ListOrganizationInvites
+type ListOrganizationInvitesResult429Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+	RetryAfter      *int
+}
+
+// ListOrganizationInvitesResultDefaultHeaders the declared response headers of an HTTP default response for ListOrganizationInvites
+type ListOrganizationInvitesResultDefaultHeaders struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+type ListOrganizationInvitesResult struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *externalRef0.ListOrganizationInvitesResponse
+	// ApplicationproblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationproblemJSON401 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationproblemJSON403 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON404 the response for an HTTP 404 `application/problem+json` response
+	ApplicationproblemJSON404 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON429 the response for an HTTP 429 `application/problem+json` response
+	ApplicationproblemJSON429 *externalRef0.ErrorResponse
+	// ApplicationproblemJSONDefault the response for an HTTP default `application/problem+json` response
+	ApplicationproblemJSONDefault *externalRef0.ErrorResponse
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *ListOrganizationInvitesResult200Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *ListOrganizationInvitesResult403Headers
+	// Headers404 the parsed response headers for an HTTP 404 response
+	Headers404 *ListOrganizationInvitesResult404Headers
+	// Headers429 the parsed response headers for an HTTP 429 response
+	Headers429 *ListOrganizationInvitesResult429Headers
+	// HeadersDefault the parsed response headers for an HTTP default response
+	HeadersDefault *ListOrganizationInvitesResultDefaultHeaders
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r ListOrganizationInvitesResult) GetJSON200() *externalRef0.ListOrganizationInvitesResponse {
+	return r.JSON200
+}
+
+// GetApplicationproblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r ListOrganizationInvitesResult) GetApplicationproblemJSON401() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON401
+}
+
+// GetApplicationproblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r ListOrganizationInvitesResult) GetApplicationproblemJSON403() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON403
+}
+
+// GetApplicationproblemJSON404 returns the response for an HTTP 404 `application/problem+json` response
+func (r ListOrganizationInvitesResult) GetApplicationproblemJSON404() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON404
+}
+
+// GetApplicationproblemJSON429 returns the response for an HTTP 429 `application/problem+json` response
+func (r ListOrganizationInvitesResult) GetApplicationproblemJSON429() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON429
+}
+
+// GetApplicationproblemJSONDefault returns the response for an HTTP default `application/problem+json` response
+func (r ListOrganizationInvitesResult) GetApplicationproblemJSONDefault() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSONDefault
+}
+
+// GetBody returns the raw response body bytes
+func (r ListOrganizationInvitesResult) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r ListOrganizationInvitesResult) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ListOrganizationInvitesResult) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r ListOrganizationInvitesResult) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// CreateOrganizationInviteResult201Headers the declared response headers of an HTTP 201 response for CreateOrganizationInvite
+type CreateOrganizationInviteResult201Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+// CreateOrganizationInviteResult400Headers the declared response headers of an HTTP 400 response for CreateOrganizationInvite
+type CreateOrganizationInviteResult400Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+// CreateOrganizationInviteResult403Headers the declared response headers of an HTTP 403 response for CreateOrganizationInvite
+type CreateOrganizationInviteResult403Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+// CreateOrganizationInviteResult404Headers the declared response headers of an HTTP 404 response for CreateOrganizationInvite
+type CreateOrganizationInviteResult404Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+// CreateOrganizationInviteResult413Headers the declared response headers of an HTTP 413 response for CreateOrganizationInvite
+type CreateOrganizationInviteResult413Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+// CreateOrganizationInviteResult422Headers the declared response headers of an HTTP 422 response for CreateOrganizationInvite
+type CreateOrganizationInviteResult422Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+// CreateOrganizationInviteResult429Headers the declared response headers of an HTTP 429 response for CreateOrganizationInvite
+type CreateOrganizationInviteResult429Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+	RetryAfter      *int
+}
+
+// CreateOrganizationInviteResultDefaultHeaders the declared response headers of an HTTP default response for CreateOrganizationInvite
+type CreateOrganizationInviteResultDefaultHeaders struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+type CreateOrganizationInviteResult struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON201 the response for an HTTP 201 `application/json` response
+	JSON201 *externalRef0.OrganizationInvite
+	// ApplicationproblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationproblemJSON400 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationproblemJSON401 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationproblemJSON403 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON404 the response for an HTTP 404 `application/problem+json` response
+	ApplicationproblemJSON404 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON409 the response for an HTTP 409 `application/problem+json` response
+	ApplicationproblemJSON409 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON413 the response for an HTTP 413 `application/problem+json` response
+	ApplicationproblemJSON413 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON422 the response for an HTTP 422 `application/problem+json` response
+	ApplicationproblemJSON422 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON429 the response for an HTTP 429 `application/problem+json` response
+	ApplicationproblemJSON429 *externalRef0.ErrorResponse
+	// ApplicationproblemJSONDefault the response for an HTTP default `application/problem+json` response
+	ApplicationproblemJSONDefault *externalRef0.ErrorResponse
+	// Headers201 the parsed response headers for an HTTP 201 response
+	Headers201 *CreateOrganizationInviteResult201Headers
+	// Headers400 the parsed response headers for an HTTP 400 response
+	Headers400 *CreateOrganizationInviteResult400Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *CreateOrganizationInviteResult403Headers
+	// Headers404 the parsed response headers for an HTTP 404 response
+	Headers404 *CreateOrganizationInviteResult404Headers
+	// Headers413 the parsed response headers for an HTTP 413 response
+	Headers413 *CreateOrganizationInviteResult413Headers
+	// Headers422 the parsed response headers for an HTTP 422 response
+	Headers422 *CreateOrganizationInviteResult422Headers
+	// Headers429 the parsed response headers for an HTTP 429 response
+	Headers429 *CreateOrganizationInviteResult429Headers
+	// HeadersDefault the parsed response headers for an HTTP default response
+	HeadersDefault *CreateOrganizationInviteResultDefaultHeaders
+}
+
+// GetJSON201 returns the response for an HTTP 201 `application/json` response
+func (r CreateOrganizationInviteResult) GetJSON201() *externalRef0.OrganizationInvite {
+	return r.JSON201
+}
+
+// GetApplicationproblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r CreateOrganizationInviteResult) GetApplicationproblemJSON400() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON400
+}
+
+// GetApplicationproblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r CreateOrganizationInviteResult) GetApplicationproblemJSON401() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON401
+}
+
+// GetApplicationproblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r CreateOrganizationInviteResult) GetApplicationproblemJSON403() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON403
+}
+
+// GetApplicationproblemJSON404 returns the response for an HTTP 404 `application/problem+json` response
+func (r CreateOrganizationInviteResult) GetApplicationproblemJSON404() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON404
+}
+
+// GetApplicationproblemJSON409 returns the response for an HTTP 409 `application/problem+json` response
+func (r CreateOrganizationInviteResult) GetApplicationproblemJSON409() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON409
+}
+
+// GetApplicationproblemJSON413 returns the response for an HTTP 413 `application/problem+json` response
+func (r CreateOrganizationInviteResult) GetApplicationproblemJSON413() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON413
+}
+
+// GetApplicationproblemJSON422 returns the response for an HTTP 422 `application/problem+json` response
+func (r CreateOrganizationInviteResult) GetApplicationproblemJSON422() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON422
+}
+
+// GetApplicationproblemJSON429 returns the response for an HTTP 429 `application/problem+json` response
+func (r CreateOrganizationInviteResult) GetApplicationproblemJSON429() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON429
+}
+
+// GetApplicationproblemJSONDefault returns the response for an HTTP default `application/problem+json` response
+func (r CreateOrganizationInviteResult) GetApplicationproblemJSONDefault() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSONDefault
+}
+
+// GetBody returns the raw response body bytes
+func (r CreateOrganizationInviteResult) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r CreateOrganizationInviteResult) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r CreateOrganizationInviteResult) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r CreateOrganizationInviteResult) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// DeleteOrganizationInviteResult204Headers the declared response headers of an HTTP 204 response for DeleteOrganizationInvite
+type DeleteOrganizationInviteResult204Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+// DeleteOrganizationInviteResult403Headers the declared response headers of an HTTP 403 response for DeleteOrganizationInvite
+type DeleteOrganizationInviteResult403Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+// DeleteOrganizationInviteResult404Headers the declared response headers of an HTTP 404 response for DeleteOrganizationInvite
+type DeleteOrganizationInviteResult404Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+// DeleteOrganizationInviteResult429Headers the declared response headers of an HTTP 429 response for DeleteOrganizationInvite
+type DeleteOrganizationInviteResult429Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+	RetryAfter      *int
+}
+
+// DeleteOrganizationInviteResultDefaultHeaders the declared response headers of an HTTP default response for DeleteOrganizationInvite
+type DeleteOrganizationInviteResultDefaultHeaders struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+type DeleteOrganizationInviteResult struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// ApplicationproblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationproblemJSON401 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationproblemJSON403 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON404 the response for an HTTP 404 `application/problem+json` response
+	ApplicationproblemJSON404 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON429 the response for an HTTP 429 `application/problem+json` response
+	ApplicationproblemJSON429 *externalRef0.ErrorResponse
+	// ApplicationproblemJSONDefault the response for an HTTP default `application/problem+json` response
+	ApplicationproblemJSONDefault *externalRef0.ErrorResponse
+	// Headers204 the parsed response headers for an HTTP 204 response
+	Headers204 *DeleteOrganizationInviteResult204Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *DeleteOrganizationInviteResult403Headers
+	// Headers404 the parsed response headers for an HTTP 404 response
+	Headers404 *DeleteOrganizationInviteResult404Headers
+	// Headers429 the parsed response headers for an HTTP 429 response
+	Headers429 *DeleteOrganizationInviteResult429Headers
+	// HeadersDefault the parsed response headers for an HTTP default response
+	HeadersDefault *DeleteOrganizationInviteResultDefaultHeaders
+}
+
+// GetApplicationproblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r DeleteOrganizationInviteResult) GetApplicationproblemJSON401() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON401
+}
+
+// GetApplicationproblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r DeleteOrganizationInviteResult) GetApplicationproblemJSON403() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON403
+}
+
+// GetApplicationproblemJSON404 returns the response for an HTTP 404 `application/problem+json` response
+func (r DeleteOrganizationInviteResult) GetApplicationproblemJSON404() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON404
+}
+
+// GetApplicationproblemJSON429 returns the response for an HTTP 429 `application/problem+json` response
+func (r DeleteOrganizationInviteResult) GetApplicationproblemJSON429() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON429
+}
+
+// GetApplicationproblemJSONDefault returns the response for an HTTP default `application/problem+json` response
+func (r DeleteOrganizationInviteResult) GetApplicationproblemJSONDefault() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSONDefault
+}
+
+// GetBody returns the raw response body bytes
+func (r DeleteOrganizationInviteResult) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r DeleteOrganizationInviteResult) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r DeleteOrganizationInviteResult) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r DeleteOrganizationInviteResult) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// GetOrganizationInviteResult200Headers the declared response headers of an HTTP 200 response for GetOrganizationInvite
+type GetOrganizationInviteResult200Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+// GetOrganizationInviteResult403Headers the declared response headers of an HTTP 403 response for GetOrganizationInvite
+type GetOrganizationInviteResult403Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+// GetOrganizationInviteResult404Headers the declared response headers of an HTTP 404 response for GetOrganizationInvite
+type GetOrganizationInviteResult404Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+// GetOrganizationInviteResult429Headers the declared response headers of an HTTP 429 response for GetOrganizationInvite
+type GetOrganizationInviteResult429Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+	RetryAfter      *int
+}
+
+// GetOrganizationInviteResultDefaultHeaders the declared response headers of an HTTP default response for GetOrganizationInvite
+type GetOrganizationInviteResultDefaultHeaders struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+type GetOrganizationInviteResult struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *externalRef0.OrganizationInvite
+	// ApplicationproblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationproblemJSON401 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationproblemJSON403 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON404 the response for an HTTP 404 `application/problem+json` response
+	ApplicationproblemJSON404 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON429 the response for an HTTP 429 `application/problem+json` response
+	ApplicationproblemJSON429 *externalRef0.ErrorResponse
+	// ApplicationproblemJSONDefault the response for an HTTP default `application/problem+json` response
+	ApplicationproblemJSONDefault *externalRef0.ErrorResponse
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *GetOrganizationInviteResult200Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *GetOrganizationInviteResult403Headers
+	// Headers404 the parsed response headers for an HTTP 404 response
+	Headers404 *GetOrganizationInviteResult404Headers
+	// Headers429 the parsed response headers for an HTTP 429 response
+	Headers429 *GetOrganizationInviteResult429Headers
+	// HeadersDefault the parsed response headers for an HTTP default response
+	HeadersDefault *GetOrganizationInviteResultDefaultHeaders
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r GetOrganizationInviteResult) GetJSON200() *externalRef0.OrganizationInvite {
+	return r.JSON200
+}
+
+// GetApplicationproblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r GetOrganizationInviteResult) GetApplicationproblemJSON401() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON401
+}
+
+// GetApplicationproblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r GetOrganizationInviteResult) GetApplicationproblemJSON403() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON403
+}
+
+// GetApplicationproblemJSON404 returns the response for an HTTP 404 `application/problem+json` response
+func (r GetOrganizationInviteResult) GetApplicationproblemJSON404() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON404
+}
+
+// GetApplicationproblemJSON429 returns the response for an HTTP 429 `application/problem+json` response
+func (r GetOrganizationInviteResult) GetApplicationproblemJSON429() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON429
+}
+
+// GetApplicationproblemJSONDefault returns the response for an HTTP default `application/problem+json` response
+func (r GetOrganizationInviteResult) GetApplicationproblemJSONDefault() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSONDefault
+}
+
+// GetBody returns the raw response body bytes
+func (r GetOrganizationInviteResult) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r GetOrganizationInviteResult) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetOrganizationInviteResult) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r GetOrganizationInviteResult) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// ListOrganizationRolesResult200Headers the declared response headers of an HTTP 200 response for ListOrganizationRoles
+type ListOrganizationRolesResult200Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+// ListOrganizationRolesResult403Headers the declared response headers of an HTTP 403 response for ListOrganizationRoles
+type ListOrganizationRolesResult403Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+// ListOrganizationRolesResult404Headers the declared response headers of an HTTP 404 response for ListOrganizationRoles
+type ListOrganizationRolesResult404Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+// ListOrganizationRolesResult429Headers the declared response headers of an HTTP 429 response for ListOrganizationRoles
+type ListOrganizationRolesResult429Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+	RetryAfter      *int
+}
+
+// ListOrganizationRolesResultDefaultHeaders the declared response headers of an HTTP default response for ListOrganizationRoles
+type ListOrganizationRolesResultDefaultHeaders struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+type ListOrganizationRolesResult struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *externalRef0.ListOrganizationRolesResponse
+	// ApplicationproblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationproblemJSON401 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationproblemJSON403 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON404 the response for an HTTP 404 `application/problem+json` response
+	ApplicationproblemJSON404 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON429 the response for an HTTP 429 `application/problem+json` response
+	ApplicationproblemJSON429 *externalRef0.ErrorResponse
+	// ApplicationproblemJSONDefault the response for an HTTP default `application/problem+json` response
+	ApplicationproblemJSONDefault *externalRef0.ErrorResponse
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *ListOrganizationRolesResult200Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *ListOrganizationRolesResult403Headers
+	// Headers404 the parsed response headers for an HTTP 404 response
+	Headers404 *ListOrganizationRolesResult404Headers
+	// Headers429 the parsed response headers for an HTTP 429 response
+	Headers429 *ListOrganizationRolesResult429Headers
+	// HeadersDefault the parsed response headers for an HTTP default response
+	HeadersDefault *ListOrganizationRolesResultDefaultHeaders
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r ListOrganizationRolesResult) GetJSON200() *externalRef0.ListOrganizationRolesResponse {
+	return r.JSON200
+}
+
+// GetApplicationproblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r ListOrganizationRolesResult) GetApplicationproblemJSON401() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON401
+}
+
+// GetApplicationproblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r ListOrganizationRolesResult) GetApplicationproblemJSON403() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON403
+}
+
+// GetApplicationproblemJSON404 returns the response for an HTTP 404 `application/problem+json` response
+func (r ListOrganizationRolesResult) GetApplicationproblemJSON404() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON404
+}
+
+// GetApplicationproblemJSON429 returns the response for an HTTP 429 `application/problem+json` response
+func (r ListOrganizationRolesResult) GetApplicationproblemJSON429() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON429
+}
+
+// GetApplicationproblemJSONDefault returns the response for an HTTP default `application/problem+json` response
+func (r ListOrganizationRolesResult) GetApplicationproblemJSONDefault() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSONDefault
+}
+
+// GetBody returns the raw response body bytes
+func (r ListOrganizationRolesResult) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r ListOrganizationRolesResult) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ListOrganizationRolesResult) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r ListOrganizationRolesResult) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// CreateOrganizationRoleResult201Headers the declared response headers of an HTTP 201 response for CreateOrganizationRole
+type CreateOrganizationRoleResult201Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+// CreateOrganizationRoleResult400Headers the declared response headers of an HTTP 400 response for CreateOrganizationRole
+type CreateOrganizationRoleResult400Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+// CreateOrganizationRoleResult403Headers the declared response headers of an HTTP 403 response for CreateOrganizationRole
+type CreateOrganizationRoleResult403Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+// CreateOrganizationRoleResult404Headers the declared response headers of an HTTP 404 response for CreateOrganizationRole
+type CreateOrganizationRoleResult404Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+// CreateOrganizationRoleResult413Headers the declared response headers of an HTTP 413 response for CreateOrganizationRole
+type CreateOrganizationRoleResult413Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+// CreateOrganizationRoleResult422Headers the declared response headers of an HTTP 422 response for CreateOrganizationRole
+type CreateOrganizationRoleResult422Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+// CreateOrganizationRoleResult429Headers the declared response headers of an HTTP 429 response for CreateOrganizationRole
+type CreateOrganizationRoleResult429Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+	RetryAfter      *int
+}
+
+// CreateOrganizationRoleResultDefaultHeaders the declared response headers of an HTTP default response for CreateOrganizationRole
+type CreateOrganizationRoleResultDefaultHeaders struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+type CreateOrganizationRoleResult struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON201 the response for an HTTP 201 `application/json` response
+	JSON201 *externalRef0.OrganizationRole
+	// ApplicationproblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationproblemJSON400 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationproblemJSON401 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationproblemJSON403 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON404 the response for an HTTP 404 `application/problem+json` response
+	ApplicationproblemJSON404 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON409 the response for an HTTP 409 `application/problem+json` response
+	ApplicationproblemJSON409 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON413 the response for an HTTP 413 `application/problem+json` response
+	ApplicationproblemJSON413 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON422 the response for an HTTP 422 `application/problem+json` response
+	ApplicationproblemJSON422 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON429 the response for an HTTP 429 `application/problem+json` response
+	ApplicationproblemJSON429 *externalRef0.ErrorResponse
+	// ApplicationproblemJSONDefault the response for an HTTP default `application/problem+json` response
+	ApplicationproblemJSONDefault *externalRef0.ErrorResponse
+	// Headers201 the parsed response headers for an HTTP 201 response
+	Headers201 *CreateOrganizationRoleResult201Headers
+	// Headers400 the parsed response headers for an HTTP 400 response
+	Headers400 *CreateOrganizationRoleResult400Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *CreateOrganizationRoleResult403Headers
+	// Headers404 the parsed response headers for an HTTP 404 response
+	Headers404 *CreateOrganizationRoleResult404Headers
+	// Headers413 the parsed response headers for an HTTP 413 response
+	Headers413 *CreateOrganizationRoleResult413Headers
+	// Headers422 the parsed response headers for an HTTP 422 response
+	Headers422 *CreateOrganizationRoleResult422Headers
+	// Headers429 the parsed response headers for an HTTP 429 response
+	Headers429 *CreateOrganizationRoleResult429Headers
+	// HeadersDefault the parsed response headers for an HTTP default response
+	HeadersDefault *CreateOrganizationRoleResultDefaultHeaders
+}
+
+// GetJSON201 returns the response for an HTTP 201 `application/json` response
+func (r CreateOrganizationRoleResult) GetJSON201() *externalRef0.OrganizationRole {
+	return r.JSON201
+}
+
+// GetApplicationproblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r CreateOrganizationRoleResult) GetApplicationproblemJSON400() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON400
+}
+
+// GetApplicationproblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r CreateOrganizationRoleResult) GetApplicationproblemJSON401() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON401
+}
+
+// GetApplicationproblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r CreateOrganizationRoleResult) GetApplicationproblemJSON403() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON403
+}
+
+// GetApplicationproblemJSON404 returns the response for an HTTP 404 `application/problem+json` response
+func (r CreateOrganizationRoleResult) GetApplicationproblemJSON404() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON404
+}
+
+// GetApplicationproblemJSON409 returns the response for an HTTP 409 `application/problem+json` response
+func (r CreateOrganizationRoleResult) GetApplicationproblemJSON409() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON409
+}
+
+// GetApplicationproblemJSON413 returns the response for an HTTP 413 `application/problem+json` response
+func (r CreateOrganizationRoleResult) GetApplicationproblemJSON413() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON413
+}
+
+// GetApplicationproblemJSON422 returns the response for an HTTP 422 `application/problem+json` response
+func (r CreateOrganizationRoleResult) GetApplicationproblemJSON422() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON422
+}
+
+// GetApplicationproblemJSON429 returns the response for an HTTP 429 `application/problem+json` response
+func (r CreateOrganizationRoleResult) GetApplicationproblemJSON429() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON429
+}
+
+// GetApplicationproblemJSONDefault returns the response for an HTTP default `application/problem+json` response
+func (r CreateOrganizationRoleResult) GetApplicationproblemJSONDefault() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSONDefault
+}
+
+// GetBody returns the raw response body bytes
+func (r CreateOrganizationRoleResult) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r CreateOrganizationRoleResult) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r CreateOrganizationRoleResult) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r CreateOrganizationRoleResult) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// GetOrganizationRoleCapabilitiesResult200Headers the declared response headers of an HTTP 200 response for GetOrganizationRoleCapabilities
+type GetOrganizationRoleCapabilitiesResult200Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+// GetOrganizationRoleCapabilitiesResult403Headers the declared response headers of an HTTP 403 response for GetOrganizationRoleCapabilities
+type GetOrganizationRoleCapabilitiesResult403Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+// GetOrganizationRoleCapabilitiesResult429Headers the declared response headers of an HTTP 429 response for GetOrganizationRoleCapabilities
+type GetOrganizationRoleCapabilitiesResult429Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+	RetryAfter      *int
+}
+
+// GetOrganizationRoleCapabilitiesResultDefaultHeaders the declared response headers of an HTTP default response for GetOrganizationRoleCapabilities
+type GetOrganizationRoleCapabilitiesResultDefaultHeaders struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+type GetOrganizationRoleCapabilitiesResult struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *externalRef0.OrganizationCapabilityCatalog
+	// ApplicationproblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationproblemJSON401 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationproblemJSON403 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON429 the response for an HTTP 429 `application/problem+json` response
+	ApplicationproblemJSON429 *externalRef0.ErrorResponse
+	// ApplicationproblemJSONDefault the response for an HTTP default `application/problem+json` response
+	ApplicationproblemJSONDefault *externalRef0.ErrorResponse
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *GetOrganizationRoleCapabilitiesResult200Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *GetOrganizationRoleCapabilitiesResult403Headers
+	// Headers429 the parsed response headers for an HTTP 429 response
+	Headers429 *GetOrganizationRoleCapabilitiesResult429Headers
+	// HeadersDefault the parsed response headers for an HTTP default response
+	HeadersDefault *GetOrganizationRoleCapabilitiesResultDefaultHeaders
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r GetOrganizationRoleCapabilitiesResult) GetJSON200() *externalRef0.OrganizationCapabilityCatalog {
+	return r.JSON200
+}
+
+// GetApplicationproblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r GetOrganizationRoleCapabilitiesResult) GetApplicationproblemJSON401() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON401
+}
+
+// GetApplicationproblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r GetOrganizationRoleCapabilitiesResult) GetApplicationproblemJSON403() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON403
+}
+
+// GetApplicationproblemJSON429 returns the response for an HTTP 429 `application/problem+json` response
+func (r GetOrganizationRoleCapabilitiesResult) GetApplicationproblemJSON429() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON429
+}
+
+// GetApplicationproblemJSONDefault returns the response for an HTTP default `application/problem+json` response
+func (r GetOrganizationRoleCapabilitiesResult) GetApplicationproblemJSONDefault() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSONDefault
+}
+
+// GetBody returns the raw response body bytes
+func (r GetOrganizationRoleCapabilitiesResult) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r GetOrganizationRoleCapabilitiesResult) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetOrganizationRoleCapabilitiesResult) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r GetOrganizationRoleCapabilitiesResult) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// DeleteOrganizationRoleResult204Headers the declared response headers of an HTTP 204 response for DeleteOrganizationRole
+type DeleteOrganizationRoleResult204Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+// DeleteOrganizationRoleResult400Headers the declared response headers of an HTTP 400 response for DeleteOrganizationRole
+type DeleteOrganizationRoleResult400Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+// DeleteOrganizationRoleResult403Headers the declared response headers of an HTTP 403 response for DeleteOrganizationRole
+type DeleteOrganizationRoleResult403Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+// DeleteOrganizationRoleResult404Headers the declared response headers of an HTTP 404 response for DeleteOrganizationRole
+type DeleteOrganizationRoleResult404Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+// DeleteOrganizationRoleResult429Headers the declared response headers of an HTTP 429 response for DeleteOrganizationRole
+type DeleteOrganizationRoleResult429Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+	RetryAfter      *int
+}
+
+// DeleteOrganizationRoleResultDefaultHeaders the declared response headers of an HTTP default response for DeleteOrganizationRole
+type DeleteOrganizationRoleResultDefaultHeaders struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+type DeleteOrganizationRoleResult struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// ApplicationproblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationproblemJSON400 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationproblemJSON401 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationproblemJSON403 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON404 the response for an HTTP 404 `application/problem+json` response
+	ApplicationproblemJSON404 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON409 the response for an HTTP 409 `application/problem+json` response
+	ApplicationproblemJSON409 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON429 the response for an HTTP 429 `application/problem+json` response
+	ApplicationproblemJSON429 *externalRef0.ErrorResponse
+	// ApplicationproblemJSONDefault the response for an HTTP default `application/problem+json` response
+	ApplicationproblemJSONDefault *externalRef0.ErrorResponse
+	// Headers204 the parsed response headers for an HTTP 204 response
+	Headers204 *DeleteOrganizationRoleResult204Headers
+	// Headers400 the parsed response headers for an HTTP 400 response
+	Headers400 *DeleteOrganizationRoleResult400Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *DeleteOrganizationRoleResult403Headers
+	// Headers404 the parsed response headers for an HTTP 404 response
+	Headers404 *DeleteOrganizationRoleResult404Headers
+	// Headers429 the parsed response headers for an HTTP 429 response
+	Headers429 *DeleteOrganizationRoleResult429Headers
+	// HeadersDefault the parsed response headers for an HTTP default response
+	HeadersDefault *DeleteOrganizationRoleResultDefaultHeaders
+}
+
+// GetApplicationproblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r DeleteOrganizationRoleResult) GetApplicationproblemJSON400() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON400
+}
+
+// GetApplicationproblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r DeleteOrganizationRoleResult) GetApplicationproblemJSON401() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON401
+}
+
+// GetApplicationproblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r DeleteOrganizationRoleResult) GetApplicationproblemJSON403() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON403
+}
+
+// GetApplicationproblemJSON404 returns the response for an HTTP 404 `application/problem+json` response
+func (r DeleteOrganizationRoleResult) GetApplicationproblemJSON404() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON404
+}
+
+// GetApplicationproblemJSON409 returns the response for an HTTP 409 `application/problem+json` response
+func (r DeleteOrganizationRoleResult) GetApplicationproblemJSON409() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON409
+}
+
+// GetApplicationproblemJSON429 returns the response for an HTTP 429 `application/problem+json` response
+func (r DeleteOrganizationRoleResult) GetApplicationproblemJSON429() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON429
+}
+
+// GetApplicationproblemJSONDefault returns the response for an HTTP default `application/problem+json` response
+func (r DeleteOrganizationRoleResult) GetApplicationproblemJSONDefault() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSONDefault
+}
+
+// GetBody returns the raw response body bytes
+func (r DeleteOrganizationRoleResult) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r DeleteOrganizationRoleResult) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r DeleteOrganizationRoleResult) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r DeleteOrganizationRoleResult) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// GetOrganizationRoleResult200Headers the declared response headers of an HTTP 200 response for GetOrganizationRole
+type GetOrganizationRoleResult200Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+// GetOrganizationRoleResult403Headers the declared response headers of an HTTP 403 response for GetOrganizationRole
+type GetOrganizationRoleResult403Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+// GetOrganizationRoleResult404Headers the declared response headers of an HTTP 404 response for GetOrganizationRole
+type GetOrganizationRoleResult404Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+// GetOrganizationRoleResult429Headers the declared response headers of an HTTP 429 response for GetOrganizationRole
+type GetOrganizationRoleResult429Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+	RetryAfter      *int
+}
+
+// GetOrganizationRoleResultDefaultHeaders the declared response headers of an HTTP default response for GetOrganizationRole
+type GetOrganizationRoleResultDefaultHeaders struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+type GetOrganizationRoleResult struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *externalRef0.OrganizationRole
+	// ApplicationproblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationproblemJSON401 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationproblemJSON403 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON404 the response for an HTTP 404 `application/problem+json` response
+	ApplicationproblemJSON404 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON429 the response for an HTTP 429 `application/problem+json` response
+	ApplicationproblemJSON429 *externalRef0.ErrorResponse
+	// ApplicationproblemJSONDefault the response for an HTTP default `application/problem+json` response
+	ApplicationproblemJSONDefault *externalRef0.ErrorResponse
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *GetOrganizationRoleResult200Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *GetOrganizationRoleResult403Headers
+	// Headers404 the parsed response headers for an HTTP 404 response
+	Headers404 *GetOrganizationRoleResult404Headers
+	// Headers429 the parsed response headers for an HTTP 429 response
+	Headers429 *GetOrganizationRoleResult429Headers
+	// HeadersDefault the parsed response headers for an HTTP default response
+	HeadersDefault *GetOrganizationRoleResultDefaultHeaders
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r GetOrganizationRoleResult) GetJSON200() *externalRef0.OrganizationRole {
+	return r.JSON200
+}
+
+// GetApplicationproblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r GetOrganizationRoleResult) GetApplicationproblemJSON401() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON401
+}
+
+// GetApplicationproblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r GetOrganizationRoleResult) GetApplicationproblemJSON403() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON403
+}
+
+// GetApplicationproblemJSON404 returns the response for an HTTP 404 `application/problem+json` response
+func (r GetOrganizationRoleResult) GetApplicationproblemJSON404() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON404
+}
+
+// GetApplicationproblemJSON429 returns the response for an HTTP 429 `application/problem+json` response
+func (r GetOrganizationRoleResult) GetApplicationproblemJSON429() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON429
+}
+
+// GetApplicationproblemJSONDefault returns the response for an HTTP default `application/problem+json` response
+func (r GetOrganizationRoleResult) GetApplicationproblemJSONDefault() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSONDefault
+}
+
+// GetBody returns the raw response body bytes
+func (r GetOrganizationRoleResult) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r GetOrganizationRoleResult) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetOrganizationRoleResult) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r GetOrganizationRoleResult) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// UpdateOrganizationRoleResult200Headers the declared response headers of an HTTP 200 response for UpdateOrganizationRole
+type UpdateOrganizationRoleResult200Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+// UpdateOrganizationRoleResult400Headers the declared response headers of an HTTP 400 response for UpdateOrganizationRole
+type UpdateOrganizationRoleResult400Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+// UpdateOrganizationRoleResult403Headers the declared response headers of an HTTP 403 response for UpdateOrganizationRole
+type UpdateOrganizationRoleResult403Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+// UpdateOrganizationRoleResult404Headers the declared response headers of an HTTP 404 response for UpdateOrganizationRole
+type UpdateOrganizationRoleResult404Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+// UpdateOrganizationRoleResult413Headers the declared response headers of an HTTP 413 response for UpdateOrganizationRole
+type UpdateOrganizationRoleResult413Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+// UpdateOrganizationRoleResult422Headers the declared response headers of an HTTP 422 response for UpdateOrganizationRole
+type UpdateOrganizationRoleResult422Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+// UpdateOrganizationRoleResult429Headers the declared response headers of an HTTP 429 response for UpdateOrganizationRole
+type UpdateOrganizationRoleResult429Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+	RetryAfter      *int
+}
+
+// UpdateOrganizationRoleResultDefaultHeaders the declared response headers of an HTTP default response for UpdateOrganizationRole
+type UpdateOrganizationRoleResultDefaultHeaders struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+type UpdateOrganizationRoleResult struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *externalRef0.OrganizationRole
+	// ApplicationproblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationproblemJSON400 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationproblemJSON401 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationproblemJSON403 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON404 the response for an HTTP 404 `application/problem+json` response
+	ApplicationproblemJSON404 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON409 the response for an HTTP 409 `application/problem+json` response
+	ApplicationproblemJSON409 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON413 the response for an HTTP 413 `application/problem+json` response
+	ApplicationproblemJSON413 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON422 the response for an HTTP 422 `application/problem+json` response
+	ApplicationproblemJSON422 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON429 the response for an HTTP 429 `application/problem+json` response
+	ApplicationproblemJSON429 *externalRef0.ErrorResponse
+	// ApplicationproblemJSONDefault the response for an HTTP default `application/problem+json` response
+	ApplicationproblemJSONDefault *externalRef0.ErrorResponse
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *UpdateOrganizationRoleResult200Headers
+	// Headers400 the parsed response headers for an HTTP 400 response
+	Headers400 *UpdateOrganizationRoleResult400Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *UpdateOrganizationRoleResult403Headers
+	// Headers404 the parsed response headers for an HTTP 404 response
+	Headers404 *UpdateOrganizationRoleResult404Headers
+	// Headers413 the parsed response headers for an HTTP 413 response
+	Headers413 *UpdateOrganizationRoleResult413Headers
+	// Headers422 the parsed response headers for an HTTP 422 response
+	Headers422 *UpdateOrganizationRoleResult422Headers
+	// Headers429 the parsed response headers for an HTTP 429 response
+	Headers429 *UpdateOrganizationRoleResult429Headers
+	// HeadersDefault the parsed response headers for an HTTP default response
+	HeadersDefault *UpdateOrganizationRoleResultDefaultHeaders
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r UpdateOrganizationRoleResult) GetJSON200() *externalRef0.OrganizationRole {
+	return r.JSON200
+}
+
+// GetApplicationproblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r UpdateOrganizationRoleResult) GetApplicationproblemJSON400() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON400
+}
+
+// GetApplicationproblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r UpdateOrganizationRoleResult) GetApplicationproblemJSON401() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON401
+}
+
+// GetApplicationproblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r UpdateOrganizationRoleResult) GetApplicationproblemJSON403() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON403
+}
+
+// GetApplicationproblemJSON404 returns the response for an HTTP 404 `application/problem+json` response
+func (r UpdateOrganizationRoleResult) GetApplicationproblemJSON404() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON404
+}
+
+// GetApplicationproblemJSON409 returns the response for an HTTP 409 `application/problem+json` response
+func (r UpdateOrganizationRoleResult) GetApplicationproblemJSON409() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON409
+}
+
+// GetApplicationproblemJSON413 returns the response for an HTTP 413 `application/problem+json` response
+func (r UpdateOrganizationRoleResult) GetApplicationproblemJSON413() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON413
+}
+
+// GetApplicationproblemJSON422 returns the response for an HTTP 422 `application/problem+json` response
+func (r UpdateOrganizationRoleResult) GetApplicationproblemJSON422() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON422
+}
+
+// GetApplicationproblemJSON429 returns the response for an HTTP 429 `application/problem+json` response
+func (r UpdateOrganizationRoleResult) GetApplicationproblemJSON429() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON429
+}
+
+// GetApplicationproblemJSONDefault returns the response for an HTTP default `application/problem+json` response
+func (r UpdateOrganizationRoleResult) GetApplicationproblemJSONDefault() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSONDefault
+}
+
+// GetBody returns the raw response body bytes
+func (r UpdateOrganizationRoleResult) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r UpdateOrganizationRoleResult) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r UpdateOrganizationRoleResult) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r UpdateOrganizationRoleResult) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// ListOrganizationUsersResult200Headers the declared response headers of an HTTP 200 response for ListOrganizationUsers
+type ListOrganizationUsersResult200Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+// ListOrganizationUsersResult403Headers the declared response headers of an HTTP 403 response for ListOrganizationUsers
+type ListOrganizationUsersResult403Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+// ListOrganizationUsersResult404Headers the declared response headers of an HTTP 404 response for ListOrganizationUsers
+type ListOrganizationUsersResult404Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+// ListOrganizationUsersResult429Headers the declared response headers of an HTTP 429 response for ListOrganizationUsers
+type ListOrganizationUsersResult429Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+	RetryAfter      *int
+}
+
+// ListOrganizationUsersResultDefaultHeaders the declared response headers of an HTTP default response for ListOrganizationUsers
+type ListOrganizationUsersResultDefaultHeaders struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+type ListOrganizationUsersResult struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *externalRef0.ListOrganizationUsersResponse
+	// ApplicationproblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationproblemJSON401 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationproblemJSON403 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON404 the response for an HTTP 404 `application/problem+json` response
+	ApplicationproblemJSON404 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON429 the response for an HTTP 429 `application/problem+json` response
+	ApplicationproblemJSON429 *externalRef0.ErrorResponse
+	// ApplicationproblemJSONDefault the response for an HTTP default `application/problem+json` response
+	ApplicationproblemJSONDefault *externalRef0.ErrorResponse
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *ListOrganizationUsersResult200Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *ListOrganizationUsersResult403Headers
+	// Headers404 the parsed response headers for an HTTP 404 response
+	Headers404 *ListOrganizationUsersResult404Headers
+	// Headers429 the parsed response headers for an HTTP 429 response
+	Headers429 *ListOrganizationUsersResult429Headers
+	// HeadersDefault the parsed response headers for an HTTP default response
+	HeadersDefault *ListOrganizationUsersResultDefaultHeaders
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r ListOrganizationUsersResult) GetJSON200() *externalRef0.ListOrganizationUsersResponse {
+	return r.JSON200
+}
+
+// GetApplicationproblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r ListOrganizationUsersResult) GetApplicationproblemJSON401() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON401
+}
+
+// GetApplicationproblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r ListOrganizationUsersResult) GetApplicationproblemJSON403() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON403
+}
+
+// GetApplicationproblemJSON404 returns the response for an HTTP 404 `application/problem+json` response
+func (r ListOrganizationUsersResult) GetApplicationproblemJSON404() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON404
+}
+
+// GetApplicationproblemJSON429 returns the response for an HTTP 429 `application/problem+json` response
+func (r ListOrganizationUsersResult) GetApplicationproblemJSON429() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON429
+}
+
+// GetApplicationproblemJSONDefault returns the response for an HTTP default `application/problem+json` response
+func (r ListOrganizationUsersResult) GetApplicationproblemJSONDefault() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSONDefault
+}
+
+// GetBody returns the raw response body bytes
+func (r ListOrganizationUsersResult) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r ListOrganizationUsersResult) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ListOrganizationUsersResult) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r ListOrganizationUsersResult) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// DeleteOrganizationUserResult204Headers the declared response headers of an HTTP 204 response for DeleteOrganizationUser
+type DeleteOrganizationUserResult204Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+// DeleteOrganizationUserResult403Headers the declared response headers of an HTTP 403 response for DeleteOrganizationUser
+type DeleteOrganizationUserResult403Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+// DeleteOrganizationUserResult404Headers the declared response headers of an HTTP 404 response for DeleteOrganizationUser
+type DeleteOrganizationUserResult404Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+// DeleteOrganizationUserResult429Headers the declared response headers of an HTTP 429 response for DeleteOrganizationUser
+type DeleteOrganizationUserResult429Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+	RetryAfter      *int
+}
+
+// DeleteOrganizationUserResultDefaultHeaders the declared response headers of an HTTP default response for DeleteOrganizationUser
+type DeleteOrganizationUserResultDefaultHeaders struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+type DeleteOrganizationUserResult struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// ApplicationproblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationproblemJSON401 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationproblemJSON403 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON404 the response for an HTTP 404 `application/problem+json` response
+	ApplicationproblemJSON404 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON409 the response for an HTTP 409 `application/problem+json` response
+	ApplicationproblemJSON409 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON429 the response for an HTTP 429 `application/problem+json` response
+	ApplicationproblemJSON429 *externalRef0.ErrorResponse
+	// ApplicationproblemJSONDefault the response for an HTTP default `application/problem+json` response
+	ApplicationproblemJSONDefault *externalRef0.ErrorResponse
+	// Headers204 the parsed response headers for an HTTP 204 response
+	Headers204 *DeleteOrganizationUserResult204Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *DeleteOrganizationUserResult403Headers
+	// Headers404 the parsed response headers for an HTTP 404 response
+	Headers404 *DeleteOrganizationUserResult404Headers
+	// Headers429 the parsed response headers for an HTTP 429 response
+	Headers429 *DeleteOrganizationUserResult429Headers
+	// HeadersDefault the parsed response headers for an HTTP default response
+	HeadersDefault *DeleteOrganizationUserResultDefaultHeaders
+}
+
+// GetApplicationproblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r DeleteOrganizationUserResult) GetApplicationproblemJSON401() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON401
+}
+
+// GetApplicationproblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r DeleteOrganizationUserResult) GetApplicationproblemJSON403() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON403
+}
+
+// GetApplicationproblemJSON404 returns the response for an HTTP 404 `application/problem+json` response
+func (r DeleteOrganizationUserResult) GetApplicationproblemJSON404() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON404
+}
+
+// GetApplicationproblemJSON409 returns the response for an HTTP 409 `application/problem+json` response
+func (r DeleteOrganizationUserResult) GetApplicationproblemJSON409() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON409
+}
+
+// GetApplicationproblemJSON429 returns the response for an HTTP 429 `application/problem+json` response
+func (r DeleteOrganizationUserResult) GetApplicationproblemJSON429() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON429
+}
+
+// GetApplicationproblemJSONDefault returns the response for an HTTP default `application/problem+json` response
+func (r DeleteOrganizationUserResult) GetApplicationproblemJSONDefault() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSONDefault
+}
+
+// GetBody returns the raw response body bytes
+func (r DeleteOrganizationUserResult) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r DeleteOrganizationUserResult) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r DeleteOrganizationUserResult) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r DeleteOrganizationUserResult) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// GetOrganizationUserResult200Headers the declared response headers of an HTTP 200 response for GetOrganizationUser
+type GetOrganizationUserResult200Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+// GetOrganizationUserResult403Headers the declared response headers of an HTTP 403 response for GetOrganizationUser
+type GetOrganizationUserResult403Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+// GetOrganizationUserResult404Headers the declared response headers of an HTTP 404 response for GetOrganizationUser
+type GetOrganizationUserResult404Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+// GetOrganizationUserResult429Headers the declared response headers of an HTTP 429 response for GetOrganizationUser
+type GetOrganizationUserResult429Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+	RetryAfter      *int
+}
+
+// GetOrganizationUserResultDefaultHeaders the declared response headers of an HTTP default response for GetOrganizationUser
+type GetOrganizationUserResultDefaultHeaders struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+type GetOrganizationUserResult struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *externalRef0.OrganizationUser
+	// ApplicationproblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationproblemJSON401 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationproblemJSON403 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON404 the response for an HTTP 404 `application/problem+json` response
+	ApplicationproblemJSON404 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON429 the response for an HTTP 429 `application/problem+json` response
+	ApplicationproblemJSON429 *externalRef0.ErrorResponse
+	// ApplicationproblemJSONDefault the response for an HTTP default `application/problem+json` response
+	ApplicationproblemJSONDefault *externalRef0.ErrorResponse
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *GetOrganizationUserResult200Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *GetOrganizationUserResult403Headers
+	// Headers404 the parsed response headers for an HTTP 404 response
+	Headers404 *GetOrganizationUserResult404Headers
+	// Headers429 the parsed response headers for an HTTP 429 response
+	Headers429 *GetOrganizationUserResult429Headers
+	// HeadersDefault the parsed response headers for an HTTP default response
+	HeadersDefault *GetOrganizationUserResultDefaultHeaders
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r GetOrganizationUserResult) GetJSON200() *externalRef0.OrganizationUser {
+	return r.JSON200
+}
+
+// GetApplicationproblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r GetOrganizationUserResult) GetApplicationproblemJSON401() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON401
+}
+
+// GetApplicationproblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r GetOrganizationUserResult) GetApplicationproblemJSON403() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON403
+}
+
+// GetApplicationproblemJSON404 returns the response for an HTTP 404 `application/problem+json` response
+func (r GetOrganizationUserResult) GetApplicationproblemJSON404() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON404
+}
+
+// GetApplicationproblemJSON429 returns the response for an HTTP 429 `application/problem+json` response
+func (r GetOrganizationUserResult) GetApplicationproblemJSON429() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON429
+}
+
+// GetApplicationproblemJSONDefault returns the response for an HTTP default `application/problem+json` response
+func (r GetOrganizationUserResult) GetApplicationproblemJSONDefault() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSONDefault
+}
+
+// GetBody returns the raw response body bytes
+func (r GetOrganizationUserResult) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r GetOrganizationUserResult) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetOrganizationUserResult) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r GetOrganizationUserResult) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// UpdateOrganizationUserResult200Headers the declared response headers of an HTTP 200 response for UpdateOrganizationUser
+type UpdateOrganizationUserResult200Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+// UpdateOrganizationUserResult400Headers the declared response headers of an HTTP 400 response for UpdateOrganizationUser
+type UpdateOrganizationUserResult400Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+// UpdateOrganizationUserResult403Headers the declared response headers of an HTTP 403 response for UpdateOrganizationUser
+type UpdateOrganizationUserResult403Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+// UpdateOrganizationUserResult404Headers the declared response headers of an HTTP 404 response for UpdateOrganizationUser
+type UpdateOrganizationUserResult404Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+// UpdateOrganizationUserResult413Headers the declared response headers of an HTTP 413 response for UpdateOrganizationUser
+type UpdateOrganizationUserResult413Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+// UpdateOrganizationUserResult422Headers the declared response headers of an HTTP 422 response for UpdateOrganizationUser
+type UpdateOrganizationUserResult422Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+// UpdateOrganizationUserResult429Headers the declared response headers of an HTTP 429 response for UpdateOrganizationUser
+type UpdateOrganizationUserResult429Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+	RetryAfter      *int
+}
+
+// UpdateOrganizationUserResultDefaultHeaders the declared response headers of an HTTP default response for UpdateOrganizationUser
+type UpdateOrganizationUserResultDefaultHeaders struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+type UpdateOrganizationUserResult struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *externalRef0.OrganizationUser
+	// ApplicationproblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationproblemJSON400 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationproblemJSON401 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationproblemJSON403 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON404 the response for an HTTP 404 `application/problem+json` response
+	ApplicationproblemJSON404 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON409 the response for an HTTP 409 `application/problem+json` response
+	ApplicationproblemJSON409 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON413 the response for an HTTP 413 `application/problem+json` response
+	ApplicationproblemJSON413 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON422 the response for an HTTP 422 `application/problem+json` response
+	ApplicationproblemJSON422 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON429 the response for an HTTP 429 `application/problem+json` response
+	ApplicationproblemJSON429 *externalRef0.ErrorResponse
+	// ApplicationproblemJSONDefault the response for an HTTP default `application/problem+json` response
+	ApplicationproblemJSONDefault *externalRef0.ErrorResponse
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *UpdateOrganizationUserResult200Headers
+	// Headers400 the parsed response headers for an HTTP 400 response
+	Headers400 *UpdateOrganizationUserResult400Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *UpdateOrganizationUserResult403Headers
+	// Headers404 the parsed response headers for an HTTP 404 response
+	Headers404 *UpdateOrganizationUserResult404Headers
+	// Headers413 the parsed response headers for an HTTP 413 response
+	Headers413 *UpdateOrganizationUserResult413Headers
+	// Headers422 the parsed response headers for an HTTP 422 response
+	Headers422 *UpdateOrganizationUserResult422Headers
+	// Headers429 the parsed response headers for an HTTP 429 response
+	Headers429 *UpdateOrganizationUserResult429Headers
+	// HeadersDefault the parsed response headers for an HTTP default response
+	HeadersDefault *UpdateOrganizationUserResultDefaultHeaders
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r UpdateOrganizationUserResult) GetJSON200() *externalRef0.OrganizationUser {
+	return r.JSON200
+}
+
+// GetApplicationproblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r UpdateOrganizationUserResult) GetApplicationproblemJSON400() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON400
+}
+
+// GetApplicationproblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r UpdateOrganizationUserResult) GetApplicationproblemJSON401() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON401
+}
+
+// GetApplicationproblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r UpdateOrganizationUserResult) GetApplicationproblemJSON403() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON403
+}
+
+// GetApplicationproblemJSON404 returns the response for an HTTP 404 `application/problem+json` response
+func (r UpdateOrganizationUserResult) GetApplicationproblemJSON404() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON404
+}
+
+// GetApplicationproblemJSON409 returns the response for an HTTP 409 `application/problem+json` response
+func (r UpdateOrganizationUserResult) GetApplicationproblemJSON409() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON409
+}
+
+// GetApplicationproblemJSON413 returns the response for an HTTP 413 `application/problem+json` response
+func (r UpdateOrganizationUserResult) GetApplicationproblemJSON413() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON413
+}
+
+// GetApplicationproblemJSON422 returns the response for an HTTP 422 `application/problem+json` response
+func (r UpdateOrganizationUserResult) GetApplicationproblemJSON422() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON422
+}
+
+// GetApplicationproblemJSON429 returns the response for an HTTP 429 `application/problem+json` response
+func (r UpdateOrganizationUserResult) GetApplicationproblemJSON429() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON429
+}
+
+// GetApplicationproblemJSONDefault returns the response for an HTTP default `application/problem+json` response
+func (r UpdateOrganizationUserResult) GetApplicationproblemJSONDefault() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSONDefault
+}
+
+// GetBody returns the raw response body bytes
+func (r UpdateOrganizationUserResult) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r UpdateOrganizationUserResult) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r UpdateOrganizationUserResult) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r UpdateOrganizationUserResult) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
 // GetOrganizationWithResponse Get your current organization
 //
 // Returns the authenticated caller's current organization. Organization context comes from the caller's membership; no organization selector is required. Returns 404 when the caller does not belong to an organization, or 403 when organizations are unavailable to the caller.
@@ -326,6 +5244,418 @@ func (c *ClientWithResponses) GetOrganizationWithResponse(ctx context.Context, r
 		return nil, err
 	}
 	return ParseGetOrganizationResult(rsp)
+}
+
+// ListOrganizationGroupsWithResponse List groups in your current organization
+//
+// Returns groups without their members or roles, ordered by creation time descending and then ID descending for deterministic pagination.
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /v2/organization/groups (the `ListOrganizationGroups` operationId).
+func (c *ClientWithResponses) ListOrganizationGroupsWithResponse(ctx context.Context, params *ListOrganizationGroupsParams, reqEditors ...RequestEditorFn) (*ListOrganizationGroupsResult, error) {
+	rsp, err := c.ListOrganizationGroups(ctx, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListOrganizationGroupsResult(rsp)
+}
+
+// CreateOrganizationGroupWithBodyWithResponse Create a group in your current organization
+//
+// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /v2/organization/groups (the `CreateOrganizationGroup` operationId).
+func (c *ClientWithResponses) CreateOrganizationGroupWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateOrganizationGroupResult, error) {
+	rsp, err := c.CreateOrganizationGroupWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCreateOrganizationGroupResult(rsp)
+}
+
+// CreateOrganizationGroupWithResponse Create a group in your current organization
+//
+// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /v2/organization/groups (the `CreateOrganizationGroup` operationId).
+func (c *ClientWithResponses) CreateOrganizationGroupWithResponse(ctx context.Context, body CreateOrganizationGroupJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateOrganizationGroupResult, error) {
+	rsp, err := c.CreateOrganizationGroup(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCreateOrganizationGroupResult(rsp)
+}
+
+// DeleteOrganizationGroupWithResponse Delete a group in your current organization
+//
+// Permanently deletes the group and its group memberships. Organization members are not removed. Returns 404 when the group does not exist in your current organization, including when it has already been deleted.
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with DELETE /v2/organization/groups/{id} (the `DeleteOrganizationGroup` operationId).
+func (c *ClientWithResponses) DeleteOrganizationGroupWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*DeleteOrganizationGroupResult, error) {
+	rsp, err := c.DeleteOrganizationGroup(ctx, id, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseDeleteOrganizationGroupResult(rsp)
+}
+
+// GetOrganizationGroupWithResponse Get a group in your current organization
+//
+// Returns the group without its members. Returns 404 when the ID is unknown or belongs to another organization, or when the caller does not belong to an organization.
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /v2/organization/groups/{id} (the `GetOrganizationGroup` operationId).
+func (c *ClientWithResponses) GetOrganizationGroupWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*GetOrganizationGroupResult, error) {
+	rsp, err := c.GetOrganizationGroup(ctx, id, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetOrganizationGroupResult(rsp)
+}
+
+// UpdateOrganizationGroupWithBodyWithResponse Rename a group in your current organization
+//
+// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with PATCH /v2/organization/groups/{id} (the `UpdateOrganizationGroup` operationId).
+func (c *ClientWithResponses) UpdateOrganizationGroupWithBodyWithResponse(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateOrganizationGroupResult, error) {
+	rsp, err := c.UpdateOrganizationGroupWithBody(ctx, id, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseUpdateOrganizationGroupResult(rsp)
+}
+
+// UpdateOrganizationGroupWithResponse Rename a group in your current organization
+//
+// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with PATCH /v2/organization/groups/{id} (the `UpdateOrganizationGroup` operationId).
+func (c *ClientWithResponses) UpdateOrganizationGroupWithResponse(ctx context.Context, id string, body UpdateOrganizationGroupJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateOrganizationGroupResult, error) {
+	rsp, err := c.UpdateOrganizationGroup(ctx, id, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseUpdateOrganizationGroupResult(rsp)
+}
+
+// ListOrganizationGroupMembersWithResponse List members of a group
+//
+// Members are ordered newest first by membership creation time, with a unique upstream tie-breaker. Returns 404 when the group does not exist in the current organization, or when the caller does not belong to an organization.
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /v2/organization/groups/{id}/members (the `ListOrganizationGroupMembers` operationId).
+func (c *ClientWithResponses) ListOrganizationGroupMembersWithResponse(ctx context.Context, id string, params *ListOrganizationGroupMembersParams, reqEditors ...RequestEditorFn) (*ListOrganizationGroupMembersResult, error) {
+	rsp, err := c.ListOrganizationGroupMembers(ctx, id, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListOrganizationGroupMembersResult(rsp)
+}
+
+// RemoveOrganizationGroupMemberWithResponse Remove a member from a group
+//
+// Removes the organization member from the group. The group and user must belong to the current organization. Returns 404 when the membership is absent, including repeated deletion, or when the group is unknown or belongs to another organization.
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with DELETE /v2/organization/groups/{id}/members/{userId} (the `RemoveOrganizationGroupMember` operationId).
+func (c *ClientWithResponses) RemoveOrganizationGroupMemberWithResponse(ctx context.Context, id string, userId string, reqEditors ...RequestEditorFn) (*RemoveOrganizationGroupMemberResult, error) {
+	rsp, err := c.RemoveOrganizationGroupMember(ctx, id, userId, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseRemoveOrganizationGroupMemberResult(rsp)
+}
+
+// AddOrganizationGroupMemberWithResponse Add a member to a group
+//
+// Adds the organization member to the group. The group and user must belong to the current organization. Adding an existing member is idempotent and returns the same no-content response.
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with PUT /v2/organization/groups/{id}/members/{userId} (the `AddOrganizationGroupMember` operationId).
+func (c *ClientWithResponses) AddOrganizationGroupMemberWithResponse(ctx context.Context, id string, userId string, reqEditors ...RequestEditorFn) (*AddOrganizationGroupMemberResult, error) {
+	rsp, err := c.AddOrganizationGroupMember(ctx, id, userId, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseAddOrganizationGroupMemberResult(rsp)
+}
+
+// ListOrganizationInvitesWithResponse List pending organization invites
+//
+// Returns the pending invitations to the authenticated caller's organization, newest first. Only unexpired invites are pending: an invite leaves the list once it is accepted, revoked or expired. The list is complete and takes no pagination parameters, because an organization's pending invites are capped. Reading invites requires the organization's invite-management capability, which the built-in admin role holds; other members receive 403. Returns 404 when the caller does not belong to an organization, or 403 when organizations are unavailable to the caller.
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /v2/organization/invites (the `ListOrganizationInvites` operationId).
+func (c *ClientWithResponses) ListOrganizationInvitesWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListOrganizationInvitesResult, error) {
+	rsp, err := c.ListOrganizationInvites(ctx, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListOrganizationInvitesResult(rsp)
+}
+
+// CreateOrganizationInviteWithBodyWithResponse Invite a user to your organization
+//
+// Sends an invitation to join the authenticated caller's organization and returns the pending invite; `expiresAt` is when it lapses. The invitee receives an email carrying the acceptance link, which is never returned here. Returns 409 when the address already belongs to a member or to a pending invite, or when the organization has reached its pending-invite limit; 404 when the role is unknown to the organization; and 403 when the caller does not hold every capability the role grants. Inviting requires the organization's invite-management capability, which the built-in admin role holds; other members, and callers outside an organization, receive 403, as does a caller for whom organizations are unavailable.
+//
+// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /v2/organization/invites (the `CreateOrganizationInvite` operationId).
+func (c *ClientWithResponses) CreateOrganizationInviteWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateOrganizationInviteResult, error) {
+	rsp, err := c.CreateOrganizationInviteWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCreateOrganizationInviteResult(rsp)
+}
+
+// CreateOrganizationInviteWithResponse Invite a user to your organization
+//
+// Sends an invitation to join the authenticated caller's organization and returns the pending invite; `expiresAt` is when it lapses. The invitee receives an email carrying the acceptance link, which is never returned here. Returns 409 when the address already belongs to a member or to a pending invite, or when the organization has reached its pending-invite limit; 404 when the role is unknown to the organization; and 403 when the caller does not hold every capability the role grants. Inviting requires the organization's invite-management capability, which the built-in admin role holds; other members, and callers outside an organization, receive 403, as does a caller for whom organizations are unavailable.
+//
+// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /v2/organization/invites (the `CreateOrganizationInvite` operationId).
+func (c *ClientWithResponses) CreateOrganizationInviteWithResponse(ctx context.Context, body CreateOrganizationInviteJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateOrganizationInviteResult, error) {
+	rsp, err := c.CreateOrganizationInvite(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCreateOrganizationInviteResult(rsp)
+}
+
+// DeleteOrganizationInviteWithResponse Cancel an organization invite
+//
+// Cancels one invitation to the authenticated caller's organization; the invitee can no longer accept it. Returns 404 when the ID is unknown to the caller's organization: never issued, already accepted, already cancelled, or issued by another organization. An expired invite can still be cancelled. Cancelling invites requires the organization's invite-management capability, which the built-in admin role holds; other members, and callers outside an organization, receive 403, as does a caller for whom organizations are unavailable.
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with DELETE /v2/organization/invites/{id} (the `DeleteOrganizationInvite` operationId).
+func (c *ClientWithResponses) DeleteOrganizationInviteWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*DeleteOrganizationInviteResult, error) {
+	rsp, err := c.DeleteOrganizationInvite(ctx, id, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseDeleteOrganizationInviteResult(rsp)
+}
+
+// GetOrganizationInviteWithResponse Get a pending organization invite
+//
+// Returns one pending invitation to the authenticated caller's organization. Only unexpired invites are pending: an invite that has expired, been accepted or been revoked returns 404, as does an ID from another organization. Reading invites requires the organization's invite-management capability, which the built-in admin role holds; other members receive 403. Returns 404 when the caller does not belong to an organization, or 403 when organizations are unavailable to the caller.
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /v2/organization/invites/{id} (the `GetOrganizationInvite` operationId).
+func (c *ClientWithResponses) GetOrganizationInviteWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*GetOrganizationInviteResult, error) {
+	rsp, err := c.GetOrganizationInvite(ctx, id, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetOrganizationInviteResult(rsp)
+}
+
+// ListOrganizationRolesWithResponse List organization roles
+//
+// Returns every role a member or invite of the authenticated caller's organization can hold: Runpod's built-in roles and the organization's custom roles, oldest first. The list is complete and takes no pagination parameters, because an organization's custom roles are capped. Returns 404 when the caller does not belong to an organization, or 403 when organizations are unavailable to the caller.
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /v2/organization/roles (the `ListOrganizationRoles` operationId).
+func (c *ClientWithResponses) ListOrganizationRolesWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListOrganizationRolesResult, error) {
+	rsp, err := c.ListOrganizationRoles(ctx, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListOrganizationRolesResult(rsp)
+}
+
+// CreateOrganizationRoleWithBodyWithResponse Create a custom organization role
+//
+// Creates a custom role in the authenticated caller's organization and returns it. Returns 409 when the organization already has a role with this name or has reached its custom-role limit; 422 when a capability is unknown or the name is reserved; and 403 when the caller does not hold every capability the role grants. Creating roles requires the organization's role-management capability, which the built-in admin role holds; other members, and callers outside an organization, receive 403, as does a caller for whom organizations are unavailable.
+//
+// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /v2/organization/roles (the `CreateOrganizationRole` operationId).
+func (c *ClientWithResponses) CreateOrganizationRoleWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateOrganizationRoleResult, error) {
+	rsp, err := c.CreateOrganizationRoleWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCreateOrganizationRoleResult(rsp)
+}
+
+// CreateOrganizationRoleWithResponse Create a custom organization role
+//
+// Creates a custom role in the authenticated caller's organization and returns it. Returns 409 when the organization already has a role with this name or has reached its custom-role limit; 422 when a capability is unknown or the name is reserved; and 403 when the caller does not hold every capability the role grants. Creating roles requires the organization's role-management capability, which the built-in admin role holds; other members, and callers outside an organization, receive 403, as does a caller for whom organizations are unavailable.
+//
+// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /v2/organization/roles (the `CreateOrganizationRole` operationId).
+func (c *ClientWithResponses) CreateOrganizationRoleWithResponse(ctx context.Context, body CreateOrganizationRoleJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateOrganizationRoleResult, error) {
+	rsp, err := c.CreateOrganizationRole(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCreateOrganizationRoleResult(rsp)
+}
+
+// GetOrganizationRoleCapabilitiesWithResponse List grantable role capabilities
+//
+// Returns the capabilities a custom role can grant, grouped by family: each capability is a family and one of its verbs, written `FAMILY:VERB`. This is the set role creation accepts, not filtered to the caller's own access; saving a role also requires the caller to hold every capability it grants. `family` and `verb` narrow the result and apply together; with neither, the whole catalog is returned. Reading the catalog requires organization membership; other callers receive 403.
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /v2/organization/roles/capabilities (the `GetOrganizationRoleCapabilities` operationId).
+func (c *ClientWithResponses) GetOrganizationRoleCapabilitiesWithResponse(ctx context.Context, params *GetOrganizationRoleCapabilitiesParams, reqEditors ...RequestEditorFn) (*GetOrganizationRoleCapabilitiesResult, error) {
+	rsp, err := c.GetOrganizationRoleCapabilities(ctx, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetOrganizationRoleCapabilitiesResult(rsp)
+}
+
+// DeleteOrganizationRoleWithResponse Delete a custom organization role
+//
+// Deletes a custom role from the authenticated caller's organization. Returns 409 while a member or a pending invite holds the role: reassign those members and cancel those invites first, since deleting never changes anyone's role. Expired invites do not block deletion. Returns 400 for a built-in role, which cannot be deleted; 404 when the ID is unknown, names another organization's role, or was already deleted. Deleting roles requires the organization's role-management capability, which the built-in admin role holds; other members, and callers outside an organization, receive 403, as does a caller for whom organizations are unavailable.
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with DELETE /v2/organization/roles/{id} (the `DeleteOrganizationRole` operationId).
+func (c *ClientWithResponses) DeleteOrganizationRoleWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*DeleteOrganizationRoleResult, error) {
+	rsp, err := c.DeleteOrganizationRole(ctx, id, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseDeleteOrganizationRoleResult(rsp)
+}
+
+// GetOrganizationRoleWithResponse Get an organization role
+//
+// Returns one role a member or invite of the authenticated caller's organization can hold: a built-in role, or one of the organization's custom roles. Returns 404 when the ID is unknown or names another organization's custom role, or when the caller does not belong to an organization; 403 when the caller may not view the organization's roles or organizations are unavailable to the caller.
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /v2/organization/roles/{id} (the `GetOrganizationRole` operationId).
+func (c *ClientWithResponses) GetOrganizationRoleWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*GetOrganizationRoleResult, error) {
+	rsp, err := c.GetOrganizationRole(ctx, id, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetOrganizationRoleResult(rsp)
+}
+
+// UpdateOrganizationRoleWithBodyWithResponse Update a custom organization role
+//
+// Changes a custom role's name, its capabilities, or both, and returns the role. Sent capabilities replace the whole grant set. Returns 400 for a built-in role, which cannot be changed; 404 when the ID is unknown or names another organization's role; 403 when the caller does not hold every capability the role grants, before or after the change; 409 when the organization already has a role with the new name; and 422 when a capability is unknown or the name is reserved. Updating roles requires the organization's role-management capability, which the built-in admin role holds; other members, and callers outside an organization, receive 403, as does a caller for whom organizations are unavailable.
+//
+// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with PATCH /v2/organization/roles/{id} (the `UpdateOrganizationRole` operationId).
+func (c *ClientWithResponses) UpdateOrganizationRoleWithBodyWithResponse(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateOrganizationRoleResult, error) {
+	rsp, err := c.UpdateOrganizationRoleWithBody(ctx, id, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseUpdateOrganizationRoleResult(rsp)
+}
+
+// UpdateOrganizationRoleWithResponse Update a custom organization role
+//
+// Changes a custom role's name, its capabilities, or both, and returns the role. Sent capabilities replace the whole grant set. Returns 400 for a built-in role, which cannot be changed; 404 when the ID is unknown or names another organization's role; 403 when the caller does not hold every capability the role grants, before or after the change; 409 when the organization already has a role with the new name; and 422 when a capability is unknown or the name is reserved. Updating roles requires the organization's role-management capability, which the built-in admin role holds; other members, and callers outside an organization, receive 403, as does a caller for whom organizations are unavailable.
+//
+// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with PATCH /v2/organization/roles/{id} (the `UpdateOrganizationRole` operationId).
+func (c *ClientWithResponses) UpdateOrganizationRoleWithResponse(ctx context.Context, id string, body UpdateOrganizationRoleJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateOrganizationRoleResult, error) {
+	rsp, err := c.UpdateOrganizationRole(ctx, id, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseUpdateOrganizationRoleResult(rsp)
+}
+
+// ListOrganizationUsersWithResponse List organization members
+//
+// Returns every member of the authenticated caller's organization with the role each holds. Any member can read the roster. The list is complete and takes no pagination parameters. Returns 404 when the caller does not belong to an organization, or 403 when organizations are unavailable to the caller.
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /v2/organization/users (the `ListOrganizationUsers` operationId).
+func (c *ClientWithResponses) ListOrganizationUsersWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListOrganizationUsersResult, error) {
+	rsp, err := c.ListOrganizationUsers(ctx, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListOrganizationUsersResult(rsp)
+}
+
+// DeleteOrganizationUserWithResponse Remove an organization member
+//
+// Removes one member from the authenticated caller's organization by user ID. Their group memberships end and the API keys attributed to them within the organization are revoked; the resources they created stay with the organization. Removing another member requires the organization's member-removal capability, which the built-in admin role holds; any member can remove themselves. The organization keeps at least one member with the built-in admin role, so removing the last one returns 409. A user who is not a member, including one from another organization, returns 404. A member without the capability removing someone else, a caller outside an organization, and a caller for whom organizations are unavailable receive 403.
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with DELETE /v2/organization/users/{id} (the `DeleteOrganizationUser` operationId).
+func (c *ClientWithResponses) DeleteOrganizationUserWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*DeleteOrganizationUserResult, error) {
+	rsp, err := c.DeleteOrganizationUser(ctx, id, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseDeleteOrganizationUserResult(rsp)
+}
+
+// GetOrganizationUserWithResponse Get an organization member
+//
+// Returns one member of the authenticated caller's organization by user ID, with the role they hold. Any member can read it. A user who is not a member, including one from another organization, returns 404. Returns 404 when the caller does not belong to an organization, or 403 when organizations are unavailable to the caller.
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /v2/organization/users/{id} (the `GetOrganizationUser` operationId).
+func (c *ClientWithResponses) GetOrganizationUserWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*GetOrganizationUserResult, error) {
+	rsp, err := c.GetOrganizationUser(ctx, id, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetOrganizationUserResult(rsp)
+}
+
+// UpdateOrganizationUserWithBodyWithResponse Update an organization member
+//
+// Changes one member of the authenticated caller's organization by user ID: assigns a role, replaces their set of groups, or both, applied together or not at all. Send at least one field; an omitted field is left as it is, and an empty `groups` list removes the member from every group. Updating members requires the organization's member-management capability, which the built-in admin role holds; other members, and callers outside an organization, receive 403, as does a caller for whom organizations are unavailable. Returns 403 when the caller changes their own role or assigns a role granting a capability the caller lacks; 409 when the change would leave the organization without a member in the built-in admin role; and 404 when the user is not a member or the role or a group is unknown to the organization, with the detail naming which.
+//
+// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with PATCH /v2/organization/users/{id} (the `UpdateOrganizationUser` operationId).
+func (c *ClientWithResponses) UpdateOrganizationUserWithBodyWithResponse(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateOrganizationUserResult, error) {
+	rsp, err := c.UpdateOrganizationUserWithBody(ctx, id, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseUpdateOrganizationUserResult(rsp)
+}
+
+// UpdateOrganizationUserWithResponse Update an organization member
+//
+// Changes one member of the authenticated caller's organization by user ID: assigns a role, replaces their set of groups, or both, applied together or not at all. Send at least one field; an omitted field is left as it is, and an empty `groups` list removes the member from every group. Updating members requires the organization's member-management capability, which the built-in admin role holds; other members, and callers outside an organization, receive 403, as does a caller for whom organizations are unavailable. Returns 403 when the caller changes their own role or assigns a role granting a capability the caller lacks; 409 when the change would leave the organization without a member in the built-in admin role; and 404 when the user is not a member or the role or a group is unknown to the organization, with the detail naming which.
+//
+// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with PATCH /v2/organization/users/{id} (the `UpdateOrganizationUser` operationId).
+func (c *ClientWithResponses) UpdateOrganizationUserWithResponse(ctx context.Context, id string, body UpdateOrganizationUserJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateOrganizationUserResult, error) {
+	rsp, err := c.UpdateOrganizationUser(ctx, id, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseUpdateOrganizationUserResult(rsp)
 }
 
 // ParseGetOrganizationResult parses an HTTP response from a GetOrganizationWithResponse call
@@ -464,6 +5794,4142 @@ func ParseGetOrganizationResult(rsp *http.Response) (*GetOrganizationResult, err
 		response.Headers429 = &headers
 	case true:
 		var headers GetOrganizationResultDefaultHeaders
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.HeadersDefault = &headers
+	}
+
+	return response, nil
+}
+
+// ParseListOrganizationGroupsResult parses an HTTP response from a ListOrganizationGroupsWithResponse call
+func ParseListOrganizationGroupsResult(rsp *http.Response) (*ListOrganizationGroupsResult, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ListOrganizationGroupsResult{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest externalRef0.ListOrganizationGroupsResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 413:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON413 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON422 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON429 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSONDefault = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers ListOrganizationGroupsResult200Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers200 = &headers
+	case rsp.StatusCode == 403:
+		var headers ListOrganizationGroupsResult403Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 404:
+		var headers ListOrganizationGroupsResult404Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers404 = &headers
+	case rsp.StatusCode == 413:
+		var headers ListOrganizationGroupsResult413Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers413 = &headers
+	case rsp.StatusCode == 422:
+		var headers ListOrganizationGroupsResult422Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers422 = &headers
+	case rsp.StatusCode == 429:
+		var headers ListOrganizationGroupsResult429Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		response.Headers429 = &headers
+	case true:
+		var headers ListOrganizationGroupsResultDefaultHeaders
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.HeadersDefault = &headers
+	}
+
+	return response, nil
+}
+
+// ParseCreateOrganizationGroupResult parses an HTTP response from a CreateOrganizationGroupWithResponse call
+func ParseCreateOrganizationGroupResult(rsp *http.Response) (*CreateOrganizationGroupResult, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &CreateOrganizationGroupResult{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 201:
+		var dest externalRef0.OrganizationGroup
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON201 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON409 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 413:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON413 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON422 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON429 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSONDefault = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 201:
+		var headers CreateOrganizationGroupResult201Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers201 = &headers
+	case rsp.StatusCode == 400:
+		var headers CreateOrganizationGroupResult400Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers400 = &headers
+	case rsp.StatusCode == 403:
+		var headers CreateOrganizationGroupResult403Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 413:
+		var headers CreateOrganizationGroupResult413Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers413 = &headers
+	case rsp.StatusCode == 422:
+		var headers CreateOrganizationGroupResult422Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers422 = &headers
+	case rsp.StatusCode == 429:
+		var headers CreateOrganizationGroupResult429Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		response.Headers429 = &headers
+	case true:
+		var headers CreateOrganizationGroupResultDefaultHeaders
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.HeadersDefault = &headers
+	}
+
+	return response, nil
+}
+
+// ParseDeleteOrganizationGroupResult parses an HTTP response from a DeleteOrganizationGroupWithResponse call
+func ParseDeleteOrganizationGroupResult(rsp *http.Response) (*DeleteOrganizationGroupResult, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &DeleteOrganizationGroupResult{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case rsp.StatusCode == 204:
+		break // No content-type
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON422 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON429 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSONDefault = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 204:
+		var headers DeleteOrganizationGroupResult204Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers204 = &headers
+	case rsp.StatusCode == 400:
+		var headers DeleteOrganizationGroupResult400Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers400 = &headers
+	case rsp.StatusCode == 403:
+		var headers DeleteOrganizationGroupResult403Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 404:
+		var headers DeleteOrganizationGroupResult404Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers404 = &headers
+	case rsp.StatusCode == 422:
+		var headers DeleteOrganizationGroupResult422Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers422 = &headers
+	case rsp.StatusCode == 429:
+		var headers DeleteOrganizationGroupResult429Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		response.Headers429 = &headers
+	case true:
+		var headers DeleteOrganizationGroupResultDefaultHeaders
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.HeadersDefault = &headers
+	}
+
+	return response, nil
+}
+
+// ParseGetOrganizationGroupResult parses an HTTP response from a GetOrganizationGroupWithResponse call
+func ParseGetOrganizationGroupResult(rsp *http.Response) (*GetOrganizationGroupResult, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetOrganizationGroupResult{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest externalRef0.OrganizationGroup
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON429 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSONDefault = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers GetOrganizationGroupResult200Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers200 = &headers
+	case rsp.StatusCode == 403:
+		var headers GetOrganizationGroupResult403Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 404:
+		var headers GetOrganizationGroupResult404Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers404 = &headers
+	case rsp.StatusCode == 429:
+		var headers GetOrganizationGroupResult429Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		response.Headers429 = &headers
+	case true:
+		var headers GetOrganizationGroupResultDefaultHeaders
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.HeadersDefault = &headers
+	}
+
+	return response, nil
+}
+
+// ParseUpdateOrganizationGroupResult parses an HTTP response from a UpdateOrganizationGroupWithResponse call
+func ParseUpdateOrganizationGroupResult(rsp *http.Response) (*UpdateOrganizationGroupResult, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &UpdateOrganizationGroupResult{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest externalRef0.OrganizationGroup
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON409 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 413:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON413 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON422 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON429 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSONDefault = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers UpdateOrganizationGroupResult200Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers200 = &headers
+	case rsp.StatusCode == 400:
+		var headers UpdateOrganizationGroupResult400Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers400 = &headers
+	case rsp.StatusCode == 403:
+		var headers UpdateOrganizationGroupResult403Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 404:
+		var headers UpdateOrganizationGroupResult404Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers404 = &headers
+	case rsp.StatusCode == 413:
+		var headers UpdateOrganizationGroupResult413Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers413 = &headers
+	case rsp.StatusCode == 422:
+		var headers UpdateOrganizationGroupResult422Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers422 = &headers
+	case rsp.StatusCode == 429:
+		var headers UpdateOrganizationGroupResult429Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		response.Headers429 = &headers
+	case true:
+		var headers UpdateOrganizationGroupResultDefaultHeaders
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.HeadersDefault = &headers
+	}
+
+	return response, nil
+}
+
+// ParseListOrganizationGroupMembersResult parses an HTTP response from a ListOrganizationGroupMembersWithResponse call
+func ParseListOrganizationGroupMembersResult(rsp *http.Response) (*ListOrganizationGroupMembersResult, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ListOrganizationGroupMembersResult{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest externalRef0.ListOrganizationGroupMembersResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 413:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON413 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON422 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON429 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSONDefault = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers ListOrganizationGroupMembersResult200Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers200 = &headers
+	case rsp.StatusCode == 403:
+		var headers ListOrganizationGroupMembersResult403Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 404:
+		var headers ListOrganizationGroupMembersResult404Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers404 = &headers
+	case rsp.StatusCode == 413:
+		var headers ListOrganizationGroupMembersResult413Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers413 = &headers
+	case rsp.StatusCode == 422:
+		var headers ListOrganizationGroupMembersResult422Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers422 = &headers
+	case rsp.StatusCode == 429:
+		var headers ListOrganizationGroupMembersResult429Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		response.Headers429 = &headers
+	case true:
+		var headers ListOrganizationGroupMembersResultDefaultHeaders
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.HeadersDefault = &headers
+	}
+
+	return response, nil
+}
+
+// ParseRemoveOrganizationGroupMemberResult parses an HTTP response from a RemoveOrganizationGroupMemberWithResponse call
+func ParseRemoveOrganizationGroupMemberResult(rsp *http.Response) (*RemoveOrganizationGroupMemberResult, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &RemoveOrganizationGroupMemberResult{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case rsp.StatusCode == 204:
+		break // No content-type
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON422 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON429 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSONDefault = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 204:
+		var headers RemoveOrganizationGroupMemberResult204Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers204 = &headers
+	case rsp.StatusCode == 400:
+		var headers RemoveOrganizationGroupMemberResult400Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers400 = &headers
+	case rsp.StatusCode == 403:
+		var headers RemoveOrganizationGroupMemberResult403Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 404:
+		var headers RemoveOrganizationGroupMemberResult404Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers404 = &headers
+	case rsp.StatusCode == 422:
+		var headers RemoveOrganizationGroupMemberResult422Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers422 = &headers
+	case rsp.StatusCode == 429:
+		var headers RemoveOrganizationGroupMemberResult429Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		response.Headers429 = &headers
+	case true:
+		var headers RemoveOrganizationGroupMemberResultDefaultHeaders
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.HeadersDefault = &headers
+	}
+
+	return response, nil
+}
+
+// ParseAddOrganizationGroupMemberResult parses an HTTP response from a AddOrganizationGroupMemberWithResponse call
+func ParseAddOrganizationGroupMemberResult(rsp *http.Response) (*AddOrganizationGroupMemberResult, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &AddOrganizationGroupMemberResult{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case rsp.StatusCode == 204:
+		break // No content-type
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 413:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON413 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON422 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON429 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSONDefault = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 204:
+		var headers AddOrganizationGroupMemberResult204Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers204 = &headers
+	case rsp.StatusCode == 400:
+		var headers AddOrganizationGroupMemberResult400Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers400 = &headers
+	case rsp.StatusCode == 403:
+		var headers AddOrganizationGroupMemberResult403Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 404:
+		var headers AddOrganizationGroupMemberResult404Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers404 = &headers
+	case rsp.StatusCode == 413:
+		var headers AddOrganizationGroupMemberResult413Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers413 = &headers
+	case rsp.StatusCode == 422:
+		var headers AddOrganizationGroupMemberResult422Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers422 = &headers
+	case rsp.StatusCode == 429:
+		var headers AddOrganizationGroupMemberResult429Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		response.Headers429 = &headers
+	case true:
+		var headers AddOrganizationGroupMemberResultDefaultHeaders
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.HeadersDefault = &headers
+	}
+
+	return response, nil
+}
+
+// ParseListOrganizationInvitesResult parses an HTTP response from a ListOrganizationInvitesWithResponse call
+func ParseListOrganizationInvitesResult(rsp *http.Response) (*ListOrganizationInvitesResult, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ListOrganizationInvitesResult{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest externalRef0.ListOrganizationInvitesResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON429 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSONDefault = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers ListOrganizationInvitesResult200Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers200 = &headers
+	case rsp.StatusCode == 403:
+		var headers ListOrganizationInvitesResult403Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 404:
+		var headers ListOrganizationInvitesResult404Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers404 = &headers
+	case rsp.StatusCode == 429:
+		var headers ListOrganizationInvitesResult429Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		response.Headers429 = &headers
+	case true:
+		var headers ListOrganizationInvitesResultDefaultHeaders
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.HeadersDefault = &headers
+	}
+
+	return response, nil
+}
+
+// ParseCreateOrganizationInviteResult parses an HTTP response from a CreateOrganizationInviteWithResponse call
+func ParseCreateOrganizationInviteResult(rsp *http.Response) (*CreateOrganizationInviteResult, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &CreateOrganizationInviteResult{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 201:
+		var dest externalRef0.OrganizationInvite
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON201 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON409 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 413:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON413 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON422 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON429 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSONDefault = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 201:
+		var headers CreateOrganizationInviteResult201Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers201 = &headers
+	case rsp.StatusCode == 400:
+		var headers CreateOrganizationInviteResult400Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers400 = &headers
+	case rsp.StatusCode == 403:
+		var headers CreateOrganizationInviteResult403Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 404:
+		var headers CreateOrganizationInviteResult404Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers404 = &headers
+	case rsp.StatusCode == 413:
+		var headers CreateOrganizationInviteResult413Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers413 = &headers
+	case rsp.StatusCode == 422:
+		var headers CreateOrganizationInviteResult422Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers422 = &headers
+	case rsp.StatusCode == 429:
+		var headers CreateOrganizationInviteResult429Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		response.Headers429 = &headers
+	case true:
+		var headers CreateOrganizationInviteResultDefaultHeaders
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.HeadersDefault = &headers
+	}
+
+	return response, nil
+}
+
+// ParseDeleteOrganizationInviteResult parses an HTTP response from a DeleteOrganizationInviteWithResponse call
+func ParseDeleteOrganizationInviteResult(rsp *http.Response) (*DeleteOrganizationInviteResult, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &DeleteOrganizationInviteResult{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case rsp.StatusCode == 204:
+		break // No content-type
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON429 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSONDefault = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 204:
+		var headers DeleteOrganizationInviteResult204Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers204 = &headers
+	case rsp.StatusCode == 403:
+		var headers DeleteOrganizationInviteResult403Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 404:
+		var headers DeleteOrganizationInviteResult404Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers404 = &headers
+	case rsp.StatusCode == 429:
+		var headers DeleteOrganizationInviteResult429Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		response.Headers429 = &headers
+	case true:
+		var headers DeleteOrganizationInviteResultDefaultHeaders
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.HeadersDefault = &headers
+	}
+
+	return response, nil
+}
+
+// ParseGetOrganizationInviteResult parses an HTTP response from a GetOrganizationInviteWithResponse call
+func ParseGetOrganizationInviteResult(rsp *http.Response) (*GetOrganizationInviteResult, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetOrganizationInviteResult{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest externalRef0.OrganizationInvite
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON429 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSONDefault = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers GetOrganizationInviteResult200Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers200 = &headers
+	case rsp.StatusCode == 403:
+		var headers GetOrganizationInviteResult403Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 404:
+		var headers GetOrganizationInviteResult404Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers404 = &headers
+	case rsp.StatusCode == 429:
+		var headers GetOrganizationInviteResult429Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		response.Headers429 = &headers
+	case true:
+		var headers GetOrganizationInviteResultDefaultHeaders
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.HeadersDefault = &headers
+	}
+
+	return response, nil
+}
+
+// ParseListOrganizationRolesResult parses an HTTP response from a ListOrganizationRolesWithResponse call
+func ParseListOrganizationRolesResult(rsp *http.Response) (*ListOrganizationRolesResult, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ListOrganizationRolesResult{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest externalRef0.ListOrganizationRolesResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON429 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSONDefault = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers ListOrganizationRolesResult200Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers200 = &headers
+	case rsp.StatusCode == 403:
+		var headers ListOrganizationRolesResult403Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 404:
+		var headers ListOrganizationRolesResult404Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers404 = &headers
+	case rsp.StatusCode == 429:
+		var headers ListOrganizationRolesResult429Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		response.Headers429 = &headers
+	case true:
+		var headers ListOrganizationRolesResultDefaultHeaders
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.HeadersDefault = &headers
+	}
+
+	return response, nil
+}
+
+// ParseCreateOrganizationRoleResult parses an HTTP response from a CreateOrganizationRoleWithResponse call
+func ParseCreateOrganizationRoleResult(rsp *http.Response) (*CreateOrganizationRoleResult, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &CreateOrganizationRoleResult{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 201:
+		var dest externalRef0.OrganizationRole
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON201 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON409 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 413:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON413 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON422 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON429 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSONDefault = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 201:
+		var headers CreateOrganizationRoleResult201Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers201 = &headers
+	case rsp.StatusCode == 400:
+		var headers CreateOrganizationRoleResult400Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers400 = &headers
+	case rsp.StatusCode == 403:
+		var headers CreateOrganizationRoleResult403Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 404:
+		var headers CreateOrganizationRoleResult404Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers404 = &headers
+	case rsp.StatusCode == 413:
+		var headers CreateOrganizationRoleResult413Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers413 = &headers
+	case rsp.StatusCode == 422:
+		var headers CreateOrganizationRoleResult422Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers422 = &headers
+	case rsp.StatusCode == 429:
+		var headers CreateOrganizationRoleResult429Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		response.Headers429 = &headers
+	case true:
+		var headers CreateOrganizationRoleResultDefaultHeaders
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.HeadersDefault = &headers
+	}
+
+	return response, nil
+}
+
+// ParseGetOrganizationRoleCapabilitiesResult parses an HTTP response from a GetOrganizationRoleCapabilitiesWithResponse call
+func ParseGetOrganizationRoleCapabilitiesResult(rsp *http.Response) (*GetOrganizationRoleCapabilitiesResult, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetOrganizationRoleCapabilitiesResult{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest externalRef0.OrganizationCapabilityCatalog
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON429 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSONDefault = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers GetOrganizationRoleCapabilitiesResult200Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers200 = &headers
+	case rsp.StatusCode == 403:
+		var headers GetOrganizationRoleCapabilitiesResult403Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 429:
+		var headers GetOrganizationRoleCapabilitiesResult429Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		response.Headers429 = &headers
+	case true:
+		var headers GetOrganizationRoleCapabilitiesResultDefaultHeaders
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.HeadersDefault = &headers
+	}
+
+	return response, nil
+}
+
+// ParseDeleteOrganizationRoleResult parses an HTTP response from a DeleteOrganizationRoleWithResponse call
+func ParseDeleteOrganizationRoleResult(rsp *http.Response) (*DeleteOrganizationRoleResult, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &DeleteOrganizationRoleResult{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case rsp.StatusCode == 204:
+		break // No content-type
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON409 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON429 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSONDefault = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 204:
+		var headers DeleteOrganizationRoleResult204Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers204 = &headers
+	case rsp.StatusCode == 400:
+		var headers DeleteOrganizationRoleResult400Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers400 = &headers
+	case rsp.StatusCode == 403:
+		var headers DeleteOrganizationRoleResult403Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 404:
+		var headers DeleteOrganizationRoleResult404Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers404 = &headers
+	case rsp.StatusCode == 429:
+		var headers DeleteOrganizationRoleResult429Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		response.Headers429 = &headers
+	case true:
+		var headers DeleteOrganizationRoleResultDefaultHeaders
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.HeadersDefault = &headers
+	}
+
+	return response, nil
+}
+
+// ParseGetOrganizationRoleResult parses an HTTP response from a GetOrganizationRoleWithResponse call
+func ParseGetOrganizationRoleResult(rsp *http.Response) (*GetOrganizationRoleResult, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetOrganizationRoleResult{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest externalRef0.OrganizationRole
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON429 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSONDefault = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers GetOrganizationRoleResult200Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers200 = &headers
+	case rsp.StatusCode == 403:
+		var headers GetOrganizationRoleResult403Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 404:
+		var headers GetOrganizationRoleResult404Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers404 = &headers
+	case rsp.StatusCode == 429:
+		var headers GetOrganizationRoleResult429Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		response.Headers429 = &headers
+	case true:
+		var headers GetOrganizationRoleResultDefaultHeaders
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.HeadersDefault = &headers
+	}
+
+	return response, nil
+}
+
+// ParseUpdateOrganizationRoleResult parses an HTTP response from a UpdateOrganizationRoleWithResponse call
+func ParseUpdateOrganizationRoleResult(rsp *http.Response) (*UpdateOrganizationRoleResult, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &UpdateOrganizationRoleResult{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest externalRef0.OrganizationRole
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON409 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 413:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON413 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON422 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON429 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSONDefault = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers UpdateOrganizationRoleResult200Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers200 = &headers
+	case rsp.StatusCode == 400:
+		var headers UpdateOrganizationRoleResult400Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers400 = &headers
+	case rsp.StatusCode == 403:
+		var headers UpdateOrganizationRoleResult403Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 404:
+		var headers UpdateOrganizationRoleResult404Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers404 = &headers
+	case rsp.StatusCode == 413:
+		var headers UpdateOrganizationRoleResult413Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers413 = &headers
+	case rsp.StatusCode == 422:
+		var headers UpdateOrganizationRoleResult422Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers422 = &headers
+	case rsp.StatusCode == 429:
+		var headers UpdateOrganizationRoleResult429Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		response.Headers429 = &headers
+	case true:
+		var headers UpdateOrganizationRoleResultDefaultHeaders
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.HeadersDefault = &headers
+	}
+
+	return response, nil
+}
+
+// ParseListOrganizationUsersResult parses an HTTP response from a ListOrganizationUsersWithResponse call
+func ParseListOrganizationUsersResult(rsp *http.Response) (*ListOrganizationUsersResult, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ListOrganizationUsersResult{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest externalRef0.ListOrganizationUsersResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON429 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSONDefault = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers ListOrganizationUsersResult200Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers200 = &headers
+	case rsp.StatusCode == 403:
+		var headers ListOrganizationUsersResult403Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 404:
+		var headers ListOrganizationUsersResult404Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers404 = &headers
+	case rsp.StatusCode == 429:
+		var headers ListOrganizationUsersResult429Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		response.Headers429 = &headers
+	case true:
+		var headers ListOrganizationUsersResultDefaultHeaders
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.HeadersDefault = &headers
+	}
+
+	return response, nil
+}
+
+// ParseDeleteOrganizationUserResult parses an HTTP response from a DeleteOrganizationUserWithResponse call
+func ParseDeleteOrganizationUserResult(rsp *http.Response) (*DeleteOrganizationUserResult, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &DeleteOrganizationUserResult{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case rsp.StatusCode == 204:
+		break // No content-type
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON409 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON429 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSONDefault = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 204:
+		var headers DeleteOrganizationUserResult204Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers204 = &headers
+	case rsp.StatusCode == 403:
+		var headers DeleteOrganizationUserResult403Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 404:
+		var headers DeleteOrganizationUserResult404Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers404 = &headers
+	case rsp.StatusCode == 429:
+		var headers DeleteOrganizationUserResult429Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		response.Headers429 = &headers
+	case true:
+		var headers DeleteOrganizationUserResultDefaultHeaders
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.HeadersDefault = &headers
+	}
+
+	return response, nil
+}
+
+// ParseGetOrganizationUserResult parses an HTTP response from a GetOrganizationUserWithResponse call
+func ParseGetOrganizationUserResult(rsp *http.Response) (*GetOrganizationUserResult, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetOrganizationUserResult{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest externalRef0.OrganizationUser
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON429 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSONDefault = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers GetOrganizationUserResult200Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers200 = &headers
+	case rsp.StatusCode == 403:
+		var headers GetOrganizationUserResult403Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 404:
+		var headers GetOrganizationUserResult404Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers404 = &headers
+	case rsp.StatusCode == 429:
+		var headers GetOrganizationUserResult429Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		response.Headers429 = &headers
+	case true:
+		var headers GetOrganizationUserResultDefaultHeaders
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.HeadersDefault = &headers
+	}
+
+	return response, nil
+}
+
+// ParseUpdateOrganizationUserResult parses an HTTP response from a UpdateOrganizationUserWithResponse call
+func ParseUpdateOrganizationUserResult(rsp *http.Response) (*UpdateOrganizationUserResult, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &UpdateOrganizationUserResult{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest externalRef0.OrganizationUser
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON409 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 413:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON413 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON422 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON429 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSONDefault = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers UpdateOrganizationUserResult200Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers200 = &headers
+	case rsp.StatusCode == 400:
+		var headers UpdateOrganizationUserResult400Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers400 = &headers
+	case rsp.StatusCode == 403:
+		var headers UpdateOrganizationUserResult403Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 404:
+		var headers UpdateOrganizationUserResult404Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers404 = &headers
+	case rsp.StatusCode == 413:
+		var headers UpdateOrganizationUserResult413Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers413 = &headers
+	case rsp.StatusCode == 422:
+		var headers UpdateOrganizationUserResult422Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers422 = &headers
+	case rsp.StatusCode == 429:
+		var headers UpdateOrganizationUserResult429Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		response.Headers429 = &headers
+	case true:
+		var headers UpdateOrganizationUserResultDefaultHeaders
 		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
 			var value externalRef0.RateLimitHeader
 			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {

@@ -81,11 +81,17 @@ The generated request bodies take their optional fields by pointer, which is
 what `runpod.Ptr` is for: it returns a pointer to any value, so a literal
 needs no temporary variable.
 
-Nine list operations are cursor-paginated: `Pods.ListPods`,
-`Serverless.ListEndpoints`, `Serverless.ListEndpointBuilds`,
-`Serverless.ListEndpointReleases`, `Templates.ListTemplates`,
+Seventeen operations are cursor-paginated: `Pods.ListPods`,
+`Pods.ListQueuedPods`, `Serverless.ListEndpoints`,
+`Serverless.ListEndpointBuilds`, `Serverless.ListEndpointReleases`,
+`Serverless.GetEndpointRequestMetrics`,
+`Serverless.GetEndpointColdStartMetrics`,
+`Serverless.GetEndpointWorkerMetrics`, `Templates.ListTemplates`,
 `Clusters.ListClusters`, `NetworkVolumes.ListNetworkVolumes`,
-`GlobalVolumes.ListGlobalVolumes` and `AuditLogs.ListAuditLogs`. Their `limit`
+`GlobalVolumes.ListGlobalVolumes`, `CostCenters.ListCostCenters`,
+`CostCenters.ListCostCenterResources`, `Organization.ListOrganizationGroups`,
+`Organization.ListOrganizationGroupMembers` and `AuditLogs.ListAuditLogs`. The
+three metrics reads page over time buckets, not over a list. Their `limit`
 is a page size, not a cap you can leave off: omit it and you get 1000 items, or
 100 for the builds list and 200 for the audit logs. So `ListPodsWithResponse(ctx, nil)` reads like "all
 pods" and is one page of them. To see the whole set, follow

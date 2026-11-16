@@ -19,6 +19,9 @@ import (
 
 // ListNetworkVolumesParams defines parameters for ListNetworkVolumes.
 type ListNetworkVolumesParams struct {
+	// Filters Only return resources matching these filters, as URL-encoded JSON. The filters apply before the page is cut, so send the same value with each `cursor` to keep walking the filtered list.
+	Filters *externalRef0.ResourceFilters `form:"filters,omitempty" json:"filters,omitempty"`
+
 	// Cursor Opaque resume cursor — pass the previous response's `pagination.nextCursor` through verbatim; omit for the first page. A cursor is only valid for the operation and parameters that issued it; a malformed or foreign cursor is rejected with 422.
 	Cursor *externalRef0.PaginationCursor `form:"cursor,omitempty" json:"cursor,omitempty"`
 
@@ -363,6 +366,16 @@ func NewListNetworkVolumesRequest(server string, params *ListNetworkVolumesParam
 		// per the OpenAPI spec (e.g. "color=blue,black,brown").
 		var rawQueryFragments []string
 
+		if params.Filters != nil {
+
+			if queryParamBuf, err := json.Marshal(*params.Filters); err != nil {
+				return nil, err
+			} else {
+				queryValues.Add("filters", string(queryParamBuf))
+			}
+
+		}
+
 		if params.Cursor != nil {
 
 			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "cursor", *params.Cursor, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
@@ -704,6 +717,12 @@ type ListNetworkVolumesResult413Headers struct {
 	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
 }
 
+// ListNetworkVolumesResult422Headers the declared response headers of an HTTP 422 response for ListNetworkVolumes
+type ListNetworkVolumesResult422Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
 // ListNetworkVolumesResult429Headers the declared response headers of an HTTP 429 response for ListNetworkVolumes
 type ListNetworkVolumesResult429Headers struct {
 	RateLimit       *externalRef0.RateLimitHeader
@@ -728,6 +747,8 @@ type ListNetworkVolumesResult struct {
 	ApplicationproblemJSON403 *externalRef0.ErrorResponse
 	// ApplicationproblemJSON413 the response for an HTTP 413 `application/problem+json` response
 	ApplicationproblemJSON413 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON422 the response for an HTTP 422 `application/problem+json` response
+	ApplicationproblemJSON422 *externalRef0.ErrorResponse
 	// ApplicationproblemJSON429 the response for an HTTP 429 `application/problem+json` response
 	ApplicationproblemJSON429 *externalRef0.ErrorResponse
 	// ApplicationproblemJSONDefault the response for an HTTP default `application/problem+json` response
@@ -738,6 +759,8 @@ type ListNetworkVolumesResult struct {
 	Headers403 *ListNetworkVolumesResult403Headers
 	// Headers413 the parsed response headers for an HTTP 413 response
 	Headers413 *ListNetworkVolumesResult413Headers
+	// Headers422 the parsed response headers for an HTTP 422 response
+	Headers422 *ListNetworkVolumesResult422Headers
 	// Headers429 the parsed response headers for an HTTP 429 response
 	Headers429 *ListNetworkVolumesResult429Headers
 	// HeadersDefault the parsed response headers for an HTTP default response
@@ -762,6 +785,11 @@ func (r ListNetworkVolumesResult) GetApplicationproblemJSON403() *externalRef0.E
 // GetApplicationproblemJSON413 returns the response for an HTTP 413 `application/problem+json` response
 func (r ListNetworkVolumesResult) GetApplicationproblemJSON413() *externalRef0.ErrorResponse {
 	return r.ApplicationproblemJSON413
+}
+
+// GetApplicationproblemJSON422 returns the response for an HTTP 422 `application/problem+json` response
+func (r ListNetworkVolumesResult) GetApplicationproblemJSON422() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON422
 }
 
 // GetApplicationproblemJSON429 returns the response for an HTTP 429 `application/problem+json` response
@@ -968,6 +996,12 @@ type DeleteNetworkVolumeResult404Headers struct {
 	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
 }
 
+// DeleteNetworkVolumeResult409Headers the declared response headers of an HTTP 409 response for DeleteNetworkVolume
+type DeleteNetworkVolumeResult409Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
 // DeleteNetworkVolumeResult429Headers the declared response headers of an HTTP 429 response for DeleteNetworkVolume
 type DeleteNetworkVolumeResult429Headers struct {
 	RateLimit       *externalRef0.RateLimitHeader
@@ -990,6 +1024,8 @@ type DeleteNetworkVolumeResult struct {
 	ApplicationproblemJSON403 *externalRef0.ErrorResponse
 	// ApplicationproblemJSON404 the response for an HTTP 404 `application/problem+json` response
 	ApplicationproblemJSON404 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON409 the response for an HTTP 409 `application/problem+json` response
+	ApplicationproblemJSON409 *externalRef0.ErrorResponse
 	// ApplicationproblemJSON429 the response for an HTTP 429 `application/problem+json` response
 	ApplicationproblemJSON429 *externalRef0.ErrorResponse
 	// ApplicationproblemJSONDefault the response for an HTTP default `application/problem+json` response
@@ -1000,6 +1036,8 @@ type DeleteNetworkVolumeResult struct {
 	Headers403 *DeleteNetworkVolumeResult403Headers
 	// Headers404 the parsed response headers for an HTTP 404 response
 	Headers404 *DeleteNetworkVolumeResult404Headers
+	// Headers409 the parsed response headers for an HTTP 409 response
+	Headers409 *DeleteNetworkVolumeResult409Headers
 	// Headers429 the parsed response headers for an HTTP 429 response
 	Headers429 *DeleteNetworkVolumeResult429Headers
 	// HeadersDefault the parsed response headers for an HTTP default response
@@ -1019,6 +1057,11 @@ func (r DeleteNetworkVolumeResult) GetApplicationproblemJSON403() *externalRef0.
 // GetApplicationproblemJSON404 returns the response for an HTTP 404 `application/problem+json` response
 func (r DeleteNetworkVolumeResult) GetApplicationproblemJSON404() *externalRef0.ErrorResponse {
 	return r.ApplicationproblemJSON404
+}
+
+// GetApplicationproblemJSON409 returns the response for an HTTP 409 `application/problem+json` response
+func (r DeleteNetworkVolumeResult) GetApplicationproblemJSON409() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON409
 }
 
 // GetApplicationproblemJSON429 returns the response for an HTTP 429 `application/problem+json` response
@@ -1508,6 +1551,13 @@ func ParseListNetworkVolumesResult(rsp *http.Response) (*ListNetworkVolumesResul
 		}
 		response.ApplicationproblemJSON413 = &dest
 
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON422 = &dest
+
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
 		var dest externalRef0.ErrorResponse
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
@@ -1576,6 +1626,23 @@ func ParseListNetworkVolumesResult(rsp *http.Response) (*ListNetworkVolumesResul
 			headers.RateLimitPolicy = &value
 		}
 		response.Headers413 = &headers
+	case rsp.StatusCode == 422:
+		var headers ListNetworkVolumesResult422Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers422 = &headers
 	case rsp.StatusCode == 429:
 		var headers ListNetworkVolumesResult429Headers
 		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
@@ -1864,6 +1931,13 @@ func ParseDeleteNetworkVolumeResult(rsp *http.Response) (*DeleteNetworkVolumeRes
 		}
 		response.ApplicationproblemJSON404 = &dest
 
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON409 = &dest
+
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
 		var dest externalRef0.ErrorResponse
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
@@ -1932,6 +2006,23 @@ func ParseDeleteNetworkVolumeResult(rsp *http.Response) (*DeleteNetworkVolumeRes
 			headers.RateLimitPolicy = &value
 		}
 		response.Headers404 = &headers
+	case rsp.StatusCode == 409:
+		var headers DeleteNetworkVolumeResult409Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers409 = &headers
 	case rsp.StatusCode == 429:
 		var headers DeleteNetworkVolumeResult429Headers
 		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
