@@ -73,7 +73,7 @@ An area package holds its operations: the client, the per-operation parameters,
 request bodies and response wrappers (`pods.CreatePodJSONRequestBody`,
 `pods.CreatePodResult`). Every schema the spec names is in `lib/types`
 (`types.Pod`, `types.CreateGpuConfig`, `types.ErrorResponse`, the enum
-constants), declared once and imported by all twelve areas, so
+constants), declared once and imported by all fourteen areas, so
 `clusters.ListClusterPodsWithResponse` hands back the same `types.Pod` as
 `pods.GetPodWithResponse`, and one error check works across areas.
 
@@ -93,7 +93,8 @@ Seventeen operations are cursor-paginated: `Pods.ListPods`,
 `Organization.ListOrganizationGroupMembers` and `AuditLogs.ListAuditLogs`. The
 three metrics reads page over time buckets, not over a list. Their `limit`
 is a page size, not a cap you can leave off: omit it and you get 1000 items, or
-100 for the builds list and 200 for the audit logs. So `ListPodsWithResponse(ctx, nil)` reads like "all
+100 for the builds list and the two organization group lists, and 200 for the
+audit logs. So `ListPodsWithResponse(ctx, nil)` reads like "all
 pods" and is one page of them. To see the whole set, follow
 `pagination.nextCursor` until `hasNextPage` is false:
 
@@ -166,7 +167,7 @@ artifacts/api/         generated intermediates (the shared components spec, one 
 pkg/, example/         the earlier SDK and the Pulumi provider: separate modules, unchanged
 ```
 
-Twelve packages under `lib/` map one-to-one onto the spec's twelve operation tags,
+Fourteen packages under `lib/` map one-to-one onto the spec's fourteen operation tags,
 over one `lib/types` holding the whole `components` object of the spec: schemas,
 responses, parameters and headers. The generator emits the components once, as
 `artifacts/api/components.yaml`, and gives each per-tag spec a reference to that

@@ -456,8 +456,6 @@ def name_enum_constants(spec: dict) -> int:
 DESCRIPTION_EDITS: list[tuple[tuple[str | int, ...], str, str]] = [
     # Server-internal structure ("the handler", "upstream") described to
     # external API consumers; the contract half is what callers need.
-    # BaseMounts had an entry here until 2026-11: upstream rewrote that
-    # description itself and it no longer names the handler.
     (
         ("components", "schemas", "Mounts", "description"),
         "`persistent` (the volume disk) is\nmutually exclusive with both `network` and `global` (enforced at the\n"
@@ -555,10 +553,6 @@ def normalize_public_descriptions(spec: dict) -> int:
 
     Drops server-internal vocabulary, the duplicated include-expansion
     sentence, and version-relative wording that ages silently.
-
-    2026-11-13: the global-volume release rewrote the mount descriptions.
-    BaseMounts no longer needs an edit, and the Mounts and CreatePodRequest
-    anchors were re-derived against the new text.
     """
     edits = 0
     for path, old, new in DESCRIPTION_EDITS:

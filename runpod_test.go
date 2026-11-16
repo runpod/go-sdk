@@ -66,9 +66,10 @@ func TestEveryAreaClientIsWired(t *testing.T) {
 	}
 	areas := 0
 	for _, entry := range entries {
-		// lib/types holds the schemas every area package shares; it carries no
-		// client and so no field on Client.
-		if entry.IsDir() && entry.Name() != "types" {
+		// lib/types holds the schemas every area package shares, and lib/signup's
+		// operations declare no auth, so a caller of them has no key to build a
+		// Client with. Neither carries a field.
+		if entry.IsDir() && entry.Name() != "types" && entry.Name() != "signup" {
 			areas++
 		}
 	}
