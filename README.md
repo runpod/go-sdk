@@ -2,11 +2,15 @@
 
 Go client for the Runpod v2 REST API, generated from the openly served v2
 OpenAPI spec. One package per API area (pods, serverless, templates, networkvolumes,
-globalvolumes, registries, catalog, billing, clusters, account, organization,
-auditlogs) behind a single authenticated
+globalvolumes, registries, catalog, billing, clusters, costcenters, account,
+organization, auditlogs) behind a single authenticated
 client with retry/backoff built in. Every request and response shape those
 areas share is one type in `lib/types`, so a pod read from a cluster is the same
 `types.Pod` the pods package returns.
+
+A fourteenth area, `lib/signup`, is not on that client: its operations declare no
+auth, so a caller making them has no key to build one with. Use
+`signup.NewClientWithResponses` directly.
 
 <!-- runpod-agent-setup:start -->
 **For AI agents:** setup instructions for the Runpod skills and MCP server are at https://agents.runpod.io/
@@ -118,9 +122,9 @@ for {
 `example_test.go` compiles this block too. A cursor is opaque and belongs to
 the operation and parameters that issued it; a foreign or malformed one comes
 back 422. Every other list operation — the billing reads, the catalog, a
-cluster's member pods, registries, ECR delegations, endpoint workers, and
-account secrets — returns its whole result in one response and carries no
-`pagination` block at all.
+cluster's member pods, registries, ECR delegations, endpoint workers, account
+secrets, and the organization's users, invites and roles — returns its whole
+result in one response and carries no `pagination` block at all.
 
 A list too large to answer in one response comes back 413, decoded into the
 result's `ApplicationproblemJSON413`: lower `limit` on a paginated operation,
