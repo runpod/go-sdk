@@ -20,6 +20,7 @@ import (
 	"github.com/runpod/go-sdk/v2/lib/billing"
 	"github.com/runpod/go-sdk/v2/lib/catalog"
 	"github.com/runpod/go-sdk/v2/lib/clusters"
+	"github.com/runpod/go-sdk/v2/lib/costcenters"
 	"github.com/runpod/go-sdk/v2/lib/globalvolumes"
 	"github.com/runpod/go-sdk/v2/lib/networkvolumes"
 	"github.com/runpod/go-sdk/v2/lib/organization"
@@ -35,7 +36,7 @@ const DefaultBaseURL = "https://api.runpod.io"
 
 // Version is this module's release, sent in the User-Agent header. Bump it in
 // the same commit as the release tag; CHANGELOG.md records what changed.
-const Version = "2.1.0"
+const Version = "2.2.0"
 
 // Ptr returns a pointer to v, for the optional fields the generated request
 // bodies take by pointer.
@@ -47,7 +48,9 @@ func defaultUserAgent() string {
 	return "runpod-go-sdk/" + Version + " (" + runtime.Version() + ")"
 }
 
-// Client bundles one authenticated client per API area (one per spec tag).
+// Client bundles one authenticated client per API area. Signup is the one tag
+// it leaves out: those operations declare no auth, and a caller making them has
+// no key yet. Use lib/signup directly.
 type Client struct {
 	Pods           *pods.ClientWithResponses
 	Serverless     *serverless.ClientWithResponses
@@ -61,6 +64,7 @@ type Client struct {
 	Account        *account.ClientWithResponses
 	Organization   *organization.ClientWithResponses
 	AuditLogs      *auditlogs.ClientWithResponses
+	CostCenters    *costcenters.ClientWithResponses
 }
 
 type options struct {
@@ -173,6 +177,10 @@ func New(opts ...Option) (*Client, error) {
 	if c.AuditLogs, err = auditlogs.NewClientWithResponses(o.baseURL,
 		auditlogs.WithHTTPClient(o.httpClient), auditlogs.WithRequestEditorFn(auth)); err != nil {
 		return nil, fmt.Errorf("runpod: audit logs client: %w", err)
+	}
+	if c.CostCenters, err = costcenters.NewClientWithResponses(o.baseURL,
+		costcenters.WithHTTPClient(o.httpClient), costcenters.WithRequestEditorFn(auth)); err != nil {
+		return nil, fmt.Errorf("runpod: cost centers client: %w", err)
 	}
 	return c, nil
 }

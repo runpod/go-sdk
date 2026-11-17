@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/oapi-codegen/runtime"
+	openapi_types "github.com/oapi-codegen/runtime/types"
 )
 
 // Defines values for AvailabilityLevel.
@@ -92,6 +93,21 @@ func (e BuildState) Valid() bool {
 	case BuildStateTesting:
 		return true
 	case BuildStateUploading:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for BuiltinOrganizationRoleType.
+const (
+	BuiltinOrganizationRoleTypeBuiltin BuiltinOrganizationRoleType = "builtin"
+)
+
+// Valid indicates whether the value is a known member of the BuiltinOrganizationRoleType enum.
+func (e BuiltinOrganizationRoleType) Valid() bool {
+	switch e {
+	case BuiltinOrganizationRoleTypeBuiltin:
 		return true
 	default:
 		return false
@@ -221,6 +237,21 @@ func (e CpuProduct) Valid() bool {
 	}
 }
 
+// Defines values for CustomOrganizationRoleType.
+const (
+	CustomOrganizationRoleTypeCustom CustomOrganizationRoleType = "custom"
+)
+
+// Valid indicates whether the value is a known member of the CustomOrganizationRoleType enum.
+func (e CustomOrganizationRoleType) Valid() bool {
+	switch e {
+	case CustomOrganizationRoleTypeCustom:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for DataCenterInclude.
 const (
 	DataCenterIncludeCpuAvailability DataCenterInclude = "CPU_AVAILABILITY"
@@ -272,6 +303,42 @@ func (e DataCenterRegion) Valid() bool {
 	case DataCenterRegionSouthAmerica:
 		return true
 	case DataCenterRegionUnknown:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for EndpointMetricsInterval.
+const (
+	EndpointMetricsInterval12Hours   EndpointMetricsInterval = "12h"
+	EndpointMetricsInterval15Minutes EndpointMetricsInterval = "15m"
+	EndpointMetricsInterval1Day      EndpointMetricsInterval = "1d"
+	EndpointMetricsInterval1Hour     EndpointMetricsInterval = "1h"
+	EndpointMetricsInterval1Minute   EndpointMetricsInterval = "1m"
+	EndpointMetricsInterval30Minutes EndpointMetricsInterval = "30m"
+	EndpointMetricsInterval5Minutes  EndpointMetricsInterval = "5m"
+	EndpointMetricsInterval6Hours    EndpointMetricsInterval = "6h"
+)
+
+// Valid indicates whether the value is a known member of the EndpointMetricsInterval enum.
+func (e EndpointMetricsInterval) Valid() bool {
+	switch e {
+	case EndpointMetricsInterval12Hours:
+		return true
+	case EndpointMetricsInterval15Minutes:
+		return true
+	case EndpointMetricsInterval1Day:
+		return true
+	case EndpointMetricsInterval1Hour:
+		return true
+	case EndpointMetricsInterval1Minute:
+		return true
+	case EndpointMetricsInterval30Minutes:
+		return true
+	case EndpointMetricsInterval5Minutes:
+		return true
+	case EndpointMetricsInterval6Hours:
 		return true
 	default:
 		return false
@@ -368,6 +435,24 @@ func (e LogSource) Valid() bool {
 	case LogSourceContainer:
 		return true
 	case LogSourceSystem:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for OrganizationRoleType.
+const (
+	OrganizationRoleTypeBuiltin OrganizationRoleType = "builtin"
+	OrganizationRoleTypeCustom  OrganizationRoleType = "custom"
+)
+
+// Valid indicates whether the value is a known member of the OrganizationRoleType enum.
+func (e OrganizationRoleType) Valid() bool {
+	switch e {
+	case OrganizationRoleTypeBuiltin:
+		return true
+	case OrganizationRoleTypeCustom:
 		return true
 	default:
 		return false
@@ -488,6 +573,63 @@ func (e QueueDelayScalingType) Valid() bool {
 	}
 }
 
+// Defines values for QueuedPodFailureReason.
+const (
+	QueuedPodFailureReasonGpuConcurrencyExceeded QueuedPodFailureReason = "GPU_CONCURRENCY_EXCEEDED"
+	QueuedPodFailureReasonGpuQuotaExceeded       QueuedPodFailureReason = "GPU_QUOTA_EXCEEDED"
+	QueuedPodFailureReasonInsufficientBalance    QueuedPodFailureReason = "INSUFFICIENT_BALANCE"
+	QueuedPodFailureReasonOrgRestricted          QueuedPodFailureReason = "ORG_RESTRICTED"
+	QueuedPodFailureReasonSpendingLimit          QueuedPodFailureReason = "SPENDING_LIMIT"
+	QueuedPodFailureReasonUnknown                QueuedPodFailureReason = "UNKNOWN"
+)
+
+// Valid indicates whether the value is a known member of the QueuedPodFailureReason enum.
+func (e QueuedPodFailureReason) Valid() bool {
+	switch e {
+	case QueuedPodFailureReasonGpuConcurrencyExceeded:
+		return true
+	case QueuedPodFailureReasonGpuQuotaExceeded:
+		return true
+	case QueuedPodFailureReasonInsufficientBalance:
+		return true
+	case QueuedPodFailureReasonOrgRestricted:
+		return true
+	case QueuedPodFailureReasonSpendingLimit:
+		return true
+	case QueuedPodFailureReasonUnknown:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for QueuedPodStatus.
+const (
+	QueuedPodStatusCancelled QueuedPodStatus = "CANCELLED"
+	QueuedPodStatusDeployed  QueuedPodStatus = "DEPLOYED"
+	QueuedPodStatusExpired   QueuedPodStatus = "EXPIRED"
+	QueuedPodStatusFailed    QueuedPodStatus = "FAILED"
+	QueuedPodStatusQueued    QueuedPodStatus = "QUEUED"
+)
+
+// Valid indicates whether the value is a known member of the QueuedPodStatus enum.
+func (e QueuedPodStatus) Valid() bool {
+	switch e {
+	case QueuedPodStatusCancelled:
+		return true
+	case QueuedPodStatusDeployed:
+		return true
+	case QueuedPodStatusExpired:
+		return true
+	case QueuedPodStatusFailed:
+		return true
+	case QueuedPodStatusQueued:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for ReleaseSource.
 const (
 	ReleaseSourceGitBuild ReleaseSource = "GIT_BUILD"
@@ -515,6 +657,30 @@ const (
 func (e RequestCountScalingType) Valid() bool {
 	switch e {
 	case RequestCountScalingTypeRequestCount:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ResourceType.
+const (
+	ResourceTypeCluster            ResourceType = "CLUSTER"
+	ResourceTypeNetworkVolume      ResourceType = "NETWORK_VOLUME"
+	ResourceTypePod                ResourceType = "POD"
+	ResourceTypeServerlessEndpoint ResourceType = "SERVERLESS_ENDPOINT"
+)
+
+// Valid indicates whether the value is a known member of the ResourceType enum.
+func (e ResourceType) Valid() bool {
+	switch e {
+	case ResourceTypeCluster:
+		return true
+	case ResourceTypeNetworkVolume:
+		return true
+	case ResourceTypePod:
+		return true
+	case ResourceTypeServerlessEndpoint:
 		return true
 	default:
 		return false
@@ -587,6 +753,19 @@ func (e WorkerStatus) Valid() bool {
 	}
 }
 
+// Account The account the API key belongs to.
+type Account struct {
+	// Email Email of the same account. Null when the account has no email on file.
+	//
+	// Examples: dev@example.com
+	Email *string `json:"email"`
+
+	// Id Account ID. For a request that acts for a team (a key created inside the team, or `X-Team-Id`) this is the team owner's account. For an organization member it is the member's own account; see `GET /v2/organization` for the organization.
+	//
+	// Examples: user_2abc123
+	Id string `json:"id"`
+}
+
 // AuditLog One recorded action on the account.
 type AuditLog struct {
 	// Action Name of the action, as recorded at write time. Not an enum: values are free-form, mostly lower case verbs, and new actions appear without an API version change. Current writers record values such as `create`, `update`, `delete`, `rename`, `lock`, `unlock`, `start`, `reset`, `add` and `setBillingMode`.
@@ -625,10 +804,46 @@ type AuditLog struct {
 	Value *string `json:"value"`
 }
 
+// AuthenticationAttempt defines model for AuthenticationAttempt.
+type AuthenticationAttempt struct {
+	// AttemptId Identifies the attempt in verify and resend.
+	//
+	// Examples: att_3kq9x81mzp
+	AttemptId string `json:"attemptId"`
+
+	// ExpiresAt When the attempt stops accepting codes. Resending does not extend it.
+	//
+	// Examples: 2026-10-16T18:10:00Z
+	ExpiresAt time.Time `json:"expiresAt"`
+
+	// ResendAfter Earliest time a resend is accepted.
+	//
+	// Examples: 2026-10-16T18:00:30Z
+	ResendAfter time.Time `json:"resendAfter"`
+}
+
+// AuthenticationAttemptResult defines model for AuthenticationAttemptResult.
+type AuthenticationAttemptResult struct {
+	Credential struct {
+		// ApiKey The raw API key. It is returned once, so store it before doing anything else.
+		//
+		// Examples: rpa_EXAMPLEONLYEXAMPLEONLYEXAMPLEONLY
+		ApiKey string `json:"apiKey"`
+
+		// Id Identifies the key in the console, where it can be revoked.
+		//
+		// Examples: key_7Rk2m0pq
+		Id string `json:"id"`
+	} `json:"credential"`
+
+	// UserId Examples: user_2abc9xyz
+	UserId string `json:"userId"`
+}
+
 // AvailabilityLevel Catalog stock availability level.
 type AvailabilityLevel string
 
-// BaseContainerConfig Container configuration universal to every containerized resource. Compose ContainerConfig instead unless the resource cannot support a direct registry credential (clusters — there the registry credential arrives via a pod template, see CreateClusterRequest.templateId).
+// BaseContainerConfig Container configuration universal to every containerized resource. ContainerConfig composes it and adds `registry`; resources compose ContainerConfig.
 type BaseContainerConfig struct {
 	// Args The container's command, as a single raw string. This is the field `entrypoint` and `cmd` encode into, exposed in its stored form.
 	//
@@ -710,9 +925,8 @@ type BaseEndpointGpuConfig struct {
 	// the pools and the exclusions untouched, so changing only a CUDA
 	// constraint cannot widen a pinned endpoint.
 	//
-	// Rejected with 400 if a value is not a GPU type in one of `pools`;
-	// upstream accepts unrecognized exclusions silently, so a typo would
-	// otherwise produce a filter that does nothing. Surrounding whitespace
+	// Rejected with 400 if a value is not a GPU type in one of `pools`,
+	// so a typo cannot produce a filter that does nothing. Surrounding whitespace
 	// is trimmed, so `" NVIDIA L40"` and `"NVIDIA L40"` mean the same card.
 	//
 	//
@@ -756,11 +970,10 @@ type BaseGpuConfig struct {
 	Id string `json:"id"`
 }
 
-// BaseMounts The mount kinds every resource that takes `mounts` shares. At most one
-// of `persistent` or `network` may be set: sending both is rejected with 400. The
-// `network` field is an array for forward compatibility with
-// multi-network-volume support; `maxItems` is 1. Left open so
-// that concrete schemas can extend it and close themselves.
+// BaseMounts Shared base type for all resources that mount storage volumes.
+// `persistent` and `network` cannot both be set (rejected with 400).
+// Each resource that uses this type sets its own limit on network
+// volumes.
 type BaseMounts struct {
 	Network *[]NetworkMount `json:"network,omitempty"`
 
@@ -977,6 +1190,30 @@ type Build struct {
 // `TESTING` are live.
 type BuildState string
 
+// BuiltinOrganizationRole A role Runpod defines. Built-in roles cannot be changed.
+type BuiltinOrganizationRole struct {
+	// Capabilities What the role grants, as `FAMILY:VERB` capabilities, sorted. A member's effective access can also include account-level access that no role grants.
+	//
+	// Examples: ["POD:CREATE","POD:VIEW"]
+	Capabilities OrganizationRoleCapabilities `json:"capabilities"`
+
+	// Id Role ID, `builtin:` followed by the role's key.
+	//
+	// Examples: builtin:dev
+	Id string `json:"id"`
+
+	// Name Display name.
+	//
+	// Examples: Developer
+	Name string `json:"name"`
+
+	// Type Always `builtin` for this variant.
+	Type BuiltinOrganizationRoleType `json:"type"`
+}
+
+// BuiltinOrganizationRoleType Always `builtin` for this variant.
+type BuiltinOrganizationRoleType string
+
 // CatalogInclude Catalog include expansion. `AVAILABILITY` is the only supported value.
 type CatalogInclude string
 
@@ -1006,6 +1243,9 @@ type Cluster struct {
 	// Compute The homogeneous compute shape of a cluster. Every pod in the cluster is identical: `podCount` pods, each with `gpuCountPerPod` GPUs of type `gpuTypeId`. Total GPUs = `podCount` * `gpuCountPerPod`.
 	Compute ClusterCompute `json:"compute"`
 
+	// CostCenter Cost center this resource's spend is attributed to. Absent when the resource is not attributed to a cost center, or when the caller lacks permission to view cost centers. Managed through `/v2/cost-centers`.
+	CostCenter *ResourceCostCenter `json:"costCenter,omitempty"`
+
 	// CreatedAt Examples: 2026-06-29T20:00:00Z
 	CreatedAt time.Time `json:"createdAt"`
 
@@ -1028,6 +1268,9 @@ type Cluster struct {
 
 	// Primary The primary (master) node; omitted until a primary pod is placed. Its `sshEndpoint` is omitted until that pod is RUNNING with SSH exposed.
 	Primary *ClusterPrimary `json:"primary,omitempty"`
+
+	// Tags The tags on this resource that are visible to the caller. Keys and values are returned exactly as stored. Tags under the reserved `runpod:` prefix, such as the cost center, are never listed here. Absent when the resource's tags are unavailable to the caller; an empty array means none are visible.
+	Tags *ResourceTags `json:"tags,omitempty"`
 
 	// Template ID of the template this cluster's pods were created from; omitted when they were not created from one.
 	//
@@ -1127,7 +1370,7 @@ type ClusterBillingRecord struct {
 
 // ClusterCompute The homogeneous compute shape of a cluster. Every pod in the cluster is identical: `podCount` pods, each with `gpuCountPerPod` GPUs of type `gpuTypeId`. Total GPUs = `podCount` * `gpuCountPerPod`.
 type ClusterCompute struct {
-	// GpuCountPerPod Number of GPUs on each pod. Bounded above by the GPU type's per-cloud maximum (GpuType.maxCount); the upstream rejects values beyond it.
+	// GpuCountPerPod Number of GPUs on each pod. Bounded above by the GPU type's per-cloud maximum (GpuType.maxCount); values beyond it are rejected.
 	//
 	// Examples: 8
 	GpuCountPerPod int `json:"gpuCountPerPod"`
@@ -1143,9 +1386,11 @@ type ClusterCompute struct {
 	PodCount int `json:"podCount"`
 }
 
-// ClusterMounts Storage mounts for a cluster create: `persistent` or `network`, not
-// both. Clusters cannot mount global volumes, so `global` is rejected
-// with 422.
+// ClusterMounts Storage mounts for a cluster create: `persistent` or one `network`
+// volume, not both. Clusters cannot mount global volumes, so `global`
+// is rejected with 422. A mount `path` must not be empty (rejected with 422): an
+// empty path reads as unset and would mount the volume at the
+// template's path, or `/workspace` without a template.
 type ClusterMounts = BaseMounts
 
 // ClusterNetwork The cluster's private VXLAN overlay network (shared by all member pods).
@@ -1204,10 +1449,15 @@ type ClusterPrimary struct {
 // Examples: TRAINING
 type ClusterType string
 
+// CodeVerifier The random secret whose SHA-256 hash was sent as `codeChallenge`.
+//
+// Examples: dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk
+type CodeVerifier = string
+
 // Compliance Compliance certifications.
 type Compliance string
 
-// ContainerConfig Reusable container configuration shared across templates, pods, and serverless endpoints. Adding a field here automatically propagates to all three resources.
+// ContainerConfig Reusable container configuration shared across templates, pods, serverless endpoints, and clusters. Adding a field here automatically propagates to all of them.
 type ContainerConfig struct {
 	// Args The container's command, as a single raw string. This is the field `entrypoint` and `cmd` encode into, exposed in its stored form.
 	//
@@ -1251,10 +1501,38 @@ type ContainerConfig struct {
 	// Examples: ["8888/http","22/tcp"]
 	Ports *[]string `json:"ports,omitempty"`
 
-	// Registry Container registry credential ID (for private images)
+	// Registry Container registry credential ID for a private image: one of
+	// your credentials from `/v2/registries`. Leave it unset for a
+	// private Amazon ECR image. Runpod pulls those with an ECR
+	// delegation (`/v2/registries/delegations`) matched to the
+	// image's account, region and repository at pull time, so there
+	// is no delegation ID to pass here (a delegation ID is not a
+	// credential ID). A credential set here is used instead of any
+	// delegation.
+	//
 	//
 	// Examples: null
 	Registry *string `json:"registry,omitempty"`
+}
+
+// CostCenter defines model for CostCenter.
+type CostCenter struct {
+	// Id Examples: clz1x9k4a0000qw3h8s7d2f1g
+	Id string `json:"id"`
+
+	// Value Cost center name exactly as stored, so it matches billing breakdowns.
+	//
+	// Examples: team-ml
+	Value string `json:"value"`
+}
+
+// CostCenterResource defines model for CostCenterResource.
+type CostCenterResource struct {
+	// Id Examples: p9k2m4n6q8
+	Id string `json:"id"`
+
+	// Type Kind of resource a cost center or tag can be attached to.
+	Type ResourceType `json:"type"`
 }
 
 // CpuConfig defines model for CpuConfig.
@@ -1336,6 +1614,24 @@ type CpuType struct {
 	} `json:"vcpu"`
 }
 
+// CreateAuthenticationAttemptRequest defines model for CreateAuthenticationAttemptRequest.
+type CreateAuthenticationAttemptRequest struct {
+	// CodeChallenge Unpadded base64url SHA-256 hash of a random `codeVerifier` the caller keeps private. Verify and resend require the matching verifier.
+	//
+	// Examples: E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM
+	CodeChallenge string `json:"codeChallenge"`
+
+	// Email Address to send the verification code to. It may belong to an existing account or a new one.
+	//
+	// Examples: owner@example.com
+	Email openapi_types.Email `json:"email"`
+
+	// KeyName Name of the API key issued when verification succeeds.
+	//
+	// Examples: laptop-cli
+	KeyName string `json:"keyName"`
+}
+
 // CreateClusterRequest defines model for CreateClusterRequest.
 type CreateClusterRequest struct {
 	// Args The container's command, as a single raw string. This is the field `entrypoint` and `cmd` encode into, exposed in its stored form.
@@ -1383,9 +1679,11 @@ type CreateClusterRequest struct {
 	// Examples: runpod/pytorch:1.0.2-cu1281-torch280-ubuntu2404
 	Image *string `json:"image,omitempty"`
 
-	// Mounts Storage mounts for a cluster create: `persistent` or `network`, not
-	// both. Clusters cannot mount global volumes, so `global` is rejected
-	// with 422.
+	// Mounts Storage mounts for a cluster create: `persistent` or one `network`
+	// volume, not both. Clusters cannot mount global volumes, so `global`
+	// is rejected with 422. A mount `path` must not be empty (rejected with 422): an
+	// empty path reads as unset and would mount the volume at the
+	// template's path, or `/workspace` without a template.
 	Mounts *ClusterMounts `json:"mounts,omitempty"`
 
 	// Name Examples: my-training-cluster
@@ -1396,6 +1694,19 @@ type CreateClusterRequest struct {
 	// Examples: ["8888/http","22/tcp"]
 	Ports *[]string `json:"ports,omitempty"`
 
+	// Registry Container registry credential ID for a private image: one of
+	// your credentials from `/v2/registries`. Leave it unset for a
+	// private Amazon ECR image. Runpod pulls those with an ECR
+	// delegation (`/v2/registries/delegations`) matched to the
+	// image's account, region and repository at pull time, so there
+	// is no delegation ID to pass here (a delegation ID is not a
+	// credential ID). A credential set here is used instead of any
+	// delegation.
+	//
+	//
+	// Examples: null
+	Registry *string `json:"registry,omitempty"`
+
 	// StartJupyter Start Jupyter on every member pod, as on pod create.
 	StartJupyter *bool `json:"startJupyter,omitempty"`
 
@@ -1405,9 +1716,13 @@ type CreateClusterRequest struct {
 	// TemplateId ID of a pod template to provision every member pod from. The
 	// template supplies the container settings (image, args, disk,
 	// env, ports) and the container registry credential for private
-	// images — the only private-image path for clusters. Mutually
-	// exclusive with `image`, `args`, `entrypoint`, `cmd`, `disk`,
-	// `env`, `ports`, and `mounts` (rejected with 400). The cluster
+	// images. Mutually exclusive with `image`, `args`, `entrypoint`,
+	// `cmd`, `disk`, `env`, and `ports` (rejected with 400). `registry`
+	// combines with it: an explicit `registry` overrides the
+	// template's credential; omit it (or send `null` or an empty
+	// string) to use the template's. `mounts`
+	// combines with it too: the volume in `mounts` is attached to
+	// every member pod, overriding the template's volume settings. The cluster
 	// retains the link: the `template` response field is set. Must be
 	// a non-serverless pod template accessible to the caller.
 	//
@@ -1419,6 +1734,17 @@ type CreateClusterRequest struct {
 	//
 	// Examples: TRAINING
 	Type ClusterType `json:"type"`
+}
+
+// CreateCostCenterRequest defines model for CreateCostCenterRequest.
+type CreateCostCenterRequest struct {
+	// Resources Resources to attribute to the new cost center.
+	Resources *[]CostCenterResource `json:"resources,omitempty"`
+
+	// Value Leading and trailing whitespace is trimmed.
+	//
+	// Examples: team-ml
+	Value string `json:"value"`
 }
 
 // CreateCpuConfig defines model for CreateCpuConfig.
@@ -1478,9 +1804,8 @@ type CreateEndpointGpuConfig struct {
 	// the pools and the exclusions untouched, so changing only a CUDA
 	// constraint cannot widen a pinned endpoint.
 	//
-	// Rejected with 400 if a value is not a GPU type in one of `pools`;
-	// upstream accepts unrecognized exclusions silently, so a typo would
-	// otherwise produce a filter that does nothing. Surrounding whitespace
+	// Rejected with 400 if a value is not a GPU type in one of `pools`,
+	// so a typo cannot produce a filter that does nothing. Surrounding whitespace
 	// is trimmed, so `" NVIDIA L40"` and `"NVIDIA L40"` mean the same card.
 	//
 	//
@@ -1599,7 +1924,15 @@ type CreateEndpointRequest struct {
 	// Examples: ["8888/http","22/tcp"]
 	Ports *[]string `json:"ports,omitempty"`
 
-	// Registry Container registry credential ID (for private images)
+	// Registry Container registry credential ID for a private image: one of
+	// your credentials from `/v2/registries`. Leave it unset for a
+	// private Amazon ECR image. Runpod pulls those with an ECR
+	// delegation (`/v2/registries/delegations`) matched to the
+	// image's account, region and repository at pull time, so there
+	// is no delegation ID to pass here (a delegation ID is not a
+	// credential ID). A credential set here is used instead of any
+	// delegation.
+	//
 	//
 	// Examples: null
 	Registry *string `json:"registry,omitempty"`
@@ -1730,6 +2063,38 @@ type CreateNetworkVolumeRequest struct {
 	Type *VolumeType `json:"type,omitempty"`
 }
 
+// CreateOrganizationGroupRequest defines model for CreateOrganizationGroupRequest.
+type CreateOrganizationGroupRequest struct {
+	// Name Group name with at least one non-whitespace character; surrounding whitespace is trimmed.
+	//
+	// Examples: Engineering
+	Name string `json:"name"`
+}
+
+// CreateOrganizationInviteRequest defines model for CreateOrganizationInviteRequest.
+type CreateOrganizationInviteRequest struct {
+	// Email Address to invite, stored lowercased. The invitee accepts by signing in with a verified account on this address.
+	//
+	// Examples: new-member@example.com
+	Email openapi_types.Email `json:"email"`
+
+	// Role An organization role to assign, by ID.
+	Role OrganizationRoleInput `json:"role"`
+}
+
+// CreateOrganizationRoleRequest defines model for CreateOrganizationRoleRequest.
+type CreateOrganizationRoleRequest struct {
+	// Capabilities What the role grants, as `FAMILY:VERB` capabilities from `GET /v2/organization/roles/capabilities`. The caller must hold every capability it lists.
+	//
+	// Examples: ["POD:VIEW"]
+	Capabilities OrganizationRoleCapabilitiesInput `json:"capabilities"`
+
+	// Name Display name, 1–191 characters with at least one non-whitespace character. Leading and trailing whitespace is trimmed. It must be unique within the organization and cannot be a built-in role's name.
+	//
+	// Examples: Pod viewer
+	Name OrganizationRoleName `json:"name"`
+}
+
 // CreatePodRequest defines model for CreatePodRequest.
 type CreatePodRequest struct {
 	// Args The container's command, as a single raw string. This is the field `entrypoint` and `cmd` encode into, exposed in its stored form.
@@ -1790,25 +2155,13 @@ type CreatePodRequest struct {
 	// Examples: runpod/pytorch:1.0.2-cu1281-torch280-ubuntu2404
 	Image *string `json:"image,omitempty"`
 
-	// Mounts Storage mounts attached to a pod. `persistent` is mutually exclusive
-	// with both `network` and `global`: combining them is rejected with 400.
-	// The `network` field is an array for forward compatibility with
-	// multi-network-volume support; `maxItems` is 1.
-	//
-	// PATCH semantics:
-	// - Omitting `mounts` or sending `{}` leaves the existing mount
-	//   unchanged.
-	// - An explicit `network: []` is rejected with 400 (clearing mounts
-	//   is not supported).
-	// - Mount kind is fixed at create — a PATCH that introduces a kind
-	//   not present at create (persistent on a network pod, network on
-	//   a persistent pod, or any mount on a previously-mountless pod)
-	//   is rejected with 400.
-	// - The `volumeId` of a network mount is immutable; a PATCH that
-	//   names a different `volumeId` is rejected with 400.
-	// - Partial mounts are not supported — every mount entry must
-	//   include the full schema (`size` + `path` for persistent,
-	//   `volumeId` + `path` for network). Missing required fields → 422.
+	// Mounts Storage mounts attached to a pod. `persistent` (the volume disk) is
+	// mutually exclusive with both `network` and `global`: combining them is
+	// rejected with 400. A pod takes up to 4 network volumes
+	// and 1 global volume. Every network volume must be in the pod's data
+	// center, each volume may be listed once, and mount paths must not
+	// overlap; a request that breaks one of these is rejected. To change a
+	// pod's mounts after creation, see `UpdatePodMounts`.
 	Mounts *Mounts `json:"mounts,omitempty"`
 
 	// Name Examples: my-training-pod
@@ -1819,7 +2172,31 @@ type CreatePodRequest struct {
 	// Examples: ["8888/http","22/tcp"]
 	Ports *[]string `json:"ports,omitempty"`
 
-	// Registry Container registry credential ID (for private images)
+	// Queue Queue the pod for deploy-when-available instead of failing when the
+	// requested GPU has no capacity. The create call still tries to deploy
+	// first; only a capacity failure queues the request, and any other
+	// failure is returned as it would be without `queue`. A queued pod is
+	// placed by a scheduler that retries about every five minutes, in plan
+	// priority order, during `allowedHours`, until `expiresAt`. An empty
+	// object queues with the defaults.
+	//
+	// GPU pods on the secure cloud only: `queue` with `cpu` or
+	// `globalNetworking` is rejected with `400`. A plan without
+	// deploy-when-available is refused with `403`, and one whose queue is
+	// full with `409`. A request that matches a pod still queued (same GPU
+	// type and count, same settings) returns that queued pod rather than a
+	// second one.
+	Queue *PodQueueOptions `json:"queue,omitempty"`
+
+	// Registry Container registry credential ID for a private image: one of
+	// your credentials from `/v2/registries`. Leave it unset for a
+	// private Amazon ECR image. Runpod pulls those with an ECR
+	// delegation (`/v2/registries/delegations`) matched to the
+	// image's account, region and repository at pull time, so there
+	// is no delegation ID to pass here (a delegation ID is not a
+	// credential ID). A credential set here is used instead of any
+	// delegation.
+	//
 	//
 	// Examples: null
 	Registry *string `json:"registry,omitempty"`
@@ -1841,7 +2218,7 @@ type CreatePodRequest struct {
 	// access: injects a `PUBLIC_KEY` environment variable carrying
 	// your account's registered SSH public keys, unless the request
 	// already sets one. **Requires registered keys** (`PUT
-	// /v2/account/ssh-keys`) — with none registered the flag does
+	// /v2/account/ssh-keys`); with none registered the flag does
 	// nothing and the pod has no SSH access. Only images that honor
 	// the convention start sshd from it (all Runpod official images
 	// do). Connect using the pod's `ssh` block; the `ssh.direct`
@@ -1973,7 +2350,15 @@ type CreateTemplateRequest struct {
 	Ports  *[]string `json:"ports,omitempty"`
 	Public *bool     `json:"public,omitempty"`
 
-	// Registry Container registry credential ID (for private images)
+	// Registry Container registry credential ID for a private image: one of
+	// your credentials from `/v2/registries`. Leave it unset for a
+	// private Amazon ECR image. Runpod pulls those with an ECR
+	// delegation (`/v2/registries/delegations`) matched to the
+	// image's account, region and repository at pull time, so there
+	// is no delegation ID to pass here (a delegation ID is not a
+	// credential ID). A credential set here is used instead of any
+	// delegation.
+	//
 	//
 	// Examples: null
 	Registry   *string `json:"registry,omitempty"`
@@ -2017,6 +2402,40 @@ type CudaVersionAvailability struct {
 	// Examples: 12.8
 	Version string `json:"version"`
 }
+
+// CustomOrganizationRole A role the caller's organization defined.
+type CustomOrganizationRole struct {
+	// Capabilities What the role grants, as `FAMILY:VERB` capabilities, sorted. A member's effective access can also include account-level access that no role grants.
+	//
+	// Examples: ["POD:CREATE","POD:VIEW"]
+	Capabilities OrganizationRoleCapabilities `json:"capabilities"`
+
+	// CreatedAt When the role was created.
+	//
+	// Examples: 2026-10-01T09:00:00Z
+	CreatedAt time.Time `json:"createdAt"`
+
+	// Id Role ID.
+	//
+	// Examples: cmcustomrole0001
+	Id string `json:"id"`
+
+	// Name Display name, unique within the organization.
+	//
+	// Examples: Pod viewer
+	Name string `json:"name"`
+
+	// Type Always `custom` for this variant.
+	Type CustomOrganizationRoleType `json:"type"`
+
+	// UpdatedAt When the role last changed. Assigning the role to a member or invite can also move it.
+	//
+	// Examples: 2026-10-02T09:00:00Z
+	UpdatedAt time.Time `json:"updatedAt"`
+}
+
+// CustomOrganizationRoleType Always `custom` for this variant.
+type CustomOrganizationRoleType string
 
 // DataCenter defines model for DataCenter.
 type DataCenter struct {
@@ -2145,6 +2564,9 @@ type Endpoint struct {
 	// Examples: ["--model","meta-llama/Llama-3-8B","--max-model-len","8192"]
 	Cmd *[]string `json:"cmd,omitempty"`
 
+	// CostCenter Cost center this resource's spend is attributed to. Absent when the resource is not attributed to a cost center, or when the caller lacks permission to view cost centers. Managed through `/v2/cost-centers`.
+	CostCenter *ResourceCostCenter `json:"costCenter,omitempty"`
+
 	// Cpu Eligible CPU configurations for each worker, in the order they
 	// were submitted. Present for CPU endpoints and omitted for GPU
 	// endpoints. Memory is derived from the selected flavor's catalog
@@ -2203,7 +2625,15 @@ type Endpoint struct {
 	// Examples: ["8888/http","22/tcp"]
 	Ports *[]string `json:"ports,omitempty"`
 
-	// Registry Container registry credential ID (for private images)
+	// Registry Container registry credential ID for a private image: one of
+	// your credentials from `/v2/registries`. Leave it unset for a
+	// private Amazon ECR image. Runpod pulls those with an ECR
+	// delegation (`/v2/registries/delegations`) matched to the
+	// image's account, region and repository at pull time, so there
+	// is no delegation ID to pass here (a delegation ID is not a
+	// credential ID). A credential set here is used instead of any
+	// delegation.
+	//
 	//
 	// Examples: null
 	Registry *string `json:"registry,omitempty"`
@@ -2224,6 +2654,9 @@ type Endpoint struct {
 	// independently of the endpoint's routing `type` and can be switched on
 	// update.
 	Scaling EndpointScaling `json:"scaling"`
+
+	// Tags The tags on this resource that are visible to the caller. Keys and values are returned exactly as stored. Tags under the reserved `runpod:` prefix, such as the cost center, are never listed here. Absent when the resource's tags are unavailable to the caller; an empty array means none are visible.
+	Tags *ResourceTags `json:"tags,omitempty"`
 
 	// Timeout Per-request execution timeout in milliseconds
 	//
@@ -2294,6 +2727,48 @@ type EndpointBillingRecord struct {
 	TotalAmount float64 `json:"totalAmount"`
 }
 
+// EndpointColdStartMetric defines model for EndpointColdStartMetric.
+type EndpointColdStartMetric struct {
+	Count int `json:"count"`
+
+	// DurationMs Millisecond statistics over one bucket.
+	DurationMs EndpointDurationStats `json:"durationMs"`
+
+	// Time Bucket start (UTC).
+	Time time.Time `json:"time"`
+}
+
+// EndpointColdStartMetricsResponse Cold start counts and durations per bucket for the resolved window. `records` contains only buckets with activity. Buckets with no activity are omitted, not zero-filled, so `records` can be shorter than the number of buckets in the window, or empty. Results are paged: see `pagination`.
+type EndpointColdStartMetricsResponse struct {
+	// EndTime Resolved window end (after defaults and the clamp to now).
+	EndTime time.Time `json:"endTime"`
+
+	// Interval Bucket size for endpoint metrics.
+	Interval EndpointMetricsInterval `json:"interval"`
+
+	// Pagination Cursor-pagination metadata. A list response carries it only where the operation takes the `cursor` and `limit` query parameters; every other list endpoint returns its bare list. Where it is present, follow `nextCursor` while `hasNextPage` is true to walk the full result set.
+	Pagination Pagination `json:"pagination"`
+
+	// Records This page's buckets, oldest first.
+	Records []EndpointColdStartMetric `json:"records"`
+
+	// StartTime Resolved window start (after defaults).
+	StartTime time.Time `json:"startTime"`
+}
+
+// EndpointDurationStats Millisecond statistics over one bucket.
+type EndpointDurationStats struct {
+	Max int `json:"max"`
+	Min int `json:"min"`
+	P70 int `json:"p70"`
+	P90 int `json:"p90"`
+	P95 int `json:"p95"`
+	P98 int `json:"p98"`
+
+	// Total Sum over every request (or cold start) in the bucket.
+	Total float64 `json:"total"`
+}
+
 // EndpointGpuConfig defines model for EndpointGpuConfig.
 type EndpointGpuConfig struct {
 	// AllowedCudaVersions Acceptable CUDA versions for worker placement, as `major.minor`. Empty means any version.
@@ -2323,9 +2798,8 @@ type EndpointGpuConfig struct {
 	// the pools and the exclusions untouched, so changing only a CUDA
 	// constraint cannot widen a pinned endpoint.
 	//
-	// Rejected with 400 if a value is not a GPU type in one of `pools`;
-	// upstream accepts unrecognized exclusions silently, so a typo would
-	// otherwise produce a filter that does nothing. Surrounding whitespace
+	// Rejected with 400 if a value is not a GPU type in one of `pools`,
+	// so a typo cannot produce a filter that does nothing. Surrounding whitespace
 	// is trimmed, so `" NVIDIA L40"` and `"NVIDIA L40"` mean the same card.
 	//
 	//
@@ -2361,6 +2835,9 @@ type EndpointGpuConfig struct {
 	Pools []string `json:"pools"`
 }
 
+// EndpointMetricsInterval Bucket size for endpoint metrics.
+type EndpointMetricsInterval string
+
 // EndpointMount A volume mounted on every worker, always at `/runpod-volume`. Custom
 // paths are not supported yet.
 type EndpointMount struct {
@@ -2391,6 +2868,43 @@ type EndpointMountsInput struct {
 	Network *[]EndpointMount `json:"network,omitempty"`
 }
 
+// EndpointRequestMetric defines model for EndpointRequestMetric.
+type EndpointRequestMetric struct {
+	Completed int `json:"completed"`
+
+	// DelayTimeMs Millisecond statistics over one bucket.
+	DelayTimeMs EndpointDurationStats `json:"delayTimeMs"`
+
+	// ExecutionTimeMs Millisecond statistics over one bucket.
+	ExecutionTimeMs EndpointDurationStats `json:"executionTimeMs"`
+	Failed          int                   `json:"failed"`
+
+	// Requests Requests that finished in this bucket.
+	Requests int `json:"requests"`
+	Retries  int `json:"retries"`
+
+	// Time Bucket start (UTC).
+	Time time.Time `json:"time"`
+}
+
+// EndpointRequestMetricsResponse Request counts and durations per bucket for the resolved window. `records` contains only buckets with activity. Buckets with no activity are omitted, not zero-filled, so `records` can be shorter than the number of buckets in the window, or empty. Results are paged: see `pagination`.
+type EndpointRequestMetricsResponse struct {
+	// EndTime Resolved window end (after defaults and the clamp to now).
+	EndTime time.Time `json:"endTime"`
+
+	// Interval Bucket size for endpoint metrics.
+	Interval EndpointMetricsInterval `json:"interval"`
+
+	// Pagination Cursor-pagination metadata. A list response carries it only where the operation takes the `cursor` and `limit` query parameters; every other list endpoint returns its bare list. Where it is present, follow `nextCursor` while `hasNextPage` is true to walk the full result set.
+	Pagination Pagination `json:"pagination"`
+
+	// Records This page's buckets, oldest first.
+	Records []EndpointRequestMetric `json:"records"`
+
+	// StartTime Resolved window start (after defaults).
+	StartTime time.Time `json:"startTime"`
+}
+
 // EndpointRequestUrls Request URLs appropriate to the endpoint's top-level `type`.
 // Queue-based endpoints provide job submission and management URLs;
 // load-balancing endpoints provide `base` and `health` because their
@@ -2419,6 +2933,36 @@ type EndpointScaling struct {
 //     (health-check port, default 80), and `HEALTH_CHECK_PATH` (path the
 //     load balancer polls for worker health, default `/ping`).
 type EndpointType string
+
+// EndpointWorkerMetric defines model for EndpointWorkerMetric.
+type EndpointWorkerMetric struct {
+	Idle         int `json:"idle"`
+	Initializing int `json:"initializing"`
+	Running      int `json:"running"`
+	Throttled    int `json:"throttled"`
+
+	// Time Bucket start (UTC).
+	Time      time.Time `json:"time"`
+	Unhealthy int       `json:"unhealthy"`
+}
+
+// EndpointWorkerMetricsResponse Worker counts by state per bucket for the resolved window. `records` contains only buckets with activity. Buckets with no activity are omitted, not zero-filled, so `records` can be shorter than the number of buckets in the window, or empty. Results are paged: see `pagination`.
+type EndpointWorkerMetricsResponse struct {
+	// EndTime Resolved window end (after defaults and the clamp to now).
+	EndTime time.Time `json:"endTime"`
+
+	// Interval Bucket size for endpoint metrics.
+	Interval EndpointMetricsInterval `json:"interval"`
+
+	// Pagination Cursor-pagination metadata. A list response carries it only where the operation takes the `cursor` and `limit` query parameters; every other list endpoint returns its bare list. Where it is present, follow `nextCursor` while `hasNextPage` is true to walk the full result set.
+	Pagination Pagination `json:"pagination"`
+
+	// Records This page's buckets, oldest first.
+	Records []EndpointWorkerMetric `json:"records"`
+
+	// StartTime Resolved window start (after defaults).
+	StartTime time.Time `json:"startTime"`
+}
 
 // EndpointWorkers defines model for EndpointWorkers.
 type EndpointWorkers struct {
@@ -2470,14 +3014,30 @@ type ErrorResponse struct {
 // - `PRIORITY_FLASHBOOT` — enabled with priority capacity
 type FlashBoot string
 
-// GlobalMount Reference to a GlobalVolume. Usage-billed, so it has no size. The
-// underlying `volumeId` is immutable post-create; the mount `path` may be
-// changed via PATCH.
+// GlobalMount Reference to a GlobalVolume. Usage-billed, so it has no size. On a
+// pod, the volume can be mounted, moved, or unmounted after creation
+// (see `UpdatePodMounts`).
 type GlobalMount struct {
-	// Path Mount path inside the container. Optional on create, where a default is chosen for you; a PATCH that omits it leaves the path unchanged.
+	// Path Mount path inside the container. Optional; a default is chosen for you when omitted.
 	//
 	// Examples: /data
 	Path *string `json:"path,omitempty"`
+
+	// VolumeId ID of an existing GlobalVolume.
+	//
+	// Examples: gsb_abc
+	VolumeId string `json:"volumeId"`
+}
+
+// GlobalMountPatch Mounts, moves, or unmounts the pod's global volume.
+type GlobalMountPatch struct {
+	// Path Mount path inside the container. Optional; when mounting, a default is chosen for you if omitted.
+	//
+	// Examples: /data
+	Path *string `json:"path,omitempty"`
+
+	// Remove Unmount the volume. Cannot be combined with `path`.
+	Remove *bool `json:"remove,omitempty"`
 
 	// VolumeId ID of an existing GlobalVolume.
 	//
@@ -2594,6 +3154,23 @@ type GpuType struct {
 	// Examples: 24
 	Memory int `json:"memory"`
 
+	// MinRam Minimum total system RAM in GB reported across matching machines
+	// for the requested `count` and availability filters. This is host
+	// RAM, not the GPU VRAM reported in `memory`. Present only with
+	// include=AVAILABILITY and omitted when `availability` is `NONE`.
+	//
+	//
+	// Examples: 32
+	MinRam *int `json:"minRam,omitempty"`
+
+	// MinVcpuCount Minimum total vCPU count reported across matching machines for the
+	// requested `count` and availability filters. Present only with
+	// include=AVAILABILITY and omitted when `availability` is `NONE`.
+	//
+	//
+	// Examples: 8
+	MinVcpuCount *int `json:"minVcpuCount,omitempty"`
+
 	// Name Examples: RTX 4090
 	Name string `json:"name"`
 
@@ -2653,6 +3230,21 @@ type ListClusterBillingResponse struct {
 // ListClustersResponse defines model for ListClustersResponse.
 type ListClustersResponse struct {
 	Clusters []Cluster `json:"clusters"`
+
+	// Pagination Cursor-pagination metadata. A list response carries it only where the operation takes the `cursor` and `limit` query parameters; every other list endpoint returns its bare list. Where it is present, follow `nextCursor` while `hasNextPage` is true to walk the full result set.
+	Pagination Pagination `json:"pagination"`
+}
+
+// ListCostCenterResourcesResponse defines model for ListCostCenterResourcesResponse.
+type ListCostCenterResourcesResponse struct {
+	// Pagination Cursor-pagination metadata. A list response carries it only where the operation takes the `cursor` and `limit` query parameters; every other list endpoint returns its bare list. Where it is present, follow `nextCursor` while `hasNextPage` is true to walk the full result set.
+	Pagination Pagination           `json:"pagination"`
+	Resources  []CostCenterResource `json:"resources"`
+}
+
+// ListCostCentersResponse defines model for ListCostCentersResponse.
+type ListCostCentersResponse struct {
+	CostCenters []CostCenter `json:"costCenters"`
 
 	// Pagination Cursor-pagination metadata. A list response carries it only where the operation takes the `cursor` and `limit` query parameters; every other list endpoint returns its bare list. Where it is present, follow `nextCursor` while `hasNextPage` is true to walk the full result set.
 	Pagination Pagination `json:"pagination"`
@@ -2758,6 +3350,40 @@ type ListNetworkVolumesResponse struct {
 	Pagination Pagination `json:"pagination"`
 }
 
+// ListOrganizationGroupMembersResponse defines model for ListOrganizationGroupMembersResponse.
+type ListOrganizationGroupMembersResponse struct {
+	Members []OrganizationGroupMember `json:"members"`
+
+	// Pagination Cursor-pagination metadata. A list response carries it only where the operation takes the `cursor` and `limit` query parameters; every other list endpoint returns its bare list. Where it is present, follow `nextCursor` while `hasNextPage` is true to walk the full result set.
+	Pagination Pagination `json:"pagination"`
+}
+
+// ListOrganizationGroupsResponse defines model for ListOrganizationGroupsResponse.
+type ListOrganizationGroupsResponse struct {
+	Groups []OrganizationGroup `json:"groups"`
+
+	// Pagination Cursor-pagination metadata. A list response carries it only where the operation takes the `cursor` and `limit` query parameters; every other list endpoint returns its bare list. Where it is present, follow `nextCursor` while `hasNextPage` is true to walk the full result set.
+	Pagination Pagination `json:"pagination"`
+}
+
+// ListOrganizationInvitesResponse defines model for ListOrganizationInvitesResponse.
+type ListOrganizationInvitesResponse struct {
+	// Invites Pending invites, newest first.
+	Invites []OrganizationInvite `json:"invites"`
+}
+
+// ListOrganizationRolesResponse defines model for ListOrganizationRolesResponse.
+type ListOrganizationRolesResponse struct {
+	// Roles Built-in and custom roles, oldest first.
+	Roles []OrganizationRole `json:"roles"`
+}
+
+// ListOrganizationUsersResponse defines model for ListOrganizationUsersResponse.
+type ListOrganizationUsersResponse struct {
+	// Users Every member of the organization.
+	Users []OrganizationUser `json:"users"`
+}
+
 // ListPodBillingResponse Billing records for pods.
 type ListPodBillingResponse struct {
 	Metadata PodBillingMetadata `json:"metadata"`
@@ -2769,6 +3395,13 @@ type ListPodsResponse struct {
 	// Pagination Cursor-pagination metadata. A list response carries it only where the operation takes the `cursor` and `limit` query parameters; every other list endpoint returns its bare list. Where it is present, follow `nextCursor` while `hasNextPage` is true to walk the full result set.
 	Pagination Pagination `json:"pagination"`
 	Pods       []Pod      `json:"pods"`
+}
+
+// ListQueuedPodsResponse defines model for ListQueuedPodsResponse.
+type ListQueuedPodsResponse struct {
+	// Pagination Cursor-pagination metadata. A list response carries it only where the operation takes the `cursor` and `limit` query parameters; every other list endpoint returns its bare list. Where it is present, follow `nextCursor` while `hasNextPage` is true to walk the full result set.
+	Pagination Pagination  `json:"pagination"`
+	QueuedPods []QueuedPod `json:"queuedPods"`
 }
 
 // ListRegistriesResponse defines model for ListRegistriesResponse.
@@ -2814,34 +3447,21 @@ type LoadBalancingRequestUrls struct {
 // - `system`    — host lifecycle/userlogs stream
 type LogSource string
 
-// Mounts Storage mounts attached to a pod. `persistent` is mutually exclusive
-// with both `network` and `global`: combining them is rejected with 400.
-// The `network` field is an array for forward compatibility with
-// multi-network-volume support; `maxItems` is 1.
-//
-// PATCH semantics:
-//   - Omitting `mounts` or sending `{}` leaves the existing mount
-//     unchanged.
-//   - An explicit `network: []` is rejected with 400 (clearing mounts
-//     is not supported).
-//   - Mount kind is fixed at create — a PATCH that introduces a kind
-//     not present at create (persistent on a network pod, network on
-//     a persistent pod, or any mount on a previously-mountless pod)
-//     is rejected with 400.
-//   - The `volumeId` of a network mount is immutable; a PATCH that
-//     names a different `volumeId` is rejected with 400.
-//   - Partial mounts are not supported — every mount entry must
-//     include the full schema (`size` + `path` for persistent,
-//     `volumeId` + `path` for network). Missing required fields → 422.
+// Mounts Storage mounts attached to a pod. `persistent` (the volume disk) is
+// mutually exclusive with both `network` and `global`: combining them is
+// rejected with 400. A pod takes up to 4 network volumes
+// and 1 global volume. Every network volume must be in the pod's data
+// center, each volume may be listed once, and mount paths must not
+// overlap; a request that breaks one of these is rejected. To change a
+// pod's mounts after creation, see `UpdatePodMounts`.
 type Mounts struct {
 	// Global At most one global volume, on GPU and CPU pods, with no data
 	// center constraint. Combinable with `network` but not with
 	// `persistent` (rejected with 400): a persistent disk is dropped
-	// whenever a volume is attached. Same PATCH rules as
-	// `network`: global mounts are fixed at create, `global: []` is
-	// rejected with 400, and `volumeId` is immutable; only `path` may
-	// change.
-	Global  *[]GlobalMount  `json:"global,omitempty"`
+	// whenever a volume is attached. Same PATCH rules as `network`.
+	Global *[]GlobalMount `json:"global,omitempty"`
+
+	// Network Up to 4 network volumes, all in the pod's data center.
 	Network *[]NetworkMount `json:"network,omitempty"`
 
 	// Persistent Host-local persistent storage. Pinned to the pod's host machine — data
@@ -2852,8 +3472,8 @@ type Mounts struct {
 }
 
 // NetworkMount Reference to a NetworkVolume. Custom paths are honored at runtime on
-// both GPU and CPU pods. The underlying `volumeId` is immutable
-// post-create; the mount `path` may be changed via PATCH.
+// both GPU and CPU pods. On a pod, the volume can be mounted, moved,
+// or unmounted after creation (see `UpdatePodMounts`).
 type NetworkMount struct {
 	// Path Mount path inside the container. No default — must be specified explicitly.
 	//
@@ -2866,8 +3486,28 @@ type NetworkMount struct {
 	VolumeId string `json:"volumeId"`
 }
 
+// NetworkMountPatch Mounts, moves, or unmounts one network volume. Mounting a volume the
+// pod does not have requires `path`.
+type NetworkMountPatch struct {
+	// Path Mount path inside the container. Required when mounting; optional when moving a mounted volume.
+	//
+	// Examples: /runpod-volume
+	Path *string `json:"path,omitempty"`
+
+	// Remove Unmount the volume. Cannot be combined with `path`.
+	Remove *bool `json:"remove,omitempty"`
+
+	// VolumeId ID of an existing NetworkVolume in the same data center as the pod.
+	//
+	// Examples: vol_xyz
+	VolumeId string `json:"volumeId"`
+}
+
 // NetworkVolume defines model for NetworkVolume.
 type NetworkVolume struct {
+	// CostCenter Cost center this resource's spend is attributed to. Absent when the resource is not attributed to a cost center, or when the caller lacks permission to view cost centers. Managed through `/v2/cost-centers`.
+	CostCenter *ResourceCostCenter `json:"costCenter,omitempty"`
+
 	// DataCenter Data center location; immutable after creation
 	//
 	// Examples: EU-RO-1
@@ -2887,6 +3527,9 @@ type NetworkVolume struct {
 	//
 	// Examples: 50
 	Size int `json:"size"`
+
+	// Tags The tags on this resource that are visible to the caller. Keys and values are returned exactly as stored. Tags under the reserved `runpod:` prefix, such as the cost center, are never listed here. Absent when the resource's tags are unavailable to the caller; an empty array means none are visible.
+	Tags *ResourceTags `json:"tags,omitempty"`
 
 	// Type Storage tier of this volume. Set at creation and immutable.
 	Type VolumeType `json:"type"`
@@ -2986,6 +3629,173 @@ type Organization struct {
 	Name string `json:"name"`
 }
 
+// OrganizationCapabilityCatalog The capabilities a custom role can grant.
+type OrganizationCapabilityCatalog struct {
+	// Families Capability families, in catalog order.
+	Families []OrganizationCapabilityFamily `json:"families"`
+
+	// Version Major version of the capability catalog.
+	//
+	// Examples: 1
+	Version int `json:"version"`
+}
+
+// OrganizationCapabilityFamily defines model for OrganizationCapabilityFamily.
+type OrganizationCapabilityFamily struct {
+	// Family What the capability applies to. A capability is written `FAMILY:VERB`, e.g. `POD:VIEW`.
+	//
+	// Examples: POD
+	Family string `json:"family"`
+
+	// Verbs The verbs a custom role can grant on this family, in catalog order.
+	//
+	// Examples: ["CREATE","USE","TERMINAL","UPDATE","DELETE","VIEW"]
+	Verbs []string `json:"verbs"`
+}
+
+// OrganizationGroup A group in the authenticated caller's organization.
+type OrganizationGroup struct {
+	CreatedAt time.Time `json:"createdAt"`
+
+	// Id Group ID.
+	Id string `json:"id"`
+
+	// MemberCount Number of group memberships.
+	MemberCount int `json:"memberCount"`
+
+	// Name Group name.
+	Name string `json:"name"`
+
+	// UpdatedAt Group update time; membership changes need not update it.
+	UpdatedAt time.Time `json:"updatedAt"`
+}
+
+// OrganizationGroupInput An organization group, by ID.
+type OrganizationGroupInput struct {
+	// Id Group ID.
+	//
+	// Examples: group_id_abc_123
+	Id string `json:"id"`
+}
+
+// OrganizationGroupMember A member of the group. `id` is the member's user ID.
+type OrganizationGroupMember struct {
+	// Email The member's email address. Null for an account that has none.
+	//
+	// Examples: member@example.com
+	Email *string `json:"email"`
+
+	// Id User ID.
+	//
+	// Examples: user_id_abc_123
+	Id string `json:"id"`
+}
+
+// OrganizationGroupRef An organization group, by ID and name.
+type OrganizationGroupRef struct {
+	// Id Group ID.
+	//
+	// Examples: group_id_abc_123
+	Id string `json:"id"`
+
+	// Name Group name.
+	//
+	// Examples: Engineering
+	Name string `json:"name"`
+}
+
+// OrganizationInvite A pending invitation to join the caller's organization. An invite stops being listed once it is accepted, revoked or expired.
+type OrganizationInvite struct {
+	// CreatedAt When the invite was sent.
+	//
+	// Examples: 2026-10-01T09:00:00Z
+	CreatedAt time.Time `json:"createdAt"`
+
+	// Email Email address the invitation was sent to. The invitee accepts by signing in with a verified account on this address.
+	//
+	// Examples: new-member@example.com
+	Email string `json:"email"`
+
+	// ExpiresAt When the invite can no longer be accepted.
+	//
+	// Examples: 2026-10-15T09:00:00Z
+	ExpiresAt time.Time `json:"expiresAt"`
+
+	// Id Invite ID.
+	//
+	// Examples: invite_id_abc_123
+	Id string `json:"id"`
+
+	// Role An organization role, by ID and display name.
+	Role OrganizationRoleRef `json:"role"`
+}
+
+// OrganizationRole A role an organization member or invite can hold: one of Runpod's built-in roles, or a custom role the organization defined.
+type OrganizationRole struct {
+	union json.RawMessage
+}
+
+// OrganizationRoleCapabilities What the role grants, as `FAMILY:VERB` capabilities, sorted. A member's effective access can also include account-level access that no role grants.
+//
+// Examples: ["POD:CREATE","POD:VIEW"]
+type OrganizationRoleCapabilities = []string
+
+// OrganizationRoleCapabilitiesInput What the role grants, as `FAMILY:VERB` capabilities from `GET /v2/organization/roles/capabilities`. The caller must hold every capability it lists.
+//
+// Examples: ["POD:VIEW"]
+type OrganizationRoleCapabilitiesInput = []string
+
+// OrganizationRoleInput An organization role to assign, by ID.
+type OrganizationRoleInput struct {
+	// Id Role ID, as reported on a member or an invite: `builtin:admin`, `builtin:dev`, `builtin:billing`, `builtin:basic`, or a custom role's own ID.
+	//
+	// Examples: builtin:dev
+	Id string `json:"id"`
+}
+
+// OrganizationRoleName Display name, 1–191 characters with at least one non-whitespace character. Leading and trailing whitespace is trimmed. It must be unique within the organization and cannot be a built-in role's name.
+//
+// Examples: Pod viewer
+type OrganizationRoleName = string
+
+// OrganizationRoleRef An organization role, by ID and display name.
+type OrganizationRoleRef struct {
+	// Id Role ID. A built-in role's ID is `builtin:` followed by its key; a custom role carries its own ID.
+	//
+	// Examples: builtin:dev
+	Id string `json:"id"`
+
+	// Name The role's display name: `Admin`, `Developer`, `Billing` or `Contributor` for a built-in role, or a custom role's own name. A custom role that has since been deleted reads as `Contributor` while `id` keeps its own ID.
+	//
+	// Examples: Developer
+	Name string `json:"name"`
+
+	// Type Who defines the role. `builtin` roles are Runpod's: `builtin:admin`, `builtin:dev`, `builtin:billing` and `builtin:basic`. A `custom` role is one the organization defined, under its own ID.
+	Type OrganizationRoleType `json:"type"`
+}
+
+// OrganizationRoleType Who defines the role. `builtin` roles are Runpod's: `builtin:admin`, `builtin:dev`, `builtin:billing` and `builtin:basic`. A `custom` role is one the organization defined, under its own ID.
+type OrganizationRoleType string
+
+// OrganizationUser A member of the caller's organization. `id` is the member's user ID.
+type OrganizationUser struct {
+	// Email The member's email address. Null for an account that has none.
+	//
+	// Examples: member@example.com
+	Email *string `json:"email"`
+
+	// Groups The groups the member belongs to, by name.
+	Groups []OrganizationGroupRef `json:"groups"`
+
+	// Id User ID.
+	//
+	// Examples: user_id_abc_123
+	Id string `json:"id"`
+
+	// Role An organization role, by ID and display name.
+	Role OrganizationRoleRef `json:"role"`
+}
+
 // Paginated Mixin for cursor-paginated list responses. Compose it with `allOf` next to the resource's bare list schema so that a list shape shared with a non-paginated endpoint (e.g. a cluster's member pods) does not inherit a pagination block it cannot honour.
 type Paginated struct {
 	// Pagination Cursor-pagination metadata. A list response carries it only where the operation takes the `cursor` and `limit` query parameters; every other list endpoint returns its bare list. Where it is present, follow `nextCursor` while `hasNextPage` is true to walk the full result set.
@@ -3016,10 +3826,29 @@ type PersistentMount struct {
 	// Examples: /workspace
 	Path string `json:"path"`
 
-	// Size Host-local persistent storage in GB. Upstream enforces a 10 GB floor.
+	// Size Host-local persistent storage in GB. Minimum 10 GB.
 	//
 	// Examples: 20
 	Size int `json:"size"`
+}
+
+// PersistentMountPatch Adds the pod's volume disk, grows it, or moves it. Adding a disk
+// requires `size`; on a pod that already has one, omitted fields are
+// left as they are. Not available on CPU pods.
+type PersistentMountPatch struct {
+	// Path Mount path inside the container.
+	//
+	// Examples: /workspace
+	Path *string `json:"path,omitempty"`
+
+	// Remove Removes the volume disk. Not supported yet: `remove: true` is
+	// rejected with 400.
+	Remove *bool `json:"remove,omitempty"`
+
+	// Size Volume disk size in GB. Can only grow; a smaller size than the current one is rejected with 400.
+	//
+	// Examples: 50
+	Size *int `json:"size,omitempty"`
 }
 
 // Pod defines model for Pod.
@@ -3051,10 +3880,13 @@ type Pod struct {
 	// Examples: ["--model","meta-llama/Llama-3-8B","--max-model-len","8192"]
 	Cmd *[]string `json:"cmd,omitempty"`
 
-	// Cost Current cost in USD per hour (0.0 when EXITED or TERMINATED)
+	// Cost The pod's hourly compute rate in USD. It's returned in every status, including `EXITED`, so it isn't what you're paying right now: a stopped pod isn't billed for compute, only for its volume disk.
 	//
 	// Examples: 0.35
 	Cost float32 `json:"cost"`
+
+	// CostCenter Cost center this resource's spend is attributed to. Absent when the resource is not attributed to a cost center, or when the caller lacks permission to view cost centers. Managed through `/v2/cost-centers`.
+	CostCenter *ResourceCostCenter `json:"costCenter,omitempty"`
 
 	// Cpu Present for CPU pods; omitted from GPU pods.
 	Cpu *CpuConfig `json:"cpu,omitempty"`
@@ -3105,25 +3937,13 @@ type Pod struct {
 	// Examples: false
 	Locked bool `json:"locked"`
 
-	// Mounts Storage mounts attached to a pod. `persistent` is mutually exclusive
-	// with both `network` and `global`: combining them is rejected with 400.
-	// The `network` field is an array for forward compatibility with
-	// multi-network-volume support; `maxItems` is 1.
-	//
-	// PATCH semantics:
-	// - Omitting `mounts` or sending `{}` leaves the existing mount
-	//   unchanged.
-	// - An explicit `network: []` is rejected with 400 (clearing mounts
-	//   is not supported).
-	// - Mount kind is fixed at create — a PATCH that introduces a kind
-	//   not present at create (persistent on a network pod, network on
-	//   a persistent pod, or any mount on a previously-mountless pod)
-	//   is rejected with 400.
-	// - The `volumeId` of a network mount is immutable; a PATCH that
-	//   names a different `volumeId` is rejected with 400.
-	// - Partial mounts are not supported — every mount entry must
-	//   include the full schema (`size` + `path` for persistent,
-	//   `volumeId` + `path` for network). Missing required fields → 422.
+	// Mounts Storage mounts attached to a pod. `persistent` (the volume disk) is
+	// mutually exclusive with both `network` and `global`: combining them is
+	// rejected with 400. A pod takes up to 4 network volumes
+	// and 1 global volume. Every network volume must be in the pod's data
+	// center, each volume may be listed once, and mount paths must not
+	// overlap; a request that breaks one of these is rejected. To change a
+	// pod's mounts after creation, see `UpdatePodMounts`.
 	Mounts Mounts `json:"mounts"`
 
 	// Name Examples: my-training-pod
@@ -3134,7 +3954,15 @@ type Pod struct {
 	// Examples: ["8888/http","22/tcp"]
 	Ports []string `json:"ports"`
 
-	// Registry Container registry credential ID (for private images)
+	// Registry Container registry credential ID for a private image: one of
+	// your credentials from `/v2/registries`. Leave it unset for a
+	// private Amazon ECR image. Runpod pulls those with an ECR
+	// delegation (`/v2/registries/delegations`) matched to the
+	// image's account, region and repository at pull time, so there
+	// is no delegation ID to pass here (a delegation ID is not a
+	// credential ID). A credential set here is used instead of any
+	// delegation.
+	//
 	//
 	// Examples: null
 	Registry *string `json:"registry"`
@@ -3156,6 +3984,9 @@ type Pod struct {
 	// - `ERROR`        — container is in an unrecoverable error state
 	// - `TERMINATED`   — pod has been permanently deleted
 	Status PodStatus `json:"status"`
+
+	// Tags The tags on this resource that are visible to the caller. Keys and values are returned exactly as stored. Tags under the reserved `runpod:` prefix, such as the cost center, are never listed here. Absent when the resource's tags are unavailable to the caller; an empty array means none are visible.
+	Tags *ResourceTags `json:"tags,omitempty"`
 
 	// Template ID of the template this pod was created from
 	//
@@ -3281,6 +4112,68 @@ type PodCluster struct {
 // PodClusterRole A cluster member's role. Assigned for SLURM and RAY clusters; omitted for TRAINING/APPLICATION members.
 type PodClusterRole string
 
+// PodExecRequest defines model for PodExecRequest.
+type PodExecRequest struct {
+	// Command Command to run, as an argv array of 1-256 arguments of at most 4096
+	// characters each. It is run directly, never through a shell; for
+	// pipes, redirects or globbing pass `["sh", "-c", "..."]`. The first
+	// element, the program, must contain a non-whitespace character;
+	// later arguments may be empty. No argument may contain a NUL
+	// character.
+	//
+	//
+	// Examples: ["nvidia-smi","--query-gpu=name,memory.used","--format=csv"]
+	Command []string `json:"command"`
+
+	// Cwd Absolute working directory for the command, at most 1024 characters
+	// and without control characters. Defaults to the image's `WORKDIR`.
+	//
+	//
+	// Examples: /workspace
+	Cwd *string `json:"cwd,omitempty"`
+
+	// Env Up to 64 environment variables added to the container's environment
+	// for this command only. A name is 1-256 characters and must not
+	// contain `=` or a NUL character; a value is at most 16384 characters
+	// and must not contain a NUL character.
+	//
+	//
+	// Examples: {"HF_HOME":"/workspace/hf"}
+	Env *map[string]string `json:"env,omitempty"`
+
+	// TimeoutSeconds How long the call waits for the command to finish, in seconds. A
+	// command still running at this point returns with `timedOut: true`.
+	//
+	//
+	// Examples: 10
+	TimeoutSeconds *int `json:"timeoutSeconds,omitempty"`
+}
+
+// PodExecResult defines model for PodExecResult.
+type PodExecResult struct {
+	// DurationMs Wall time of the command as measured on the pod's machine, in milliseconds.
+	DurationMs int `json:"durationMs"`
+
+	// ExitCode The command's exit code. A non-zero code is a result, not an error.
+	// Null only when `timedOut` is `true`.
+	ExitCode *int `json:"exitCode"`
+
+	// Stderr The command's standard error, as UTF-8 with invalid bytes
+	// replaced. Capped at 1 MiB; see `truncated`.
+	Stderr string `json:"stderr"`
+
+	// Stdout The command's standard output, as UTF-8 with invalid bytes
+	// replaced. Capped at 1 MiB; see `truncated`.
+	Stdout string `json:"stdout"`
+
+	// TimedOut The call stopped waiting at `timeoutSeconds`. It does not mean the
+	// command was stopped: it may still be running inside the container.
+	TimedOut bool `json:"timedOut"`
+
+	// Truncated `stdout` or `stderr` reached the 1 MiB cap and was cut.
+	Truncated bool `json:"truncated"`
+}
+
 // PodGlobalNetworking defines model for PodGlobalNetworking.
 type PodGlobalNetworking struct {
 	// Enabled Whether global networking is enabled, giving the pod a private IP reachable across data centers. Derived from whether the pod has an assigned global-network address.
@@ -3311,6 +4204,83 @@ type PodGpuUtilization struct {
 // PodList A bare list of pods. `GET /v2/clusters/{id}/pods` returns it as-is (a cluster's members are a small, complete set); `GET /v2/pods` composes it with the pagination block via ListPodsResponse.
 type PodList struct {
 	Pods []Pod `json:"pods"`
+}
+
+// PodQueueAllowedHours Hours of the day, in UTC, during which the queued pod may deploy, per
+// weekday. Omit the object to allow any time. A weekday that is omitted
+// is unrestricted; an empty array blocks that whole day. Each entry is
+// an hour from 0 to 23 and allows deploys from that hour to the next.
+type PodQueueAllowedHours struct {
+	// Friday Examples: [9,10,11,12,13,14,15,16]
+	Friday *PodQueueHours `json:"friday,omitempty"`
+
+	// Monday Examples: [9,10,11,12,13,14,15,16]
+	Monday *PodQueueHours `json:"monday,omitempty"`
+
+	// Saturday Examples: [9,10,11,12,13,14,15,16]
+	Saturday *PodQueueHours `json:"saturday,omitempty"`
+
+	// Sunday Examples: [9,10,11,12,13,14,15,16]
+	Sunday *PodQueueHours `json:"sunday,omitempty"`
+
+	// Thursday Examples: [9,10,11,12,13,14,15,16]
+	Thursday *PodQueueHours `json:"thursday,omitempty"`
+
+	// Tuesday Examples: [9,10,11,12,13,14,15,16]
+	Tuesday *PodQueueHours `json:"tuesday,omitempty"`
+
+	// Wednesday Examples: [9,10,11,12,13,14,15,16]
+	Wednesday *PodQueueHours `json:"wednesday,omitempty"`
+}
+
+// PodQueueHours Examples: [9,10,11,12,13,14,15,16]
+type PodQueueHours = []int
+
+// PodQueueOptions Queue the pod for deploy-when-available instead of failing when the
+// requested GPU has no capacity. The create call still tries to deploy
+// first; only a capacity failure queues the request, and any other
+// failure is returned as it would be without `queue`. A queued pod is
+// placed by a scheduler that retries about every five minutes, in plan
+// priority order, during `allowedHours`, until `expiresAt`. An empty
+// object queues with the defaults.
+//
+// GPU pods on the secure cloud only: `queue` with `cpu` or
+// `globalNetworking` is rejected with `400`. A plan without
+// deploy-when-available is refused with `403`, and one whose queue is
+// full with `409`. A request that matches a pod still queued (same GPU
+// type and count, same settings) returns that queued pod rather than a
+// second one.
+type PodQueueOptions struct {
+	// AllowedHours Hours of the day, in UTC, during which the queued pod may deploy, per
+	// weekday. Omit the object to allow any time. A weekday that is omitted
+	// is unrestricted; an empty array blocks that whole day. Each entry is
+	// an hour from 0 to 23 and allows deploys from that hour to the next.
+	AllowedHours *PodQueueAllowedHours `json:"allowedHours,omitempty"`
+
+	// ExpiresAt Stop waiting at this time; the queued pod then reports `EXPIRED`.
+	// Defaults to, and is capped at, 30 days after `startsAt` (or after
+	// the request when `startsAt` is omitted). A time already past, or
+	// one not after `startsAt`, is a `400`.
+	//
+	//
+	// Examples: 2026-06-03T08:00:00Z
+	ExpiresAt *time.Time `json:"expiresAt,omitempty"`
+
+	// NotifyEmail Also email this address when the pod deploys, or when the queued
+	// pod fails or expires. Must be an address on your account (`422`
+	// otherwise).
+	//
+	//
+	// Examples: ops@example.com
+	NotifyEmail *openapi_types.Email `json:"notifyEmail,omitempty"`
+
+	// StartsAt Begin waiting at this future time instead of now. The create call
+	// then does not try to deploy first; the pod is queued at once. A
+	// time already past is a `400`.
+	//
+	//
+	// Examples: 2026-06-02T08:00:00Z
+	StartsAt *time.Time `json:"startsAt,omitempty"`
 }
 
 // PodRuntime Live utilization metrics for a running pod.
@@ -3346,7 +4316,7 @@ type PodRuntimePort struct {
 
 // PodSsh How to connect to this pod over SSH. Both variants authenticate with the account's registered SSH public keys (`PUT /v2/account/ssh-keys`), which reach the pod only if it was created with `startSsh` — a pod created without it has no SSH access regardless of what this block reports.
 type PodSsh struct {
-	// Direct Connection straight to the pod's sshd over its published `22/tcp` mapping. Supports the full SSH feature set. Null unless `22/tcp` is in `ports` and the running pod has been assigned a public port for it — so it is absent while the pod is provisioning or stopped. Also null when listing pods with `GET /v2/pods`; fetch a single pod by ID to obtain the live mapping.
+	// Direct Connection straight to the pod's sshd over its published `22/tcp` mapping. Supports the full SSH feature set. Null unless `22/tcp` is in `ports` and the running pod has been assigned a public port for it — so it is usually absent while the pod is provisioning or stopped. It can still appear on a stopped pod, so check that `status` is `RUNNING` before connecting. Also null when listing pods with `GET /v2/pods`; fetch a single pod by ID to obtain the live mapping.
 	Direct *PodSshEndpoint `json:"direct"`
 
 	// Proxy Connection through Runpod's SSH proxy. Works without exposing a port and without a public IP, but carries an interactive shell only — SCP, SFTP, rsync, and port forwarding need `direct`. Null until the pod has a machine assignment.
@@ -3453,12 +4423,120 @@ type QueueDelayScaling struct {
 // QueueDelayScalingType Scaler discriminator. Always `QUEUE_DELAY` for this variant.
 type QueueDelayScalingType string
 
+// QueuedPod A pod waiting for capacity, or the record of one that waited. It
+// carries what identifies and schedules the request; the full container
+// settings are not echoed back, keep your create request.
+type QueuedPod struct {
+	// Cloud Cloud tier.
+	// - `SECURE`    — Runpod-owned datacenter hardware
+	// - `COMMUNITY` — community-hosted hardware
+	Cloud Cloud `json:"cloud"`
+
+	// CreatedAt Examples: 2026-06-01T12:00:00Z
+	CreatedAt time.Time `json:"createdAt"`
+
+	// DataCenterIds The data centers the deploy is limited to; empty when any will do.
+	//
+	// Examples: ["EU-RO-1"]
+	DataCenterIds []string `json:"dataCenterIds"`
+
+	// FailureReason Set only when `status` is `FAILED`.
+	FailureReason *QueuedPodFailureReason `json:"failureReason"`
+	Gpu           BaseGpuConfig           `json:"gpu"`
+
+	// Id Examples: clz1x9k4a0000qw3h8s7d2f1g
+	Id string `json:"id"`
+
+	// Image The image the pod will run. Null when it comes from `templateId` at deploy time.
+	//
+	// Examples: runpod/pytorch:1.0.2-cu1281-torch280-ubuntu2404
+	Image *string `json:"image"`
+
+	// Name The name the pod will carry.
+	//
+	// Examples: pytorch-training
+	Name string `json:"name"`
+
+	// PodId The pod created once capacity came; null until then. Read it with `GET /v2/pods/{id}`.
+	//
+	// Examples: null
+	PodId *string `json:"podId"`
+
+	// Queue The `queue` options as stored, with the defaults applied.
+	Queue QueuedPodSchedule `json:"queue"`
+
+	// ResolvedAt When the queued pod deployed, failed or expired. Null while it waits, and after a cancel.
+	//
+	// Examples: null
+	ResolvedAt *time.Time `json:"resolvedAt"`
+
+	// Status Where a queued pod is in its life.
+	// - `QUEUED`    — waiting for capacity (from `queue.startsAt` when set)
+	// - `DEPLOYED`  — capacity came and a pod was created; `podId` names it
+	// - `FAILED`    — capacity came but the deploy was refused for good; `failureReason` says why
+	// - `EXPIRED`   — `queue.expiresAt` passed without capacity
+	// - `CANCELLED` — cancelled with `DELETE /v2/queued-pods/{id}`
+	Status QueuedPodStatus `json:"status"`
+
+	// TemplateId The template the scheduler resolves at deploy time. Null for queued
+	// pods from this API, which expands `templateId` into `image` when
+	// the request is made.
+	//
+	//
+	// Examples: null
+	TemplateId *string `json:"templateId"`
+}
+
+// QueuedPodFailureReason Why a `FAILED` queued pod could not deploy once capacity came.
+// - `INSUFFICIENT_BALANCE`     — the account balance was too low
+// - `SPENDING_LIMIT`           — the deploy would have passed the spending limit
+// - `GPU_QUOTA_EXCEEDED`       — the account's quota for this GPU type was reached
+// - `GPU_CONCURRENCY_EXCEEDED` — the plan's concurrent GPU cap was reached
+// - `ORG_RESTRICTED`           — the account joined an organization, which cannot use queued deploys
+// - `UNKNOWN`                  — anything else; contact support
+type QueuedPodFailureReason string
+
+// QueuedPodList defines model for QueuedPodList.
+type QueuedPodList struct {
+	QueuedPods []QueuedPod `json:"queuedPods"`
+}
+
+// QueuedPodSchedule The `queue` options as stored, with the defaults applied.
+type QueuedPodSchedule struct {
+	// AllowedHours Null when any hour is allowed.
+	AllowedHours *PodQueueAllowedHours `json:"allowedHours"`
+
+	// ExpiresAt When waiting ends.
+	//
+	// Examples: 2026-07-01T12:00:00Z
+	ExpiresAt time.Time `json:"expiresAt"`
+
+	// NotifyEmail Null when no email was asked for.
+	//
+	// Examples: null
+	NotifyEmail *openapi_types.Email `json:"notifyEmail"`
+
+	// StartsAt When waiting begins. Null when it began with the request.
+	//
+	// Examples: null
+	StartsAt *time.Time `json:"startsAt"`
+}
+
+// QueuedPodStatus Where a queued pod is in its life.
+// - `QUEUED`    — waiting for capacity (from `queue.startsAt` when set)
+// - `DEPLOYED`  — capacity came and a pod was created; `podId` names it
+// - `FAILED`    — capacity came but the deploy was refused for good; `failureReason` says why
+// - `EXPIRED`   — `queue.expiresAt` passed without capacity
+// - `CANCELLED` — cancelled with `DELETE /v2/queued-pods/{id}`
+type QueuedPodStatus string
+
 // RateLimitHeader Live per-window quota state. Optional — omitted for rate-limit-exempt
 // callers.
 //
 // A structured-field list with one member per window (`minute`, `hour`,
 // `day`), each carrying the remaining request count `r` and seconds until
-// the window resets `t`. Returned on responses to authenticated requests,
+// the window resets `t` (at least 1). Windows are fixed and aligned to the
+// clock, not sliding. Returned on responses to authenticated requests,
 // not only on 429s.
 //
 // Examples: "minute";r=0;t=12, "hour";r=2800;t=1812, "day";r=49500;t=45012
@@ -3471,7 +4549,13 @@ type RateLimitHeader = string
 // `day`), each carrying the quota `q` and the window length in seconds `w`.
 // Returned on responses to authenticated requests, not only on 429s.
 //
-// Examples: "minute";q=60;w=60, "hour";q=3000;w=3600, "day";q=50000;w=86400
+// Limits are per user, and every `/v2` route counts toward the same
+// limits; creating pods has no separate limit. Read the current quotas from
+// this header instead of hard-coding them, because they can change and some
+// accounts have higher limits. A 429 only slows you down: wait for the
+// `Retry-After` time and retry. Your account isn't suspended.
+//
+// Examples: "minute";q=180;w=60, "hour";q=3600;w=3600, "day";q=43200;w=86400
 type RateLimitPolicyHeader = string
 
 // Registry defines model for Registry.
@@ -3557,6 +4641,29 @@ type RequestCountScaling struct {
 
 // RequestCountScalingType Scaler discriminator. Always `REQUEST_COUNT` for this variant.
 type RequestCountScalingType string
+
+// ResendAuthenticationAttemptRequest defines model for ResendAuthenticationAttemptRequest.
+type ResendAuthenticationAttemptRequest struct {
+	// CodeVerifier The random secret whose SHA-256 hash was sent as `codeChallenge`.
+	//
+	// Examples: dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk
+	CodeVerifier CodeVerifier `json:"codeVerifier"`
+}
+
+// ResourceCostCenter Cost center this resource's spend is attributed to. Absent when the resource is not attributed to a cost center, or when the caller lacks permission to view cost centers. Managed through `/v2/cost-centers`.
+type ResourceCostCenter = CostCenter
+
+// ResourceFilters An empty object, or an empty `tags` array, filters nothing.
+type ResourceFilters struct {
+	// Tags Conditions on the resource's tags. A resource must match every condition; repeating a key adds a condition rather than widening the first one. At most 25, the most tags one resource can carry.
+	Tags *[]TagCondition `json:"tags,omitempty"`
+}
+
+// ResourceTags The tags on this resource that are visible to the caller. Keys and values are returned exactly as stored. Tags under the reserved `runpod:` prefix, such as the cost center, are never listed here. Absent when the resource's tags are unavailable to the caller; an empty array means none are visible.
+type ResourceTags = []TagReference
+
+// ResourceType Kind of resource a cost center or tag can be attached to.
+type ResourceType string
 
 // RolloutSummary defines model for RolloutSummary.
 type RolloutSummary struct {
@@ -3706,6 +4813,40 @@ type SshKeys struct {
 	Keys []string `json:"keys"`
 }
 
+// TagCondition defines model for TagCondition.
+type TagCondition struct {
+	// Key Tag key, 1–191 characters as sent, with at least one that is not whitespace. Leading and trailing whitespace is ignored. Keys under the reserved `runpod:` prefix, in any letter case, are rejected.
+	//
+	// Examples: env
+	Key TagFilterKey `json:"key"`
+
+	// Values Matches a tag under `key` with any one of these values, compared exactly. Omitted or empty, the condition only requires the key to be present. `""` matches a tag whose value is empty. At most 100.
+	//
+	// Examples: ["dev","prod"]
+	Values *[]string `json:"values,omitempty"`
+}
+
+// TagFilterKey Tag key, 1–191 characters as sent, with at least one that is not whitespace. Leading and trailing whitespace is ignored. Keys under the reserved `runpod:` prefix, in any letter case, are rejected.
+//
+// Examples: env
+type TagFilterKey = string
+
+// TagReference defines model for TagReference.
+type TagReference struct {
+	// Id ID of the tag itself, shared by every resource it is attached to.
+	//
+	// Examples: clz1x9k4a0000qw3h8s7d2f1g
+	Id string `json:"id"`
+
+	// Key Examples: env
+	Key string `json:"key"`
+
+	// Value May be empty.
+	//
+	// Examples: dev
+	Value string `json:"value"`
+}
+
 // Template defines model for Template.
 type Template struct {
 	// AllowedCudaVersions Acceptable CUDA versions for containers created from this template, as `major.minor`. Empty means any version. Expanded into GPU pod and serverless endpoint creates; CPU pods ignore it.
@@ -3780,7 +4921,15 @@ type Template struct {
 	// Examples: false
 	Public bool `json:"public"`
 
-	// Registry Container registry credential ID (for private images)
+	// Registry Container registry credential ID for a private image: one of
+	// your credentials from `/v2/registries`. Leave it unset for a
+	// private Amazon ECR image. Runpod pulls those with an ECR
+	// delegation (`/v2/registries/delegations`) matched to the
+	// image's account, region and repository at pull time, so there
+	// is no delegation ID to pass here (a delegation ID is not a
+	// credential ID). A credential set here is used instead of any
+	// delegation.
+	//
 	//
 	// Examples: null
 	Registry *string `json:"registry"`
@@ -3834,6 +4983,14 @@ type UpdateClusterRequest struct {
 	Name *string `json:"name,omitempty"`
 }
 
+// UpdateCostCenterRequest defines model for UpdateCostCenterRequest.
+type UpdateCostCenterRequest struct {
+	// Value Leading and trailing whitespace is trimmed.
+	//
+	// Examples: team-ml-eu
+	Value string `json:"value"`
+}
+
 // UpdateEndpointGpuConfig Partial GPU update — every field is optional and an omitted one is left
 // unchanged. Unlike create, `pools` is optional, so changing only a CUDA
 // constraint does not require resending the pool list.
@@ -3876,9 +5033,8 @@ type UpdateEndpointGpuConfig struct {
 	// the pools and the exclusions untouched, so changing only a CUDA
 	// constraint cannot widen a pinned endpoint.
 	//
-	// Rejected with 400 if a value is not a GPU type in one of `pools`;
-	// upstream accepts unrecognized exclusions silently, so a typo would
-	// otherwise produce a filter that does nothing. Surrounding whitespace
+	// Rejected with 400 if a value is not a GPU type in one of `pools`,
+	// so a typo cannot produce a filter that does nothing. Surrounding whitespace
 	// is trimmed, so `" NVIDIA L40"` and `"NVIDIA L40"` mean the same card.
 	//
 	//
@@ -4003,7 +5159,15 @@ type UpdateEndpointRequest struct {
 	// Examples: ["8888/http","22/tcp"]
 	Ports *[]string `json:"ports,omitempty"`
 
-	// Registry Container registry credential ID (for private images)
+	// Registry Container registry credential ID for a private image: one of
+	// your credentials from `/v2/registries`. Leave it unset for a
+	// private Amazon ECR image. Runpod pulls those with an ECR
+	// delegation (`/v2/registries/delegations`) matched to the
+	// image's account, region and repository at pull time, so there
+	// is no delegation ID to pass here (a delegation ID is not a
+	// credential ID). A credential set here is used instead of any
+	// delegation.
+	//
 	//
 	// Examples: null
 	Registry *string `json:"registry,omitempty"`
@@ -4057,6 +5221,72 @@ type UpdateNetworkVolumeRequest struct {
 	Size *int `json:"size,omitempty"`
 }
 
+// UpdateOrganizationGroupRequest defines model for UpdateOrganizationGroupRequest.
+type UpdateOrganizationGroupRequest struct {
+	// Name Group name with at least one non-whitespace character; surrounding whitespace is trimmed.
+	//
+	// Examples: Research
+	Name string `json:"name"`
+}
+
+// UpdateOrganizationRoleRequest The fields to change; omitted fields are unchanged. `capabilities` replaces the role's whole grant set rather than adding to it.
+type UpdateOrganizationRoleRequest struct {
+	// Capabilities What the role grants, as `FAMILY:VERB` capabilities from `GET /v2/organization/roles/capabilities`. The caller must hold every capability it lists.
+	//
+	// Examples: ["POD:VIEW"]
+	Capabilities *OrganizationRoleCapabilitiesInput `json:"capabilities,omitempty"`
+
+	// Name Display name, 1–191 characters with at least one non-whitespace character. Leading and trailing whitespace is trimmed. It must be unique within the organization and cannot be a built-in role's name.
+	//
+	// Examples: Pod viewer
+	Name *OrganizationRoleName `json:"name,omitempty"`
+}
+
+// UpdateOrganizationUserRequest Changes to a member. Send `role`, `groups`, or both; an omitted field is left as it is.
+type UpdateOrganizationUserRequest struct {
+	// Groups The member's groups after the change: the whole set, by ID. An empty list removes the member from every group.
+	Groups *[]OrganizationGroupInput `json:"groups,omitempty"`
+
+	// Role An organization role to assign, by ID.
+	Role *OrganizationRoleInput `json:"role,omitempty"`
+}
+
+// UpdatePodMounts Changes to a pod's mounts. Each entry names one volume by `volumeId`
+// and changes only that volume; volumes that are not listed, and kinds
+// that are omitted, are left as they are. Omitting `mounts` or sending
+// `{}` changes nothing.
+//
+//   - A listed volume the pod does not have is mounted at `path`.
+//   - A listed volume the pod already has moves to `path` (or stays
+//     put when `path` is omitted).
+//   - `remove: true` unmounts the volume. It cannot be combined with
+//     `path`, and the volume must be mounted on the pod.
+//   - To swap a volume, remove the old one and add the new one in the
+//     same request.
+//
+// Limits are checked against the pod as it would be after the request
+// and rejected with 400: at most 4 network volumes and 1 global
+// volume, and a volume disk cannot share a pod with network or global
+// volumes. A volume disk can be added to a pod that has no volumes
+// mounted (or unmounts them all in the same request), and it can only
+// grow. Removing a volume disk is not supported yet.
+type UpdatePodMounts struct {
+	// Global Global volumes to mount, move, or unmount. Up to 2 entries, so a
+	// request can swap the global volume; the pod can still hold at
+	// most 1 afterwards.
+	Global *[]GlobalMountPatch `json:"global,omitempty"`
+
+	// Network Network volumes to mount, move, or unmount. Up to 8 entries, so
+	// a request can unmount 4 volumes and mount 4 others; the pod can
+	// still hold at most 4 afterwards.
+	Network *[]NetworkMountPatch `json:"network,omitempty"`
+
+	// Persistent Adds the pod's volume disk, grows it, or moves it. Adding a disk
+	// requires `size`; on a pod that already has one, omitted fields are
+	// left as they are. Not available on CPU pods.
+	Persistent *PersistentMountPatch `json:"persistent,omitempty"`
+}
+
 // UpdatePodRequest defines model for UpdatePodRequest.
 type UpdatePodRequest struct {
 	// Args The container's command, as a single raw string. This is the field `entrypoint` and `cmd` encode into, exposed in its stored form.
@@ -4102,34 +5332,42 @@ type UpdatePodRequest struct {
 	// Locked Lock the pod (true) or unlock it (false). Locked pods cannot be stopped or reset.
 	Locked *bool `json:"locked,omitempty"`
 
-	// Mounts Storage mounts attached to a pod. `persistent` is mutually exclusive
-	// with both `network` and `global`: combining them is rejected with 400.
-	// The `network` field is an array for forward compatibility with
-	// multi-network-volume support; `maxItems` is 1.
+	// Mounts Changes to a pod's mounts. Each entry names one volume by `volumeId`
+	// and changes only that volume; volumes that are not listed, and kinds
+	// that are omitted, are left as they are. Omitting `mounts` or sending
+	// `{}` changes nothing.
 	//
-	// PATCH semantics:
-	// - Omitting `mounts` or sending `{}` leaves the existing mount
-	//   unchanged.
-	// - An explicit `network: []` is rejected with 400 (clearing mounts
-	//   is not supported).
-	// - Mount kind is fixed at create — a PATCH that introduces a kind
-	//   not present at create (persistent on a network pod, network on
-	//   a persistent pod, or any mount on a previously-mountless pod)
-	//   is rejected with 400.
-	// - The `volumeId` of a network mount is immutable; a PATCH that
-	//   names a different `volumeId` is rejected with 400.
-	// - Partial mounts are not supported — every mount entry must
-	//   include the full schema (`size` + `path` for persistent,
-	//   `volumeId` + `path` for network). Missing required fields → 422.
-	Mounts *Mounts `json:"mounts,omitempty"`
-	Name   *string `json:"name,omitempty"`
+	// - A listed volume the pod does not have is mounted at `path`.
+	// - A listed volume the pod already has moves to `path` (or stays
+	//   put when `path` is omitted).
+	// - `remove: true` unmounts the volume. It cannot be combined with
+	//   `path`, and the volume must be mounted on the pod.
+	// - To swap a volume, remove the old one and add the new one in the
+	//   same request.
+	//
+	// Limits are checked against the pod as it would be after the request
+	// and rejected with 400: at most 4 network volumes and 1 global
+	// volume, and a volume disk cannot share a pod with network or global
+	// volumes. A volume disk can be added to a pod that has no volumes
+	// mounted (or unmounts them all in the same request), and it can only
+	// grow. Removing a volume disk is not supported yet.
+	Mounts *UpdatePodMounts `json:"mounts,omitempty"`
+	Name   *string          `json:"name,omitempty"`
 
 	// Ports Exposed ports, formatted as port/protocol
 	//
 	// Examples: ["8888/http","22/tcp"]
 	Ports *[]string `json:"ports,omitempty"`
 
-	// Registry Container registry credential ID (for private images)
+	// Registry Container registry credential ID for a private image: one of
+	// your credentials from `/v2/registries`. Leave it unset for a
+	// private Amazon ECR image. Runpod pulls those with an ECR
+	// delegation (`/v2/registries/delegations`) matched to the
+	// image's account, region and repository at pull time, so there
+	// is no delegation ID to pass here (a delegation ID is not a
+	// credential ID). A credential set here is used instead of any
+	// delegation.
+	//
 	//
 	// Examples: null
 	Registry *string `json:"registry,omitempty"`
@@ -4236,7 +5474,15 @@ type UpdateTemplateRequest struct {
 	Ports  *[]string `json:"ports,omitempty"`
 	Public *bool     `json:"public,omitempty"`
 
-	// Registry Container registry credential ID (for private images)
+	// Registry Container registry credential ID for a private image: one of
+	// your credentials from `/v2/registries`. Leave it unset for a
+	// private Amazon ECR image. Runpod pulls those with an ECR
+	// delegation (`/v2/registries/delegations`) matched to the
+	// image's account, region and repository at pull time, so there
+	// is no delegation ID to pass here (a delegation ID is not a
+	// credential ID). A credential set here is used instead of any
+	// delegation.
+	//
 	//
 	// Examples: null
 	Registry   *string `json:"registry,omitempty"`
@@ -4253,6 +5499,19 @@ type UpdateTemplateRequest struct {
 type Utilization struct {
 	// Util Examples: 45
 	Util *int `json:"util,omitempty"`
+}
+
+// VerifyAuthenticationAttemptRequest defines model for VerifyAuthenticationAttemptRequest.
+type VerifyAuthenticationAttemptRequest struct {
+	// Code Verification code from the email.
+	//
+	// Examples: 123456
+	Code string `json:"code"`
+
+	// CodeVerifier The random secret whose SHA-256 hash was sent as `codeChallenge`.
+	//
+	// Examples: dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk
+	CodeVerifier CodeVerifier `json:"codeVerifier"`
 }
 
 // VolumeType Data center network volume storage type.
@@ -4275,7 +5534,11 @@ type Worker struct {
 	// Examples: NVIDIA RTX 4090
 	GpuTypeId *string `json:"gpuTypeId,omitempty"`
 
-	// Id Examples: worker_abc
+	// Id Identifier of the pod backing this worker. Each worker is one pod,
+	// so there is no separate pod identifier.
+	//
+	//
+	// Examples: worker_abc
 	Id string `json:"id"`
 
 	// Image Container image the worker is running.
@@ -4423,8 +5686,23 @@ type LogSourceParam = LogSource
 // LogTail defines model for LogTail.
 type LogTail = int
 
+// MetricsEndTime defines model for MetricsEndTime.
+type MetricsEndTime = time.Time
+
+// MetricsInterval Bucket size for endpoint metrics.
+type MetricsInterval = EndpointMetricsInterval
+
+// MetricsStartTime defines model for MetricsStartTime.
+type MetricsStartTime = time.Time
+
 // MinCudaVersionFilter defines model for MinCudaVersionFilter.
 type MinCudaVersionFilter = string
+
+// OrganizationCapabilityFamilyFilter defines model for OrganizationCapabilityFamilyFilter.
+type OrganizationCapabilityFamilyFilter = []string
+
+// OrganizationCapabilityVerbFilter defines model for OrganizationCapabilityVerbFilter.
+type OrganizationCapabilityVerbFilter = []string
 
 // PaginationCursor defines model for PaginationCursor.
 type PaginationCursor = string
@@ -4437,6 +5715,9 @@ type PaginationLimitAuditLogs = int
 
 // PaginationLimitBuilds defines model for PaginationLimitBuilds.
 type PaginationLimitBuilds = int
+
+// PaginationLimitOrganizationGroups defines model for PaginationLimitOrganizationGroups.
+type PaginationLimitOrganizationGroups = int
 
 // BadRequestError defines model for BadRequestError.
 type BadRequestError = ErrorResponse
@@ -4624,6 +5905,107 @@ func (t EndpointScaling) MarshalJSON() ([]byte, error) {
 }
 
 func (t *EndpointScaling) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+// AsBuiltinOrganizationRole returns the union data inside the OrganizationRole as a BuiltinOrganizationRole
+func (t OrganizationRole) AsBuiltinOrganizationRole() (BuiltinOrganizationRole, error) {
+	var body BuiltinOrganizationRole
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromBuiltinOrganizationRole overwrites any union data inside the OrganizationRole as the provided BuiltinOrganizationRole
+func (t *OrganizationRole) FromBuiltinOrganizationRole(v BuiltinOrganizationRole) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+	b, err = runtime.JSONMerge(b, []byte(`{"type":"builtin"}`))
+	t.union = b
+	return err
+}
+
+// MergeBuiltinOrganizationRole performs a merge with any union data inside the OrganizationRole, using the provided BuiltinOrganizationRole
+func (t *OrganizationRole) MergeBuiltinOrganizationRole(v BuiltinOrganizationRole) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+	b, err = runtime.JSONMerge(b, []byte(`{"type":"builtin"}`))
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsCustomOrganizationRole returns the union data inside the OrganizationRole as a CustomOrganizationRole
+func (t OrganizationRole) AsCustomOrganizationRole() (CustomOrganizationRole, error) {
+	var body CustomOrganizationRole
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromCustomOrganizationRole overwrites any union data inside the OrganizationRole as the provided CustomOrganizationRole
+func (t *OrganizationRole) FromCustomOrganizationRole(v CustomOrganizationRole) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+	b, err = runtime.JSONMerge(b, []byte(`{"type":"custom"}`))
+	t.union = b
+	return err
+}
+
+// MergeCustomOrganizationRole performs a merge with any union data inside the OrganizationRole, using the provided CustomOrganizationRole
+func (t *OrganizationRole) MergeCustomOrganizationRole(v CustomOrganizationRole) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+	b, err = runtime.JSONMerge(b, []byte(`{"type":"custom"}`))
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t OrganizationRole) Discriminator() (string, error) {
+	var discriminator struct {
+		Discriminator string `json:"type"`
+	}
+	err := json.Unmarshal(t.union, &discriminator)
+	return discriminator.Discriminator, err
+}
+
+func (t OrganizationRole) ValueByDiscriminator() (interface{}, error) {
+	discriminator, err := t.Discriminator()
+	if err != nil {
+		return nil, err
+	}
+	switch discriminator {
+	case "builtin":
+		return t.AsBuiltinOrganizationRole()
+	case "custom":
+		return t.AsCustomOrganizationRole()
+	default:
+		return nil, errors.New("unknown discriminator value: " + discriminator)
+	}
+}
+
+func (t OrganizationRole) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *OrganizationRole) UnmarshalJSON(b []byte) error {
 	err := t.union.UnmarshalJSON(b)
 	return err
 }

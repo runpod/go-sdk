@@ -364,6 +364,18 @@ ENUM_VARNAMES: dict[str, dict[str, str]] = {
         "HIPAA": "ComplianceHIPAA",
         "RENEWABLE": "ComplianceRenewable",
     },
+    # Durations, so the names spell the unit out: `1m` reads as both minute and
+    # month, and the bare value would generate `serverless.1m`.
+    "EndpointMetricsInterval": {
+        "1m": "EndpointMetricsInterval1Minute",
+        "5m": "EndpointMetricsInterval5Minutes",
+        "15m": "EndpointMetricsInterval15Minutes",
+        "30m": "EndpointMetricsInterval30Minutes",
+        "1h": "EndpointMetricsInterval1Hour",
+        "6h": "EndpointMetricsInterval6Hours",
+        "12h": "EndpointMetricsInterval12Hours",
+        "1d": "EndpointMetricsInterval1Day",
+    },
 }
 
 # The scaler discriminators are inline enums on a property, not named schemas;
@@ -445,23 +457,11 @@ DESCRIPTION_EDITS: list[tuple[tuple[str | int, ...], str, str]] = [
     # Server-internal structure ("the handler", "upstream") described to
     # external API consumers; the contract half is what callers need.
     (
-        ("components", "schemas", "BaseMounts", "description"),
-        "At-most-one\nof `persistent` or `network` may be set today (mutually exclusive,\n"
-        "enforced at the handler with 400 if both are present). The `network`\n"
-        "field is an array for forward compatibility with eventual\n"
-        "multi-network-volume support, but `maxItems` is 1 today.",
-        "At most one\nof `persistent` or `network` may be set: sending both is rejected with 400. The\n"
-        "`network` field is an array for forward compatibility with\n"
-        "multi-network-volume support; `maxItems` is 1.",
-    ),
-    (
         ("components", "schemas", "Mounts", "description"),
-        "`persistent` is mutually exclusive\nwith both `network` and `global` (enforced at the handler with 400 if\n"
-        "combined). The `network` field is an array for forward compatibility\n"
-        "with eventual multi-network-volume support, but `maxItems` is 1 today.",
-        "`persistent` is mutually exclusive\nwith both `network` and `global`: combining them is rejected with 400.\n"
-        "The `network` field is an array for forward compatibility with\n"
-        "multi-network-volume support; `maxItems` is 1.",
+        "`persistent` (the volume disk) is\nmutually exclusive with both `network` and `global` (enforced at the\n"
+        "handler with 400 if combined).",
+        "`persistent` (the volume disk) is\nmutually exclusive with both `network` and `global`: combining them is\n"
+        "rejected with 400.",
     ),
     (
         ("components", "schemas", "Mounts", "allOf", 1, "properties", "global", "description"),
@@ -479,12 +479,12 @@ DESCRIPTION_EDITS: list[tuple[tuple[str | int, ...], str, str]] = [
         "Exactly one of `gpu` or `cpu`\nmust be set — enforced at the handler layer. For CPU pods, memory\n"
         "is derived by the API from the selected flavor's RAM multiplier;\n"
         "clients provide only CPU flavor and vCPU count. CPU pods support\n"
-        "container disk and network volumes only; `mounts.persistent` is\n"
-        "invalid when `cpu` is set.",
+        "container disk, network volumes, and a global volume;\n"
+        "`mounts.persistent` is invalid when `cpu` is set.",
         "Exactly one of `gpu` or `cpu`\nmust be set. For CPU pods, memory is derived by the API from the\n"
         "selected flavor's RAM multiplier; clients provide only CPU flavor\n"
-        "and vCPU count. CPU pods support container disk and network\n"
-        "volumes only; `mounts.persistent` is invalid when `cpu` is set.",
+        "and vCPU count. CPU pods support container disk, network volumes,\n"
+        "and a global volume; `mounts.persistent` is invalid when `cpu` is set.",
     ),
     (
         (

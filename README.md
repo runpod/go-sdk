@@ -2,11 +2,15 @@
 
 Go client for the Runpod v2 REST API, generated from the openly served v2
 OpenAPI spec. One package per API area (pods, serverless, templates, networkvolumes,
-globalvolumes, registries, catalog, billing, clusters, account, organization,
-auditlogs) behind a single authenticated
+globalvolumes, registries, catalog, billing, clusters, costcenters, account,
+organization, auditlogs) behind a single authenticated
 client with retry/backoff built in. Every request and response shape those
 areas share is one type in `lib/types`, so a pod read from a cluster is the same
 `types.Pod` the pods package returns.
+
+A fourteenth area, `lib/signup`, is not on that client: its operations declare no
+auth, so a caller making them has no key to build one with. Use
+`signup.NewClientWithResponses` directly.
 
 <!-- runpod-agent-setup:start -->
 **For AI agents:** setup instructions for the Runpod skills and MCP server are at https://agents.runpod.io/
@@ -73,7 +77,7 @@ An area package holds its operations: the client, the per-operation parameters,
 request bodies and response wrappers (`pods.CreatePodJSONRequestBody`,
 `pods.CreatePodResult`). Every schema the spec names is in `lib/types`
 (`types.Pod`, `types.CreateGpuConfig`, `types.ErrorResponse`, the enum
-constants), declared once and imported by all twelve areas, so
+constants), declared once and imported by all fourteen areas, so
 `clusters.ListClusterPodsWithResponse` hands back the same `types.Pod` as
 `pods.GetPodWithResponse`, and one error check works across areas.
 
@@ -81,13 +85,20 @@ The generated request bodies take their optional fields by pointer, which is
 what `runpod.Ptr` is for: it returns a pointer to any value, so a literal
 needs no temporary variable.
 
-Nine list operations are cursor-paginated: `Pods.ListPods`,
-`Serverless.ListEndpoints`, `Serverless.ListEndpointBuilds`,
-`Serverless.ListEndpointReleases`, `Templates.ListTemplates`,
+Seventeen operations are cursor-paginated: `Pods.ListPods`,
+`Pods.ListQueuedPods`, `Serverless.ListEndpoints`,
+`Serverless.ListEndpointBuilds`, `Serverless.ListEndpointReleases`,
+`Serverless.GetEndpointRequestMetrics`,
+`Serverless.GetEndpointColdStartMetrics`,
+`Serverless.GetEndpointWorkerMetrics`, `Templates.ListTemplates`,
 `Clusters.ListClusters`, `NetworkVolumes.ListNetworkVolumes`,
-`GlobalVolumes.ListGlobalVolumes` and `AuditLogs.ListAuditLogs`. Their `limit`
+`GlobalVolumes.ListGlobalVolumes`, `CostCenters.ListCostCenters`,
+`CostCenters.ListCostCenterResources`, `Organization.ListOrganizationGroups`,
+`Organization.ListOrganizationGroupMembers` and `AuditLogs.ListAuditLogs`. The
+three metrics reads page over time buckets, not over a list. Their `limit`
 is a page size, not a cap you can leave off: omit it and you get 1000 items, or
-100 for the builds list and 200 for the audit logs. So `ListPodsWithResponse(ctx, nil)` reads like "all
+100 for the builds list and the two organization group lists, and 200 for the
+audit logs. So `ListPodsWithResponse(ctx, nil)` reads like "all
 pods" and is one page of them. To see the whole set, follow
 `pagination.nextCursor` until `hasNextPage` is false:
 
@@ -111,9 +122,9 @@ for {
 `example_test.go` compiles this block too. A cursor is opaque and belongs to
 the operation and parameters that issued it; a foreign or malformed one comes
 back 422. Every other list operation — the billing reads, the catalog, a
-cluster's member pods, registries, ECR delegations, endpoint workers, and
-account secrets — returns its whole result in one response and carries no
-`pagination` block at all.
+cluster's member pods, registries, ECR delegations, endpoint workers, account
+secrets, and the organization's users, invites and roles — returns its whole
+result in one response and carries no `pagination` block at all.
 
 A list too large to answer in one response comes back 413, decoded into the
 result's `ApplicationproblemJSON413`: lower `limit` on a paginated operation,
@@ -160,7 +171,7 @@ artifacts/api/         generated intermediates (the shared components spec, one 
 pkg/, example/         the earlier SDK and the Pulumi provider: separate modules, unchanged
 ```
 
-Twelve packages under `lib/` map one-to-one onto the spec's twelve operation tags,
+Fourteen packages under `lib/` map one-to-one onto the spec's fourteen operation tags,
 over one `lib/types` holding the whole `components` object of the spec: schemas,
 responses, parameters and headers. The generator emits the components once, as
 `artifacts/api/components.yaml`, and gives each per-tag spec a reference to that

@@ -22,6 +22,9 @@ type ListPodsParams struct {
 	// IncludeClusterPods Include cluster member pods in the result. Defaults to false.
 	IncludeClusterPods *bool `form:"includeClusterPods,omitempty" json:"includeClusterPods,omitempty"`
 
+	// Filters Only return resources matching these filters, as URL-encoded JSON. The filters apply before the page is cut, so send the same value with each `cursor` to keep walking the filtered list.
+	Filters *externalRef0.ResourceFilters `form:"filters,omitempty" json:"filters,omitempty"`
+
 	// Cursor Opaque resume cursor — pass the previous response's `pagination.nextCursor` through verbatim; omit for the first page. A cursor is only valid for the operation and parameters that issued it; a malformed or foreign cursor is rejected with 422.
 	Cursor *externalRef0.PaginationCursor `form:"cursor,omitempty" json:"cursor,omitempty"`
 
@@ -51,6 +54,15 @@ type GetPodLogsParams struct {
 	LastEventID *externalRef0.LogLastEventID `json:"Last-Event-ID,omitempty"`
 }
 
+// ListQueuedPodsParams defines parameters for ListQueuedPods.
+type ListQueuedPodsParams struct {
+	// Cursor Opaque resume cursor — pass the previous response's `pagination.nextCursor` through verbatim; omit for the first page. A cursor is only valid for the operation and parameters that issued it; a malformed or foreign cursor is rejected with 422.
+	Cursor *externalRef0.PaginationCursor `form:"cursor,omitempty" json:"cursor,omitempty"`
+
+	// Limit Page size, 1–1000. Defaults to 1000 when omitted.
+	Limit *externalRef0.PaginationLimit `form:"limit,omitempty" json:"limit,omitempty"`
+}
+
 // CreatePodJSONRequestBody defines body for CreatePod for application/json ContentType.
 type CreatePodJSONRequestBody = externalRef0.CreatePodRequest
 
@@ -59,6 +71,9 @@ type UpdatePodJSONRequestBody = externalRef0.UpdatePodRequest
 
 // PodActionJSONRequestBody defines body for PodAction for application/json ContentType.
 type PodActionJSONRequestBody = externalRef0.PodActionRequest
+
+// ExecPodJSONRequestBody defines body for ExecPod for application/json ContentType.
+type ExecPodJSONRequestBody = externalRef0.PodExecRequest
 
 // RequestEditorFn is the function signature for the RequestEditor callback function
 type RequestEditorFn func(ctx context.Context, req *http.Request) error
@@ -204,7 +219,7 @@ type ClientInterface interface {
 	// | `402` | Insufficient balance. | Stop; no candidate will succeed. |
 	// | `403` | Your account cannot access the requested pool. | Skip this candidate, keep going. |
 	// | `429` | Rate limited. | Back off using `Retry-After`, then resume. |
-	// | `5xx` | Transient upstream failure. | Retry the same candidate with backoff. |
+	// | `5xx` | Transient server failure. | Retry the same candidate with backoff. |
 	//
 	// Requests larger than 102400 bytes receive `413` after authentication
 	// and rate limiting, before deployment processing. Reduce the serialized
@@ -284,7 +299,7 @@ type ClientInterface interface {
 	// | `402` | Insufficient balance. | Stop; no candidate will succeed. |
 	// | `403` | Your account cannot access the requested pool. | Skip this candidate, keep going. |
 	// | `429` | Rate limited. | Back off using `Retry-After`, then resume. |
-	// | `5xx` | Transient upstream failure. | Retry the same candidate with backoff. |
+	// | `5xx` | Transient server failure. | Retry the same candidate with backoff. |
 	//
 	// Requests larger than 102400 bytes receive `413` after authentication
 	// and rate limiting, before deployment processing. Reduce the serialized
@@ -342,6 +357,9 @@ type ClientInterface interface {
 	// apply immediately while others (e.g. `globalNetworking`) take effect
 	// on the pod's next start/restart, as noted on the individual fields.
 	//
+	// Volumes can be mounted, moved, or unmounted after creation through
+	// `mounts`, one entry per volume; see `UpdatePodMounts` for the rules.
+	//
 	// Pods that belong to a Cluster cannot be updated here — manage them
 	// through `/v2/clusters/{id}`.
 	//
@@ -364,6 +382,9 @@ type ClientInterface interface {
 	// `registry`, `mounts`, `locked`, and `globalNetworking`. Some changes
 	// apply immediately while others (e.g. `globalNetworking`) take effect
 	// on the pod's next start/restart, as noted on the individual fields.
+	//
+	// Volumes can be mounted, moved, or unmounted after creation through
+	// `mounts`, one entry per volume; see `UpdatePodMounts` for the rules.
 	//
 	// Pods that belong to a Cluster cannot be updated here — manage them
 	// through `/v2/clusters/{id}`.
@@ -433,6 +454,70 @@ type ClientInterface interface {
 	// Corresponds with POST /v2/pods/{id}/action (the `PodAction` operationId).
 	PodAction(ctx context.Context, id string, body PodActionJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// ExecPodWithBody Run a command in a pod
+	//
+	// Runs one command inside the pod's container and returns its stdout,
+	// stderr and exit code once it finishes. No SSH key, public IP or exposed
+	// port is needed, and it works with any image.
+	//
+	// `command` is an argv array, run directly and never through a shell. For
+	// pipes, redirects or globbing pass `["sh", "-c", "..."]`.
+	//
+	// A command that exits non-zero is a result, not an error: the call
+	// answers `200` with `exitCode` set. A command still running after
+	// `timeoutSeconds` (1-25, default 20) answers `200` with
+	// `timedOut: true` and a null `exitCode`. `timedOut` means the call
+	// stopped waiting, not that the command was stopped: it may keep
+	// running in the container.
+	//
+	// `stdout` and `stderr` are each capped at 1 MiB. Output past the cap is
+	// cut and `truncated` is `true`.
+	//
+	// The pod must be running with its container up, otherwise this answers
+	// `409`; while the container is still starting, the `409` carries
+	// `Retry-After`. A pod whose machine has not been updated for exec yet
+	// answers `503` with `Retry-After`.
+	//
+	// `X-Team-Id` is not applied on this route: it reaches only pods owned by
+	// the caller's own account.
+	//
+	// Takes any type of body and a specified content type.
+	//
+	// Corresponds with POST /v2/pods/{id}/exec (the `ExecPod` operationId).
+	ExecPodWithBody(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ExecPod Run a command in a pod
+	//
+	// Runs one command inside the pod's container and returns its stdout,
+	// stderr and exit code once it finishes. No SSH key, public IP or exposed
+	// port is needed, and it works with any image.
+	//
+	// `command` is an argv array, run directly and never through a shell. For
+	// pipes, redirects or globbing pass `["sh", "-c", "..."]`.
+	//
+	// A command that exits non-zero is a result, not an error: the call
+	// answers `200` with `exitCode` set. A command still running after
+	// `timeoutSeconds` (1-25, default 20) answers `200` with
+	// `timedOut: true` and a null `exitCode`. `timedOut` means the call
+	// stopped waiting, not that the command was stopped: it may keep
+	// running in the container.
+	//
+	// `stdout` and `stderr` are each capped at 1 MiB. Output past the cap is
+	// cut and `truncated` is `true`.
+	//
+	// The pod must be running with its container up, otherwise this answers
+	// `409`; while the container is still starting, the `409` carries
+	// `Retry-After`. A pod whose machine has not been updated for exec yet
+	// answers `503` with `Retry-After`.
+	//
+	// `X-Team-Id` is not applied on this route: it reaches only pods owned by
+	// the caller's own account.
+	//
+	// Takes a body of the `application/json` content type.
+	//
+	// Corresponds with POST /v2/pods/{id}/exec (the `ExecPod` operationId).
+	ExecPod(ctx context.Context, id string, body ExecPodJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// GetPodLogs Stream pod logs
 	//
 	// Streams pod logs as Server-Sent Events. The `source` query parameter
@@ -445,6 +530,35 @@ type ClientInterface interface {
 	//
 	// Corresponds with GET /v2/pods/{id}/logs (the `GetPodLogs` operationId).
 	GetPodLogs(ctx context.Context, id string, params *GetPodLogsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ListQueuedPods List queued pods
+	//
+	// Returns the caller's queued pods, cursor-paginated newest-first; an
+	// omitted `limit` defaults to 1000. Every queued pod is listed whatever
+	// its `status`, so the outcome of a queued create can be read after the
+	// fact. Follow `pagination.nextCursor` until `hasNextPage` is false.
+	//
+	// Corresponds with GET /v2/queued-pods (the `ListQueuedPods` operationId).
+	ListQueuedPods(ctx context.Context, params *ListQueuedPodsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// DeleteQueuedPod Cancel a queued pod
+	//
+	// Cancels a queued pod: it leaves the queue and is never deployed. A
+	// pod it already created is untouched; terminate that with
+	// `DELETE /v2/pods/{id}`. Cancelling a queued pod that already
+	// deployed, failed or expired changes nothing and still answers `204`.
+	//
+	// Corresponds with DELETE /v2/queued-pods/{id} (the `DeleteQueuedPod` operationId).
+	DeleteQueuedPod(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetQueuedPod Get a queued pod
+	//
+	// Returns a single queued pod by ID. Poll it after a `202` from
+	// `createPod`: `status` moves from `QUEUED` to `DEPLOYED` (with
+	// `podId`), `FAILED` (with `failureReason`), `EXPIRED`, or `CANCELLED`.
+	//
+	// Corresponds with GET /v2/queued-pods/{id} (the `GetQueuedPod` operationId).
+	GetQueuedPod(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error)
 }
 
 // ListPods List pods
@@ -527,7 +641,7 @@ func (c *Client) ListPods(ctx context.Context, params *ListPodsParams, reqEditor
 // | `402` | Insufficient balance. | Stop; no candidate will succeed. |
 // | `403` | Your account cannot access the requested pool. | Skip this candidate, keep going. |
 // | `429` | Rate limited. | Back off using `Retry-After`, then resume. |
-// | `5xx` | Transient upstream failure. | Retry the same candidate with backoff. |
+// | `5xx` | Transient server failure. | Retry the same candidate with backoff. |
 //
 // Requests larger than 102400 bytes receive `413` after authentication
 // and rate limiting, before deployment processing. Reduce the serialized
@@ -617,7 +731,7 @@ func (c *Client) CreatePodWithBody(ctx context.Context, contentType string, body
 // | `402` | Insufficient balance. | Stop; no candidate will succeed. |
 // | `403` | Your account cannot access the requested pool. | Skip this candidate, keep going. |
 // | `429` | Rate limited. | Back off using `Retry-After`, then resume. |
-// | `5xx` | Transient upstream failure. | Retry the same candidate with backoff. |
+// | `5xx` | Transient server failure. | Retry the same candidate with backoff. |
 //
 // Requests larger than 102400 bytes receive `413` after authentication
 // and rate limiting, before deployment processing. Reduce the serialized
@@ -705,6 +819,9 @@ func (c *Client) GetPod(ctx context.Context, id string, reqEditors ...RequestEdi
 // apply immediately while others (e.g. `globalNetworking`) take effect
 // on the pod's next start/restart, as noted on the individual fields.
 //
+// Volumes can be mounted, moved, or unmounted after creation through
+// `mounts`, one entry per volume; see `UpdatePodMounts` for the rules.
+//
 // Pods that belong to a Cluster cannot be updated here — manage them
 // through `/v2/clusters/{id}`.
 //
@@ -737,6 +854,9 @@ func (c *Client) UpdatePodWithBody(ctx context.Context, id string, contentType s
 // `registry`, `mounts`, `locked`, and `globalNetworking`. Some changes
 // apply immediately while others (e.g. `globalNetworking`) take effect
 // on the pod's next start/restart, as noted on the individual fields.
+//
+// Volumes can be mounted, moved, or unmounted after creation through
+// `mounts`, one entry per volume; see `UpdatePodMounts` for the rules.
 //
 // Pods that belong to a Cluster cannot be updated here — manage them
 // through `/v2/clusters/{id}`.
@@ -836,6 +956,90 @@ func (c *Client) PodAction(ctx context.Context, id string, body PodActionJSONReq
 	return c.Client.Do(req)
 }
 
+// ExecPodWithBody Run a command in a pod
+//
+// Runs one command inside the pod's container and returns its stdout,
+// stderr and exit code once it finishes. No SSH key, public IP or exposed
+// port is needed, and it works with any image.
+//
+// `command` is an argv array, run directly and never through a shell. For
+// pipes, redirects or globbing pass `["sh", "-c", "..."]`.
+//
+// A command that exits non-zero is a result, not an error: the call
+// answers `200` with `exitCode` set. A command still running after
+// `timeoutSeconds` (1-25, default 20) answers `200` with
+// `timedOut: true` and a null `exitCode`. `timedOut` means the call
+// stopped waiting, not that the command was stopped: it may keep
+// running in the container.
+//
+// `stdout` and `stderr` are each capped at 1 MiB. Output past the cap is
+// cut and `truncated` is `true`.
+//
+// The pod must be running with its container up, otherwise this answers
+// `409`; while the container is still starting, the `409` carries
+// `Retry-After`. A pod whose machine has not been updated for exec yet
+// answers `503` with `Retry-After`.
+//
+// `X-Team-Id` is not applied on this route: it reaches only pods owned by
+// the caller's own account.
+//
+// Takes any type of body and a specified content type.
+//
+// Corresponds with POST /v2/pods/{id}/exec (the `ExecPod` operationId).
+func (c *Client) ExecPodWithBody(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewExecPodRequestWithBody(c.Server, id, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// ExecPod Run a command in a pod
+//
+// Runs one command inside the pod's container and returns its stdout,
+// stderr and exit code once it finishes. No SSH key, public IP or exposed
+// port is needed, and it works with any image.
+//
+// `command` is an argv array, run directly and never through a shell. For
+// pipes, redirects or globbing pass `["sh", "-c", "..."]`.
+//
+// A command that exits non-zero is a result, not an error: the call
+// answers `200` with `exitCode` set. A command still running after
+// `timeoutSeconds` (1-25, default 20) answers `200` with
+// `timedOut: true` and a null `exitCode`. `timedOut` means the call
+// stopped waiting, not that the command was stopped: it may keep
+// running in the container.
+//
+// `stdout` and `stderr` are each capped at 1 MiB. Output past the cap is
+// cut and `truncated` is `true`.
+//
+// The pod must be running with its container up, otherwise this answers
+// `409`; while the container is still starting, the `409` carries
+// `Retry-After`. A pod whose machine has not been updated for exec yet
+// answers `503` with `Retry-After`.
+//
+// `X-Team-Id` is not applied on this route: it reaches only pods owned by
+// the caller's own account.
+//
+// Takes a body of the `application/json` content type.
+//
+// Corresponds with POST /v2/pods/{id}/exec (the `ExecPod` operationId).
+func (c *Client) ExecPod(ctx context.Context, id string, body ExecPodJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewExecPodRequest(c.Server, id, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
 // GetPodLogs Stream pod logs
 //
 // Streams pod logs as Server-Sent Events. The `source` query parameter
@@ -849,6 +1053,65 @@ func (c *Client) PodAction(ctx context.Context, id string, body PodActionJSONReq
 // Corresponds with GET /v2/pods/{id}/logs (the `GetPodLogs` operationId).
 func (c *Client) GetPodLogs(ctx context.Context, id string, params *GetPodLogsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetPodLogsRequest(c.Server, id, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// ListQueuedPods List queued pods
+//
+// Returns the caller's queued pods, cursor-paginated newest-first; an
+// omitted `limit` defaults to 1000. Every queued pod is listed whatever
+// its `status`, so the outcome of a queued create can be read after the
+// fact. Follow `pagination.nextCursor` until `hasNextPage` is false.
+//
+// Corresponds with GET /v2/queued-pods (the `ListQueuedPods` operationId).
+func (c *Client) ListQueuedPods(ctx context.Context, params *ListQueuedPodsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListQueuedPodsRequest(c.Server, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// DeleteQueuedPod Cancel a queued pod
+//
+// Cancels a queued pod: it leaves the queue and is never deployed. A
+// pod it already created is untouched; terminate that with
+// `DELETE /v2/pods/{id}`. Cancelling a queued pod that already
+// deployed, failed or expired changes nothing and still answers `204`.
+//
+// Corresponds with DELETE /v2/queued-pods/{id} (the `DeleteQueuedPod` operationId).
+func (c *Client) DeleteQueuedPod(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewDeleteQueuedPodRequest(c.Server, id)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// GetQueuedPod Get a queued pod
+//
+// Returns a single queued pod by ID. Poll it after a `202` from
+// `createPod`: `status` moves from `QUEUED` to `DEPLOYED` (with
+// `podId`), `FAILED` (with `failureReason`), `EXPIRED`, or `CANCELLED`.
+//
+// Corresponds with GET /v2/queued-pods/{id} (the `GetQueuedPod` operationId).
+func (c *Client) GetQueuedPod(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetQueuedPodRequest(c.Server, id)
 	if err != nil {
 		return nil, err
 	}
@@ -895,6 +1158,16 @@ func NewListPodsRequest(server string, params *ListPodsParams) (*http.Request, e
 				for _, qp := range strings.Split(queryFrag, "&") {
 					rawQueryFragments = append(rawQueryFragments, qp)
 				}
+			}
+
+		}
+
+		if params.Filters != nil {
+
+			if queryParamBuf, err := json.Marshal(*params.Filters); err != nil {
+				return nil, err
+			} else {
+				queryValues.Add("filters", string(queryParamBuf))
 			}
 
 		}
@@ -1139,6 +1412,53 @@ func NewPodActionRequestWithBody(server string, id string, contentType string, b
 	return req, nil
 }
 
+// NewExecPodRequest calls the generic ExecPod builder with application/json body
+func NewExecPodRequest(server string, id string, body ExecPodJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewExecPodRequestWithBody(server, id, "application/json", bodyReader)
+}
+
+// NewExecPodRequestWithBody constructs an http.Request for the ExecPod method, with any body, and a specified content type
+func NewExecPodRequestWithBody(server string, id string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "id", id, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v2/pods/%s/exec", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
 // NewGetPodLogsRequest constructs an http.Request for the GetPodLogs method
 func NewGetPodLogsRequest(server string, id string, params *GetPodLogsParams) (*http.Request, error) {
 	var err error
@@ -1234,6 +1554,140 @@ func NewGetPodLogsRequest(server string, id string, params *GetPodLogsParams) (*
 			req.Header.Set("Last-Event-ID", headerParam0)
 		}
 
+	}
+
+	return req, nil
+}
+
+// NewListQueuedPodsRequest constructs an http.Request for the ListQueuedPods method
+func NewListQueuedPodsRequest(server string, params *ListQueuedPodsParams) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v2/queued-pods")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		// queryValues collects non-styled parameters (passthrough, JSON)
+		// that are safe to round-trip through url.Values.Encode().
+		queryValues := queryURL.Query()
+		// rawQueryFragments collects pre-encoded query fragments from
+		// styled parameters, preserving literal commas as delimiters
+		// per the OpenAPI spec (e.g. "color=blue,black,brown").
+		var rawQueryFragments []string
+
+		if params.Cursor != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "cursor", *params.Cursor, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.Limit != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "limit", *params.Limit, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if encoded := queryValues.Encode(); encoded != "" {
+			rawQueryFragments = append(rawQueryFragments, encoded)
+		}
+		queryURL.RawQuery = strings.Join(rawQueryFragments, "&")
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewDeleteQueuedPodRequest constructs an http.Request for the DeleteQueuedPod method
+func NewDeleteQueuedPodRequest(server string, id string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "id", id, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v2/queued-pods/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodDelete, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewGetQueuedPodRequest constructs an http.Request for the GetQueuedPod method
+func NewGetQueuedPodRequest(server string, id string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "id", id, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v2/queued-pods/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
 	}
 
 	return req, nil
@@ -1355,7 +1809,7 @@ type ClientWithResponsesInterface interface {
 	// | `402` | Insufficient balance. | Stop; no candidate will succeed. |
 	// | `403` | Your account cannot access the requested pool. | Skip this candidate, keep going. |
 	// | `429` | Rate limited. | Back off using `Retry-After`, then resume. |
-	// | `5xx` | Transient upstream failure. | Retry the same candidate with backoff. |
+	// | `5xx` | Transient server failure. | Retry the same candidate with backoff. |
 	//
 	// Requests larger than 102400 bytes receive `413` after authentication
 	// and rate limiting, before deployment processing. Reduce the serialized
@@ -1435,7 +1889,7 @@ type ClientWithResponsesInterface interface {
 	// | `402` | Insufficient balance. | Stop; no candidate will succeed. |
 	// | `403` | Your account cannot access the requested pool. | Skip this candidate, keep going. |
 	// | `429` | Rate limited. | Back off using `Retry-After`, then resume. |
-	// | `5xx` | Transient upstream failure. | Retry the same candidate with backoff. |
+	// | `5xx` | Transient server failure. | Retry the same candidate with backoff. |
 	//
 	// Requests larger than 102400 bytes receive `413` after authentication
 	// and rate limiting, before deployment processing. Reduce the serialized
@@ -1497,6 +1951,9 @@ type ClientWithResponsesInterface interface {
 	// apply immediately while others (e.g. `globalNetworking`) take effect
 	// on the pod's next start/restart, as noted on the individual fields.
 	//
+	// Volumes can be mounted, moved, or unmounted after creation through
+	// `mounts`, one entry per volume; see `UpdatePodMounts` for the rules.
+	//
 	// Pods that belong to a Cluster cannot be updated here — manage them
 	// through `/v2/clusters/{id}`.
 	//
@@ -1519,6 +1976,9 @@ type ClientWithResponsesInterface interface {
 	// `registry`, `mounts`, `locked`, and `globalNetworking`. Some changes
 	// apply immediately while others (e.g. `globalNetworking`) take effect
 	// on the pod's next start/restart, as noted on the individual fields.
+	//
+	// Volumes can be mounted, moved, or unmounted after creation through
+	// `mounts`, one entry per volume; see `UpdatePodMounts` for the rules.
 	//
 	// Pods that belong to a Cluster cannot be updated here — manage them
 	// through `/v2/clusters/{id}`.
@@ -1588,6 +2048,70 @@ type ClientWithResponsesInterface interface {
 	// Corresponds with POST /v2/pods/{id}/action (the `PodAction` operationId).
 	PodActionWithResponse(ctx context.Context, id string, body PodActionJSONRequestBody, reqEditors ...RequestEditorFn) (*PodActionResult, error)
 
+	// ExecPodWithBodyWithResponse Run a command in a pod
+	//
+	// Runs one command inside the pod's container and returns its stdout,
+	// stderr and exit code once it finishes. No SSH key, public IP or exposed
+	// port is needed, and it works with any image.
+	//
+	// `command` is an argv array, run directly and never through a shell. For
+	// pipes, redirects or globbing pass `["sh", "-c", "..."]`.
+	//
+	// A command that exits non-zero is a result, not an error: the call
+	// answers `200` with `exitCode` set. A command still running after
+	// `timeoutSeconds` (1-25, default 20) answers `200` with
+	// `timedOut: true` and a null `exitCode`. `timedOut` means the call
+	// stopped waiting, not that the command was stopped: it may keep
+	// running in the container.
+	//
+	// `stdout` and `stderr` are each capped at 1 MiB. Output past the cap is
+	// cut and `truncated` is `true`.
+	//
+	// The pod must be running with its container up, otherwise this answers
+	// `409`; while the container is still starting, the `409` carries
+	// `Retry-After`. A pod whose machine has not been updated for exec yet
+	// answers `503` with `Retry-After`.
+	//
+	// `X-Team-Id` is not applied on this route: it reaches only pods owned by
+	// the caller's own account.
+	//
+	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /v2/pods/{id}/exec (the `ExecPod` operationId).
+	ExecPodWithBodyWithResponse(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ExecPodResult, error)
+
+	// ExecPodWithResponse Run a command in a pod
+	//
+	// Runs one command inside the pod's container and returns its stdout,
+	// stderr and exit code once it finishes. No SSH key, public IP or exposed
+	// port is needed, and it works with any image.
+	//
+	// `command` is an argv array, run directly and never through a shell. For
+	// pipes, redirects or globbing pass `["sh", "-c", "..."]`.
+	//
+	// A command that exits non-zero is a result, not an error: the call
+	// answers `200` with `exitCode` set. A command still running after
+	// `timeoutSeconds` (1-25, default 20) answers `200` with
+	// `timedOut: true` and a null `exitCode`. `timedOut` means the call
+	// stopped waiting, not that the command was stopped: it may keep
+	// running in the container.
+	//
+	// `stdout` and `stderr` are each capped at 1 MiB. Output past the cap is
+	// cut and `truncated` is `true`.
+	//
+	// The pod must be running with its container up, otherwise this answers
+	// `409`; while the container is still starting, the `409` carries
+	// `Retry-After`. A pod whose machine has not been updated for exec yet
+	// answers `503` with `Retry-After`.
+	//
+	// `X-Team-Id` is not applied on this route: it reaches only pods owned by
+	// the caller's own account.
+	//
+	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /v2/pods/{id}/exec (the `ExecPod` operationId).
+	ExecPodWithResponse(ctx context.Context, id string, body ExecPodJSONRequestBody, reqEditors ...RequestEditorFn) (*ExecPodResult, error)
+
 	// GetPodLogsWithResponse Stream pod logs
 	//
 	// Streams pod logs as Server-Sent Events. The `source` query parameter
@@ -1602,6 +2126,41 @@ type ClientWithResponsesInterface interface {
 	//
 	// Corresponds with GET /v2/pods/{id}/logs (the `GetPodLogs` operationId).
 	GetPodLogsWithResponse(ctx context.Context, id string, params *GetPodLogsParams, reqEditors ...RequestEditorFn) (*GetPodLogsResult, error)
+
+	// ListQueuedPodsWithResponse List queued pods
+	//
+	// Returns the caller's queued pods, cursor-paginated newest-first; an
+	// omitted `limit` defaults to 1000. Every queued pod is listed whatever
+	// its `status`, so the outcome of a queued create can be read after the
+	// fact. Follow `pagination.nextCursor` until `hasNextPage` is false.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /v2/queued-pods (the `ListQueuedPods` operationId).
+	ListQueuedPodsWithResponse(ctx context.Context, params *ListQueuedPodsParams, reqEditors ...RequestEditorFn) (*ListQueuedPodsResult, error)
+
+	// DeleteQueuedPodWithResponse Cancel a queued pod
+	//
+	// Cancels a queued pod: it leaves the queue and is never deployed. A
+	// pod it already created is untouched; terminate that with
+	// `DELETE /v2/pods/{id}`. Cancelling a queued pod that already
+	// deployed, failed or expired changes nothing and still answers `204`.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with DELETE /v2/queued-pods/{id} (the `DeleteQueuedPod` operationId).
+	DeleteQueuedPodWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*DeleteQueuedPodResult, error)
+
+	// GetQueuedPodWithResponse Get a queued pod
+	//
+	// Returns a single queued pod by ID. Poll it after a `202` from
+	// `createPod`: `status` moves from `QUEUED` to `DEPLOYED` (with
+	// `podId`), `FAILED` (with `failureReason`), `EXPIRED`, or `CANCELLED`.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /v2/queued-pods/{id} (the `GetQueuedPod` operationId).
+	GetQueuedPodWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*GetQueuedPodResult, error)
 }
 
 // ListPodsResult200Headers the declared response headers of an HTTP 200 response for ListPods
@@ -1618,6 +2177,12 @@ type ListPodsResult403Headers struct {
 
 // ListPodsResult413Headers the declared response headers of an HTTP 413 response for ListPods
 type ListPodsResult413Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+// ListPodsResult422Headers the declared response headers of an HTTP 422 response for ListPods
+type ListPodsResult422Headers struct {
 	RateLimit       *externalRef0.RateLimitHeader
 	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
 }
@@ -1646,6 +2211,8 @@ type ListPodsResult struct {
 	ApplicationproblemJSON403 *externalRef0.ErrorResponse
 	// ApplicationproblemJSON413 the response for an HTTP 413 `application/problem+json` response
 	ApplicationproblemJSON413 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON422 the response for an HTTP 422 `application/problem+json` response
+	ApplicationproblemJSON422 *externalRef0.ErrorResponse
 	// ApplicationproblemJSON429 the response for an HTTP 429 `application/problem+json` response
 	ApplicationproblemJSON429 *externalRef0.ErrorResponse
 	// ApplicationproblemJSONDefault the response for an HTTP default `application/problem+json` response
@@ -1656,6 +2223,8 @@ type ListPodsResult struct {
 	Headers403 *ListPodsResult403Headers
 	// Headers413 the parsed response headers for an HTTP 413 response
 	Headers413 *ListPodsResult413Headers
+	// Headers422 the parsed response headers for an HTTP 422 response
+	Headers422 *ListPodsResult422Headers
 	// Headers429 the parsed response headers for an HTTP 429 response
 	Headers429 *ListPodsResult429Headers
 	// HeadersDefault the parsed response headers for an HTTP default response
@@ -1680,6 +2249,11 @@ func (r ListPodsResult) GetApplicationproblemJSON403() *externalRef0.ErrorRespon
 // GetApplicationproblemJSON413 returns the response for an HTTP 413 `application/problem+json` response
 func (r ListPodsResult) GetApplicationproblemJSON413() *externalRef0.ErrorResponse {
 	return r.ApplicationproblemJSON413
+}
+
+// GetApplicationproblemJSON422 returns the response for an HTTP 422 `application/problem+json` response
+func (r ListPodsResult) GetApplicationproblemJSON422() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON422
 }
 
 // GetApplicationproblemJSON429 returns the response for an HTTP 429 `application/problem+json` response
@@ -1723,6 +2297,13 @@ func (r ListPodsResult) ContentType() string {
 
 // CreatePodResult201Headers the declared response headers of an HTTP 201 response for CreatePod
 type CreatePodResult201Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+// CreatePodResult202Headers the declared response headers of an HTTP 202 response for CreatePod
+type CreatePodResult202Headers struct {
+	Location        *string
 	RateLimit       *externalRef0.RateLimitHeader
 	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
 }
@@ -1775,6 +2356,8 @@ type CreatePodResult struct {
 	HTTPResponse *http.Response
 	// JSON201 the response for an HTTP 201 `application/json` response
 	JSON201 *externalRef0.Pod
+	// JSON202 the response for an HTTP 202 `application/json` response
+	JSON202 *externalRef0.QueuedPod
 	// ApplicationproblemJSON400 the response for an HTTP 400 `application/problem+json` response
 	ApplicationproblemJSON400 *externalRef0.ErrorResponse
 	// ApplicationproblemJSON401 the response for an HTTP 401 `application/problem+json` response
@@ -1783,6 +2366,8 @@ type CreatePodResult struct {
 	ApplicationproblemJSON403 *externalRef0.ErrorResponse
 	// ApplicationproblemJSON404 the response for an HTTP 404 `application/problem+json` response
 	ApplicationproblemJSON404 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON409 the response for an HTTP 409 `application/problem+json` response
+	ApplicationproblemJSON409 *externalRef0.ErrorResponse
 	// ApplicationproblemJSON413 the response for an HTTP 413 `application/problem+json` response
 	ApplicationproblemJSON413 *externalRef0.ErrorResponse
 	// ApplicationproblemJSON422 the response for an HTTP 422 `application/problem+json` response
@@ -1793,6 +2378,8 @@ type CreatePodResult struct {
 	ApplicationproblemJSONDefault *externalRef0.ErrorResponse
 	// Headers201 the parsed response headers for an HTTP 201 response
 	Headers201 *CreatePodResult201Headers
+	// Headers202 the parsed response headers for an HTTP 202 response
+	Headers202 *CreatePodResult202Headers
 	// Headers400 the parsed response headers for an HTTP 400 response
 	Headers400 *CreatePodResult400Headers
 	// Headers403 the parsed response headers for an HTTP 403 response
@@ -1814,6 +2401,11 @@ func (r CreatePodResult) GetJSON201() *externalRef0.Pod {
 	return r.JSON201
 }
 
+// GetJSON202 returns the response for an HTTP 202 `application/json` response
+func (r CreatePodResult) GetJSON202() *externalRef0.QueuedPod {
+	return r.JSON202
+}
+
 // GetApplicationproblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
 func (r CreatePodResult) GetApplicationproblemJSON400() *externalRef0.ErrorResponse {
 	return r.ApplicationproblemJSON400
@@ -1832,6 +2424,11 @@ func (r CreatePodResult) GetApplicationproblemJSON403() *externalRef0.ErrorRespo
 // GetApplicationproblemJSON404 returns the response for an HTTP 404 `application/problem+json` response
 func (r CreatePodResult) GetApplicationproblemJSON404() *externalRef0.ErrorResponse {
 	return r.ApplicationproblemJSON404
+}
+
+// GetApplicationproblemJSON409 returns the response for an HTTP 409 `application/problem+json` response
+func (r CreatePodResult) GetApplicationproblemJSON409() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON409
 }
 
 // GetApplicationproblemJSON413 returns the response for an HTTP 413 `application/problem+json` response
@@ -2471,6 +3068,230 @@ func (r PodActionResult) ContentType() string {
 	return ""
 }
 
+// ExecPodResult200Headers the declared response headers of an HTTP 200 response for ExecPod
+type ExecPodResult200Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+// ExecPodResult400Headers the declared response headers of an HTTP 400 response for ExecPod
+type ExecPodResult400Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+// ExecPodResult403Headers the declared response headers of an HTTP 403 response for ExecPod
+type ExecPodResult403Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+// ExecPodResult404Headers the declared response headers of an HTTP 404 response for ExecPod
+type ExecPodResult404Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+// ExecPodResult409Headers the declared response headers of an HTTP 409 response for ExecPod
+type ExecPodResult409Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+	RetryAfter      *int
+}
+
+// ExecPodResult413Headers the declared response headers of an HTTP 413 response for ExecPod
+type ExecPodResult413Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+// ExecPodResult422Headers the declared response headers of an HTTP 422 response for ExecPod
+type ExecPodResult422Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+// ExecPodResult429Headers the declared response headers of an HTTP 429 response for ExecPod
+type ExecPodResult429Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+	RetryAfter      *int
+}
+
+// ExecPodResult502Headers the declared response headers of an HTTP 502 response for ExecPod
+type ExecPodResult502Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+// ExecPodResult503Headers the declared response headers of an HTTP 503 response for ExecPod
+type ExecPodResult503Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+	RetryAfter      *int
+}
+
+// ExecPodResult504Headers the declared response headers of an HTTP 504 response for ExecPod
+type ExecPodResult504Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+// ExecPodResultDefaultHeaders the declared response headers of an HTTP default response for ExecPod
+type ExecPodResultDefaultHeaders struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+type ExecPodResult struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *externalRef0.PodExecResult
+	// ApplicationproblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationproblemJSON400 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationproblemJSON401 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationproblemJSON403 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON404 the response for an HTTP 404 `application/problem+json` response
+	ApplicationproblemJSON404 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON409 the response for an HTTP 409 `application/problem+json` response
+	ApplicationproblemJSON409 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON413 the response for an HTTP 413 `application/problem+json` response
+	ApplicationproblemJSON413 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON422 the response for an HTTP 422 `application/problem+json` response
+	ApplicationproblemJSON422 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON429 the response for an HTTP 429 `application/problem+json` response
+	ApplicationproblemJSON429 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON502 the response for an HTTP 502 `application/problem+json` response
+	ApplicationproblemJSON502 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON503 the response for an HTTP 503 `application/problem+json` response
+	ApplicationproblemJSON503 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON504 the response for an HTTP 504 `application/problem+json` response
+	ApplicationproblemJSON504 *externalRef0.ErrorResponse
+	// ApplicationproblemJSONDefault the response for an HTTP default `application/problem+json` response
+	ApplicationproblemJSONDefault *externalRef0.ErrorResponse
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *ExecPodResult200Headers
+	// Headers400 the parsed response headers for an HTTP 400 response
+	Headers400 *ExecPodResult400Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *ExecPodResult403Headers
+	// Headers404 the parsed response headers for an HTTP 404 response
+	Headers404 *ExecPodResult404Headers
+	// Headers409 the parsed response headers for an HTTP 409 response
+	Headers409 *ExecPodResult409Headers
+	// Headers413 the parsed response headers for an HTTP 413 response
+	Headers413 *ExecPodResult413Headers
+	// Headers422 the parsed response headers for an HTTP 422 response
+	Headers422 *ExecPodResult422Headers
+	// Headers429 the parsed response headers for an HTTP 429 response
+	Headers429 *ExecPodResult429Headers
+	// Headers502 the parsed response headers for an HTTP 502 response
+	Headers502 *ExecPodResult502Headers
+	// Headers503 the parsed response headers for an HTTP 503 response
+	Headers503 *ExecPodResult503Headers
+	// Headers504 the parsed response headers for an HTTP 504 response
+	Headers504 *ExecPodResult504Headers
+	// HeadersDefault the parsed response headers for an HTTP default response
+	HeadersDefault *ExecPodResultDefaultHeaders
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r ExecPodResult) GetJSON200() *externalRef0.PodExecResult {
+	return r.JSON200
+}
+
+// GetApplicationproblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r ExecPodResult) GetApplicationproblemJSON400() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON400
+}
+
+// GetApplicationproblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r ExecPodResult) GetApplicationproblemJSON401() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON401
+}
+
+// GetApplicationproblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r ExecPodResult) GetApplicationproblemJSON403() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON403
+}
+
+// GetApplicationproblemJSON404 returns the response for an HTTP 404 `application/problem+json` response
+func (r ExecPodResult) GetApplicationproblemJSON404() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON404
+}
+
+// GetApplicationproblemJSON409 returns the response for an HTTP 409 `application/problem+json` response
+func (r ExecPodResult) GetApplicationproblemJSON409() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON409
+}
+
+// GetApplicationproblemJSON413 returns the response for an HTTP 413 `application/problem+json` response
+func (r ExecPodResult) GetApplicationproblemJSON413() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON413
+}
+
+// GetApplicationproblemJSON422 returns the response for an HTTP 422 `application/problem+json` response
+func (r ExecPodResult) GetApplicationproblemJSON422() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON422
+}
+
+// GetApplicationproblemJSON429 returns the response for an HTTP 429 `application/problem+json` response
+func (r ExecPodResult) GetApplicationproblemJSON429() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON429
+}
+
+// GetApplicationproblemJSON502 returns the response for an HTTP 502 `application/problem+json` response
+func (r ExecPodResult) GetApplicationproblemJSON502() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON502
+}
+
+// GetApplicationproblemJSON503 returns the response for an HTTP 503 `application/problem+json` response
+func (r ExecPodResult) GetApplicationproblemJSON503() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON503
+}
+
+// GetApplicationproblemJSON504 returns the response for an HTTP 504 `application/problem+json` response
+func (r ExecPodResult) GetApplicationproblemJSON504() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON504
+}
+
+// GetApplicationproblemJSONDefault returns the response for an HTTP default `application/problem+json` response
+func (r ExecPodResult) GetApplicationproblemJSONDefault() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSONDefault
+}
+
+// GetBody returns the raw response body bytes
+func (r ExecPodResult) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r ExecPodResult) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ExecPodResult) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r ExecPodResult) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
 // GetPodLogsResult200Headers the declared response headers of an HTTP 200 response for GetPodLogs
 type GetPodLogsResult200Headers struct {
 	CacheControl    *string
@@ -2584,6 +3405,365 @@ func (r GetPodLogsResult) ContentType() string {
 	return ""
 }
 
+// ListQueuedPodsResult200Headers the declared response headers of an HTTP 200 response for ListQueuedPods
+type ListQueuedPodsResult200Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+// ListQueuedPodsResult403Headers the declared response headers of an HTTP 403 response for ListQueuedPods
+type ListQueuedPodsResult403Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+// ListQueuedPodsResult413Headers the declared response headers of an HTTP 413 response for ListQueuedPods
+type ListQueuedPodsResult413Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+// ListQueuedPodsResult422Headers the declared response headers of an HTTP 422 response for ListQueuedPods
+type ListQueuedPodsResult422Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+// ListQueuedPodsResult429Headers the declared response headers of an HTTP 429 response for ListQueuedPods
+type ListQueuedPodsResult429Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+	RetryAfter      *int
+}
+
+// ListQueuedPodsResultDefaultHeaders the declared response headers of an HTTP default response for ListQueuedPods
+type ListQueuedPodsResultDefaultHeaders struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+type ListQueuedPodsResult struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *externalRef0.ListQueuedPodsResponse
+	// ApplicationproblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationproblemJSON401 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationproblemJSON403 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON413 the response for an HTTP 413 `application/problem+json` response
+	ApplicationproblemJSON413 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON422 the response for an HTTP 422 `application/problem+json` response
+	ApplicationproblemJSON422 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON429 the response for an HTTP 429 `application/problem+json` response
+	ApplicationproblemJSON429 *externalRef0.ErrorResponse
+	// ApplicationproblemJSONDefault the response for an HTTP default `application/problem+json` response
+	ApplicationproblemJSONDefault *externalRef0.ErrorResponse
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *ListQueuedPodsResult200Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *ListQueuedPodsResult403Headers
+	// Headers413 the parsed response headers for an HTTP 413 response
+	Headers413 *ListQueuedPodsResult413Headers
+	// Headers422 the parsed response headers for an HTTP 422 response
+	Headers422 *ListQueuedPodsResult422Headers
+	// Headers429 the parsed response headers for an HTTP 429 response
+	Headers429 *ListQueuedPodsResult429Headers
+	// HeadersDefault the parsed response headers for an HTTP default response
+	HeadersDefault *ListQueuedPodsResultDefaultHeaders
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r ListQueuedPodsResult) GetJSON200() *externalRef0.ListQueuedPodsResponse {
+	return r.JSON200
+}
+
+// GetApplicationproblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r ListQueuedPodsResult) GetApplicationproblemJSON401() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON401
+}
+
+// GetApplicationproblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r ListQueuedPodsResult) GetApplicationproblemJSON403() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON403
+}
+
+// GetApplicationproblemJSON413 returns the response for an HTTP 413 `application/problem+json` response
+func (r ListQueuedPodsResult) GetApplicationproblemJSON413() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON413
+}
+
+// GetApplicationproblemJSON422 returns the response for an HTTP 422 `application/problem+json` response
+func (r ListQueuedPodsResult) GetApplicationproblemJSON422() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON422
+}
+
+// GetApplicationproblemJSON429 returns the response for an HTTP 429 `application/problem+json` response
+func (r ListQueuedPodsResult) GetApplicationproblemJSON429() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON429
+}
+
+// GetApplicationproblemJSONDefault returns the response for an HTTP default `application/problem+json` response
+func (r ListQueuedPodsResult) GetApplicationproblemJSONDefault() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSONDefault
+}
+
+// GetBody returns the raw response body bytes
+func (r ListQueuedPodsResult) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r ListQueuedPodsResult) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ListQueuedPodsResult) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r ListQueuedPodsResult) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// DeleteQueuedPodResult204Headers the declared response headers of an HTTP 204 response for DeleteQueuedPod
+type DeleteQueuedPodResult204Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+// DeleteQueuedPodResult403Headers the declared response headers of an HTTP 403 response for DeleteQueuedPod
+type DeleteQueuedPodResult403Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+// DeleteQueuedPodResult404Headers the declared response headers of an HTTP 404 response for DeleteQueuedPod
+type DeleteQueuedPodResult404Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+// DeleteQueuedPodResult429Headers the declared response headers of an HTTP 429 response for DeleteQueuedPod
+type DeleteQueuedPodResult429Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+	RetryAfter      *int
+}
+
+// DeleteQueuedPodResultDefaultHeaders the declared response headers of an HTTP default response for DeleteQueuedPod
+type DeleteQueuedPodResultDefaultHeaders struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+type DeleteQueuedPodResult struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// ApplicationproblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationproblemJSON401 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationproblemJSON403 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON404 the response for an HTTP 404 `application/problem+json` response
+	ApplicationproblemJSON404 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON429 the response for an HTTP 429 `application/problem+json` response
+	ApplicationproblemJSON429 *externalRef0.ErrorResponse
+	// ApplicationproblemJSONDefault the response for an HTTP default `application/problem+json` response
+	ApplicationproblemJSONDefault *externalRef0.ErrorResponse
+	// Headers204 the parsed response headers for an HTTP 204 response
+	Headers204 *DeleteQueuedPodResult204Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *DeleteQueuedPodResult403Headers
+	// Headers404 the parsed response headers for an HTTP 404 response
+	Headers404 *DeleteQueuedPodResult404Headers
+	// Headers429 the parsed response headers for an HTTP 429 response
+	Headers429 *DeleteQueuedPodResult429Headers
+	// HeadersDefault the parsed response headers for an HTTP default response
+	HeadersDefault *DeleteQueuedPodResultDefaultHeaders
+}
+
+// GetApplicationproblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r DeleteQueuedPodResult) GetApplicationproblemJSON401() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON401
+}
+
+// GetApplicationproblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r DeleteQueuedPodResult) GetApplicationproblemJSON403() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON403
+}
+
+// GetApplicationproblemJSON404 returns the response for an HTTP 404 `application/problem+json` response
+func (r DeleteQueuedPodResult) GetApplicationproblemJSON404() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON404
+}
+
+// GetApplicationproblemJSON429 returns the response for an HTTP 429 `application/problem+json` response
+func (r DeleteQueuedPodResult) GetApplicationproblemJSON429() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON429
+}
+
+// GetApplicationproblemJSONDefault returns the response for an HTTP default `application/problem+json` response
+func (r DeleteQueuedPodResult) GetApplicationproblemJSONDefault() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSONDefault
+}
+
+// GetBody returns the raw response body bytes
+func (r DeleteQueuedPodResult) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r DeleteQueuedPodResult) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r DeleteQueuedPodResult) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r DeleteQueuedPodResult) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// GetQueuedPodResult200Headers the declared response headers of an HTTP 200 response for GetQueuedPod
+type GetQueuedPodResult200Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+// GetQueuedPodResult403Headers the declared response headers of an HTTP 403 response for GetQueuedPod
+type GetQueuedPodResult403Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+// GetQueuedPodResult404Headers the declared response headers of an HTTP 404 response for GetQueuedPod
+type GetQueuedPodResult404Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+// GetQueuedPodResult429Headers the declared response headers of an HTTP 429 response for GetQueuedPod
+type GetQueuedPodResult429Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+	RetryAfter      *int
+}
+
+// GetQueuedPodResultDefaultHeaders the declared response headers of an HTTP default response for GetQueuedPod
+type GetQueuedPodResultDefaultHeaders struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
+type GetQueuedPodResult struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *externalRef0.QueuedPod
+	// ApplicationproblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationproblemJSON401 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationproblemJSON403 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON404 the response for an HTTP 404 `application/problem+json` response
+	ApplicationproblemJSON404 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON429 the response for an HTTP 429 `application/problem+json` response
+	ApplicationproblemJSON429 *externalRef0.ErrorResponse
+	// ApplicationproblemJSONDefault the response for an HTTP default `application/problem+json` response
+	ApplicationproblemJSONDefault *externalRef0.ErrorResponse
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *GetQueuedPodResult200Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *GetQueuedPodResult403Headers
+	// Headers404 the parsed response headers for an HTTP 404 response
+	Headers404 *GetQueuedPodResult404Headers
+	// Headers429 the parsed response headers for an HTTP 429 response
+	Headers429 *GetQueuedPodResult429Headers
+	// HeadersDefault the parsed response headers for an HTTP default response
+	HeadersDefault *GetQueuedPodResultDefaultHeaders
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r GetQueuedPodResult) GetJSON200() *externalRef0.QueuedPod {
+	return r.JSON200
+}
+
+// GetApplicationproblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r GetQueuedPodResult) GetApplicationproblemJSON401() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON401
+}
+
+// GetApplicationproblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r GetQueuedPodResult) GetApplicationproblemJSON403() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON403
+}
+
+// GetApplicationproblemJSON404 returns the response for an HTTP 404 `application/problem+json` response
+func (r GetQueuedPodResult) GetApplicationproblemJSON404() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON404
+}
+
+// GetApplicationproblemJSON429 returns the response for an HTTP 429 `application/problem+json` response
+func (r GetQueuedPodResult) GetApplicationproblemJSON429() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON429
+}
+
+// GetApplicationproblemJSONDefault returns the response for an HTTP default `application/problem+json` response
+func (r GetQueuedPodResult) GetApplicationproblemJSONDefault() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSONDefault
+}
+
+// GetBody returns the raw response body bytes
+func (r GetQueuedPodResult) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r GetQueuedPodResult) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetQueuedPodResult) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r GetQueuedPodResult) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
 // ListPodsWithResponse List pods
 //
 // Returns pods owned by the authenticated user. Cluster member
@@ -2662,7 +3842,7 @@ func (c *ClientWithResponses) ListPodsWithResponse(ctx context.Context, params *
 // | `402` | Insufficient balance. | Stop; no candidate will succeed. |
 // | `403` | Your account cannot access the requested pool. | Skip this candidate, keep going. |
 // | `429` | Rate limited. | Back off using `Retry-After`, then resume. |
-// | `5xx` | Transient upstream failure. | Retry the same candidate with backoff. |
+// | `5xx` | Transient server failure. | Retry the same candidate with backoff. |
 //
 // Requests larger than 102400 bytes receive `413` after authentication
 // and rate limiting, before deployment processing. Reduce the serialized
@@ -2748,7 +3928,7 @@ func (c *ClientWithResponses) CreatePodWithBodyWithResponse(ctx context.Context,
 // | `402` | Insufficient balance. | Stop; no candidate will succeed. |
 // | `403` | Your account cannot access the requested pool. | Skip this candidate, keep going. |
 // | `429` | Rate limited. | Back off using `Retry-After`, then resume. |
-// | `5xx` | Transient upstream failure. | Retry the same candidate with backoff. |
+// | `5xx` | Transient server failure. | Retry the same candidate with backoff. |
 //
 // Requests larger than 102400 bytes receive `413` after authentication
 // and rate limiting, before deployment processing. Reduce the serialized
@@ -2828,6 +4008,9 @@ func (c *ClientWithResponses) GetPodWithResponse(ctx context.Context, id string,
 // apply immediately while others (e.g. `globalNetworking`) take effect
 // on the pod's next start/restart, as noted on the individual fields.
 //
+// Volumes can be mounted, moved, or unmounted after creation through
+// `mounts`, one entry per volume; see `UpdatePodMounts` for the rules.
+//
 // Pods that belong to a Cluster cannot be updated here — manage them
 // through `/v2/clusters/{id}`.
 //
@@ -2856,6 +4039,9 @@ func (c *ClientWithResponses) UpdatePodWithBodyWithResponse(ctx context.Context,
 // `registry`, `mounts`, `locked`, and `globalNetworking`. Some changes
 // apply immediately while others (e.g. `globalNetworking`) take effect
 // on the pod's next start/restart, as noted on the individual fields.
+//
+// Volumes can be mounted, moved, or unmounted after creation through
+// `mounts`, one entry per volume; see `UpdatePodMounts` for the rules.
 //
 // Pods that belong to a Cluster cannot be updated here — manage them
 // through `/v2/clusters/{id}`.
@@ -2943,6 +4129,82 @@ func (c *ClientWithResponses) PodActionWithResponse(ctx context.Context, id stri
 	return ParsePodActionResult(rsp)
 }
 
+// ExecPodWithBodyWithResponse Run a command in a pod
+//
+// Runs one command inside the pod's container and returns its stdout,
+// stderr and exit code once it finishes. No SSH key, public IP or exposed
+// port is needed, and it works with any image.
+//
+// `command` is an argv array, run directly and never through a shell. For
+// pipes, redirects or globbing pass `["sh", "-c", "..."]`.
+//
+// A command that exits non-zero is a result, not an error: the call
+// answers `200` with `exitCode` set. A command still running after
+// `timeoutSeconds` (1-25, default 20) answers `200` with
+// `timedOut: true` and a null `exitCode`. `timedOut` means the call
+// stopped waiting, not that the command was stopped: it may keep
+// running in the container.
+//
+// `stdout` and `stderr` are each capped at 1 MiB. Output past the cap is
+// cut and `truncated` is `true`.
+//
+// The pod must be running with its container up, otherwise this answers
+// `409`; while the container is still starting, the `409` carries
+// `Retry-After`. A pod whose machine has not been updated for exec yet
+// answers `503` with `Retry-After`.
+//
+// `X-Team-Id` is not applied on this route: it reaches only pods owned by
+// the caller's own account.
+//
+// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /v2/pods/{id}/exec (the `ExecPod` operationId).
+func (c *ClientWithResponses) ExecPodWithBodyWithResponse(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ExecPodResult, error) {
+	rsp, err := c.ExecPodWithBody(ctx, id, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseExecPodResult(rsp)
+}
+
+// ExecPodWithResponse Run a command in a pod
+//
+// Runs one command inside the pod's container and returns its stdout,
+// stderr and exit code once it finishes. No SSH key, public IP or exposed
+// port is needed, and it works with any image.
+//
+// `command` is an argv array, run directly and never through a shell. For
+// pipes, redirects or globbing pass `["sh", "-c", "..."]`.
+//
+// A command that exits non-zero is a result, not an error: the call
+// answers `200` with `exitCode` set. A command still running after
+// `timeoutSeconds` (1-25, default 20) answers `200` with
+// `timedOut: true` and a null `exitCode`. `timedOut` means the call
+// stopped waiting, not that the command was stopped: it may keep
+// running in the container.
+//
+// `stdout` and `stderr` are each capped at 1 MiB. Output past the cap is
+// cut and `truncated` is `true`.
+//
+// The pod must be running with its container up, otherwise this answers
+// `409`; while the container is still starting, the `409` carries
+// `Retry-After`. A pod whose machine has not been updated for exec yet
+// answers `503` with `Retry-After`.
+//
+// `X-Team-Id` is not applied on this route: it reaches only pods owned by
+// the caller's own account.
+//
+// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /v2/pods/{id}/exec (the `ExecPod` operationId).
+func (c *ClientWithResponses) ExecPodWithResponse(ctx context.Context, id string, body ExecPodJSONRequestBody, reqEditors ...RequestEditorFn) (*ExecPodResult, error) {
+	rsp, err := c.ExecPod(ctx, id, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseExecPodResult(rsp)
+}
+
 // GetPodLogsWithResponse Stream pod logs
 //
 // Streams pod logs as Server-Sent Events. The `source` query parameter
@@ -2962,6 +4224,59 @@ func (c *ClientWithResponses) GetPodLogsWithResponse(ctx context.Context, id str
 		return nil, err
 	}
 	return ParseGetPodLogsResult(rsp)
+}
+
+// ListQueuedPodsWithResponse List queued pods
+//
+// Returns the caller's queued pods, cursor-paginated newest-first; an
+// omitted `limit` defaults to 1000. Every queued pod is listed whatever
+// its `status`, so the outcome of a queued create can be read after the
+// fact. Follow `pagination.nextCursor` until `hasNextPage` is false.
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /v2/queued-pods (the `ListQueuedPods` operationId).
+func (c *ClientWithResponses) ListQueuedPodsWithResponse(ctx context.Context, params *ListQueuedPodsParams, reqEditors ...RequestEditorFn) (*ListQueuedPodsResult, error) {
+	rsp, err := c.ListQueuedPods(ctx, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListQueuedPodsResult(rsp)
+}
+
+// DeleteQueuedPodWithResponse Cancel a queued pod
+//
+// Cancels a queued pod: it leaves the queue and is never deployed. A
+// pod it already created is untouched; terminate that with
+// `DELETE /v2/pods/{id}`. Cancelling a queued pod that already
+// deployed, failed or expired changes nothing and still answers `204`.
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with DELETE /v2/queued-pods/{id} (the `DeleteQueuedPod` operationId).
+func (c *ClientWithResponses) DeleteQueuedPodWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*DeleteQueuedPodResult, error) {
+	rsp, err := c.DeleteQueuedPod(ctx, id, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseDeleteQueuedPodResult(rsp)
+}
+
+// GetQueuedPodWithResponse Get a queued pod
+//
+// Returns a single queued pod by ID. Poll it after a `202` from
+// `createPod`: `status` moves from `QUEUED` to `DEPLOYED` (with
+// `podId`), `FAILED` (with `failureReason`), `EXPIRED`, or `CANCELLED`.
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /v2/queued-pods/{id} (the `GetQueuedPod` operationId).
+func (c *ClientWithResponses) GetQueuedPodWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*GetQueuedPodResult, error) {
+	rsp, err := c.GetQueuedPod(ctx, id, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetQueuedPodResult(rsp)
 }
 
 // ParseListPodsResult parses an HTTP response from a ListPodsWithResponse call
@@ -3005,6 +4320,13 @@ func ParseListPodsResult(rsp *http.Response) (*ListPodsResult, error) {
 			return nil, err
 		}
 		response.ApplicationproblemJSON413 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON422 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
 		var dest externalRef0.ErrorResponse
@@ -3074,6 +4396,23 @@ func ParseListPodsResult(rsp *http.Response) (*ListPodsResult, error) {
 			headers.RateLimitPolicy = &value
 		}
 		response.Headers413 = &headers
+	case rsp.StatusCode == 422:
+		var headers ListPodsResult422Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers422 = &headers
 	case rsp.StatusCode == 429:
 		var headers ListPodsResult429Headers
 		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
@@ -3141,6 +4480,13 @@ func ParseCreatePodResult(rsp *http.Response) (*CreatePodResult, error) {
 		}
 		response.JSON201 = &dest
 
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 202:
+		var dest externalRef0.QueuedPod
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON202 = &dest
+
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
 		var dest externalRef0.ErrorResponse
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
@@ -3168,6 +4514,13 @@ func ParseCreatePodResult(rsp *http.Response) (*CreatePodResult, error) {
 			return nil, err
 		}
 		response.ApplicationproblemJSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON409 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 413:
 		var dest externalRef0.ErrorResponse
@@ -3217,6 +4570,30 @@ func ParseCreatePodResult(rsp *http.Response) (*CreatePodResult, error) {
 			headers.RateLimitPolicy = &value
 		}
 		response.Headers201 = &headers
+	case rsp.StatusCode == 202:
+		var headers CreatePodResult202Headers
+		if values := rsp.Header.Values("Location"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Location", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.Location = &value
+		}
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers202 = &headers
 	case rsp.StatusCode == 400:
 		var headers CreatePodResult400Headers
 		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
@@ -4170,6 +5547,344 @@ func ParsePodActionResult(rsp *http.Response) (*PodActionResult, error) {
 	return response, nil
 }
 
+// ParseExecPodResult parses an HTTP response from a ExecPodWithResponse call
+func ParseExecPodResult(rsp *http.Response) (*ExecPodResult, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ExecPodResult{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest externalRef0.PodExecResult
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON409 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 413:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON413 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON422 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON429 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 502:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON502 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON503 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 504:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON504 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSONDefault = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers ExecPodResult200Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers200 = &headers
+	case rsp.StatusCode == 400:
+		var headers ExecPodResult400Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers400 = &headers
+	case rsp.StatusCode == 403:
+		var headers ExecPodResult403Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 404:
+		var headers ExecPodResult404Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers404 = &headers
+	case rsp.StatusCode == 409:
+		var headers ExecPodResult409Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		response.Headers409 = &headers
+	case rsp.StatusCode == 413:
+		var headers ExecPodResult413Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers413 = &headers
+	case rsp.StatusCode == 422:
+		var headers ExecPodResult422Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers422 = &headers
+	case rsp.StatusCode == 429:
+		var headers ExecPodResult429Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		response.Headers429 = &headers
+	case rsp.StatusCode == 502:
+		var headers ExecPodResult502Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers502 = &headers
+	case rsp.StatusCode == 503:
+		var headers ExecPodResult503Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		response.Headers503 = &headers
+	case rsp.StatusCode == 504:
+		var headers ExecPodResult504Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers504 = &headers
+	case true:
+		var headers ExecPodResultDefaultHeaders
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.HeadersDefault = &headers
+	}
+
+	return response, nil
+}
+
 // ParseGetPodLogsResult parses an HTTP response from a GetPodLogsWithResponse call
 func ParseGetPodLogsResult(rsp *http.Response) (*GetPodLogsResult, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
@@ -4320,6 +6035,494 @@ func ParseGetPodLogsResult(rsp *http.Response) (*GetPodLogsResult, error) {
 		response.Headers429 = &headers
 	case true:
 		var headers GetPodLogsResultDefaultHeaders
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.HeadersDefault = &headers
+	}
+
+	return response, nil
+}
+
+// ParseListQueuedPodsResult parses an HTTP response from a ListQueuedPodsWithResponse call
+func ParseListQueuedPodsResult(rsp *http.Response) (*ListQueuedPodsResult, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ListQueuedPodsResult{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest externalRef0.ListQueuedPodsResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 413:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON413 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON422 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON429 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSONDefault = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers ListQueuedPodsResult200Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers200 = &headers
+	case rsp.StatusCode == 403:
+		var headers ListQueuedPodsResult403Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 413:
+		var headers ListQueuedPodsResult413Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers413 = &headers
+	case rsp.StatusCode == 422:
+		var headers ListQueuedPodsResult422Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers422 = &headers
+	case rsp.StatusCode == 429:
+		var headers ListQueuedPodsResult429Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		response.Headers429 = &headers
+	case true:
+		var headers ListQueuedPodsResultDefaultHeaders
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.HeadersDefault = &headers
+	}
+
+	return response, nil
+}
+
+// ParseDeleteQueuedPodResult parses an HTTP response from a DeleteQueuedPodWithResponse call
+func ParseDeleteQueuedPodResult(rsp *http.Response) (*DeleteQueuedPodResult, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &DeleteQueuedPodResult{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case rsp.StatusCode == 204:
+		break // No content-type
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON429 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSONDefault = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 204:
+		var headers DeleteQueuedPodResult204Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers204 = &headers
+	case rsp.StatusCode == 403:
+		var headers DeleteQueuedPodResult403Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 404:
+		var headers DeleteQueuedPodResult404Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers404 = &headers
+	case rsp.StatusCode == 429:
+		var headers DeleteQueuedPodResult429Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		response.Headers429 = &headers
+	case true:
+		var headers DeleteQueuedPodResultDefaultHeaders
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.HeadersDefault = &headers
+	}
+
+	return response, nil
+}
+
+// ParseGetQueuedPodResult parses an HTTP response from a GetQueuedPodWithResponse call
+func ParseGetQueuedPodResult(rsp *http.Response) (*GetQueuedPodResult, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetQueuedPodResult{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest externalRef0.QueuedPod
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON429 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSONDefault = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers GetQueuedPodResult200Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers200 = &headers
+	case rsp.StatusCode == 403:
+		var headers GetQueuedPodResult403Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 404:
+		var headers GetQueuedPodResult404Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers404 = &headers
+	case rsp.StatusCode == 429:
+		var headers GetQueuedPodResult429Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		response.Headers429 = &headers
+	case true:
+		var headers GetQueuedPodResultDefaultHeaders
 		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
 			var value externalRef0.RateLimitHeader
 			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {

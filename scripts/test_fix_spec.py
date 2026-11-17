@@ -11,6 +11,7 @@ reproducible.
 """
 
 import pathlib
+import re
 import shutil
 import subprocess
 import sys
@@ -159,13 +160,21 @@ class VendoredSpec(unittest.TestCase):
             carries,
             {
                 "listPods",
+                "listQueuedPods",
                 "listEndpoints",
                 "listEndpointReleases",
                 "listEndpointBuilds",
+                "getEndpointRequestMetrics",
+                "getEndpointColdStartMetrics",
+                "getEndpointWorkerMetrics",
                 "listTemplates",
                 "listClusters",
                 "listNetworkVolumes",
                 "listGlobalVolumes",
+                "listCostCenters",
+                "listCostCenterResources",
+                "listOrganizationGroups",
+                "listOrganizationGroupMembers",
                 "listAuditLogs",
             },
             "the set of paged operations moved — re-derive the README's paging paragraph too",
@@ -308,12 +317,22 @@ def takes_parameter(spec, operation, name):
     return any(deref(spec, parameter).get("name") == name for parameter in operation.get("parameters") or [])
 
 
+RESPONSE_HEADERS = re.compile(r"\.responses\.[^.]+$")
+
+
 def enums(node, path=""):
-    """Every schema in the document that declares an enum, inline ones included."""
+    """Every schema in the document that declares an enum, inline ones included.
+
+    Response headers are skipped: oapi-codegen types them as plain strings, so
+    an enum there generates no identifier to name. Only a `headers` key under a
+    response is one; a schema property may be called that too.
+    """
     if isinstance(node, dict):
         if isinstance(node.get("enum"), list):
             yield path, node
         for key, value in node.items():
+            if key == "headers" and RESPONSE_HEADERS.search(path):
+                continue
             yield from enums(value, f"{path}.{key}")
     elif isinstance(node, list):
         for index, value in enumerate(node):

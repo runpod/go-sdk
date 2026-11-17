@@ -96,7 +96,7 @@ type ListGpuTypesParams struct {
 	// Count GPU count for availability and lowest-price calculations. Valid only with include=AVAILABILITY. Defaults to 1.
 	Count *externalRef0.GpuCountFilter `form:"count,omitempty" json:"count,omitempty"`
 
-	// Cloud Cloud type for availability and lowest-price calculations. Valid only with include=AVAILABILITY. Supported values: SECURE, COMMUNITY. Upstream default when omitted: SECURE.
+	// Cloud Cloud type for availability and lowest-price calculations. Valid only with include=AVAILABILITY. Supported values: SECURE, COMMUNITY. Default when omitted: SECURE.
 	Cloud *externalRef0.GpuCloudFilter `form:"cloud,omitempty" json:"cloud,omitempty"`
 
 	// CountryCodes Comma-separated ISO 3166-1 alpha-2 country codes, uppercase, to constrain availability to — e.g. FR or FR,DE. Values within this filter use OR semantics. Valid only with include=AVAILABILITY (400 otherwise); a malformed entry is a 422. Scopes availability, lowest-price calculations and the dataCenters array to those countries, so a listed data center outside them is omitted rather than returned with availability NONE. On the list endpoint a GPU type with no data center in those countries drops out entirely; the single-GPU endpoint still returns the requested type, with availability NONE and dataCenters omitted, so a 404 keeps meaning the GPU type does not exist. Read the NONE on availability rather than the absence of dataCenters, which is also absent when availability was not requested.
@@ -120,7 +120,7 @@ type GetGpuTypeParams struct {
 	// Count GPU count for availability and lowest-price calculations. Valid only with include=AVAILABILITY. Defaults to 1.
 	Count *externalRef0.GpuCountFilter `form:"count,omitempty" json:"count,omitempty"`
 
-	// Cloud Cloud type for availability and lowest-price calculations. Valid only with include=AVAILABILITY. Supported values: SECURE, COMMUNITY. Upstream default when omitted: SECURE.
+	// Cloud Cloud type for availability and lowest-price calculations. Valid only with include=AVAILABILITY. Supported values: SECURE, COMMUNITY. Default when omitted: SECURE.
 	Cloud *externalRef0.GpuCloudFilter `form:"cloud,omitempty" json:"cloud,omitempty"`
 
 	// CountryCodes Comma-separated ISO 3166-1 alpha-2 country codes, uppercase, to constrain availability to — e.g. FR or FR,DE. Values within this filter use OR semantics. Valid only with include=AVAILABILITY (400 otherwise); a malformed entry is a 422. Scopes availability, lowest-price calculations and the dataCenters array to those countries, so a listed data center outside them is omitted rather than returned with availability NONE. On the list endpoint a GPU type with no data center in those countries drops out entirely; the single-GPU endpoint still returns the requested type, with availability NONE and dataCenters omitted, so a 404 keeps meaning the GPU type does not exist. Read the NONE on availability rather than the absence of dataCenters, which is also absent when availability was not requested.

@@ -3,6 +3,68 @@
 This file is maintained by hand, newest release first. See the Releasing
 section of [README.md](README.md) for the tagging procedure.
 
+## v2.2.0
+
+Regenerated from the 2026-11-13 released REST v2 spec, the profile a production
+build serves at `/v2/openapi.yaml`: 108 operations across fourteen tags, up from
+67 across twelve. Nothing was removed.
+
+### Added
+
+- Cost centers on `client.CostCenters`: `ListCostCenters`, `CreateCostCenter`,
+  `GetCostCenter`, `UpdateCostCenter`, `DeleteCostCenter`, and
+  `ListCostCenterResources`, `AttachCostCenterResource`,
+  `DetachCostCenterResource` over `/v2/cost-centers`. A cost center groups
+  resources so their spend is billed and reported together.
+- Organization administration on `client.Organization`, twenty-two operations
+  over `/v2/organization`: users (`ListOrganizationUsers`, `GetOrganizationUser`,
+  `UpdateOrganizationUser`, `DeleteOrganizationUser`), invites
+  (`ListOrganizationInvites`, `CreateOrganizationInvite`, `GetOrganizationInvite`,
+  `DeleteOrganizationInvite`), roles (`ListOrganizationRoles`,
+  `CreateOrganizationRole`, `GetOrganizationRole`, `UpdateOrganizationRole`,
+  `DeleteOrganizationRole`, `GetOrganizationRoleCapabilities`) and groups
+  (`ListOrganizationGroups`, `CreateOrganizationGroup`, `GetOrganizationGroup`,
+  `UpdateOrganizationGroup`, `DeleteOrganizationGroup`,
+  `ListOrganizationGroupMembers`, `AddOrganizationGroupMember`,
+  `RemoveOrganizationGroupMember`).
+- Queued pods on `client.Pods`: `ListQueuedPods`, `GetQueuedPod` and
+  `DeleteQueuedPod` over `/v2/queued-pods`, for a pod waiting on capacity, plus
+  `ExecPod` to run a command in a running pod.
+- Endpoint metrics on `client.Serverless`: `GetEndpointRequestMetrics`,
+  `GetEndpointColdStartMetrics` and `GetEndpointWorkerMetrics`. Their `interval`
+  is an enum of durations (`1m` through `1d`), and they page over time buckets
+  rather than over a list.
+- `client.Account.GetAccount` (`GET /v2/account`): the authenticated account.
+- `lib/signup`: `CreateAuthenticationAttempt`, `VerifyAuthenticationAttempt` and
+  `ResendAuthenticationAttempt` over `/v2/signup`. These declare no auth, and a
+  caller making them has no key yet, so they are **not** a field on `Client`:
+  build one with `signup.NewClientWithResponses(baseURL)` and send no key.
+- Cursor pagination grew from nine operations to seventeen: the five new list
+  operations above (`ListQueuedPods`, `ListCostCenters`,
+  `ListCostCenterResources`, `ListOrganizationGroups`,
+  `ListOrganizationGroupMembers`) and the three metrics reads join it. An
+  omitted `limit` returns the first 1000 items, 100 for the builds list and the
+  two organization group lists, and 200 for the audit logs.
+
+### Changed (breaking for callers)
+
+- `types.UpdatePodRequest.Mounts` is a `*types.UpdatePodMounts` instead of a
+  `*types.Mounts`, so code that sets it stops compiling. The request body is no
+  longer the pod's whole mount set: each entry names one volume by `volumeId`,
+  a listed volume the pod already has is moved, and `remove: true` unmounts one.
+  Limits are checked against the pod as it would be after the request.
+
+### Spec patch layer
+
+- The `BaseMounts` public-description edit is retired: upstream rewrote that
+  text itself and it no longer names the handler. The `Mounts` and
+  `CreatePodRequest` anchors were re-derived against the new wording.
+- `EndpointMetricsInterval` is named in `ENUM_VARNAMES`, so its constants spell
+  the unit out (`EndpointMetricsInterval1Minute`): `1m` reads as both minute and
+  month, and the bare value would generate `serverless.1m`.
+- The enum-coverage test no longer walks into response headers. oapi-codegen
+  types those as plain strings, so an enum there generates no identifier to name.
+
 ## v2.1.0
 
 Regenerated from the 2026-10-26 released REST v2 spec, the profile a

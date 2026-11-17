@@ -19,6 +19,9 @@ import (
 
 // ListClustersParams defines parameters for ListClusters.
 type ListClustersParams struct {
+	// Filters Only return resources matching these filters, as URL-encoded JSON. The filters apply before the page is cut, so send the same value with each `cursor` to keep walking the filtered list.
+	Filters *externalRef0.ResourceFilters `form:"filters,omitempty" json:"filters,omitempty"`
+
 	// Cursor Opaque resume cursor — pass the previous response's `pagination.nextCursor` through verbatim; omit for the first page. A cursor is only valid for the operation and parameters that issued it; a malformed or foreign cursor is rejected with 422.
 	Cursor *externalRef0.PaginationCursor `form:"cursor,omitempty" json:"cursor,omitempty"`
 
@@ -362,6 +365,16 @@ func NewListClustersRequest(server string, params *ListClustersParams) (*http.Re
 		// styled parameters, preserving literal commas as delimiters
 		// per the OpenAPI spec (e.g. "color=blue,black,brown").
 		var rawQueryFragments []string
+
+		if params.Filters != nil {
+
+			if queryParamBuf, err := json.Marshal(*params.Filters); err != nil {
+				return nil, err
+			} else {
+				queryValues.Add("filters", string(queryParamBuf))
+			}
+
+		}
 
 		if params.Cursor != nil {
 
@@ -729,6 +742,12 @@ type ListClustersResult413Headers struct {
 	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
 }
 
+// ListClustersResult422Headers the declared response headers of an HTTP 422 response for ListClusters
+type ListClustersResult422Headers struct {
+	RateLimit       *externalRef0.RateLimitHeader
+	RateLimitPolicy *externalRef0.RateLimitPolicyHeader
+}
+
 // ListClustersResult429Headers the declared response headers of an HTTP 429 response for ListClusters
 type ListClustersResult429Headers struct {
 	RateLimit       *externalRef0.RateLimitHeader
@@ -747,6 +766,8 @@ type ListClustersResult struct {
 	ApplicationproblemJSON403 *externalRef0.ErrorResponse
 	// ApplicationproblemJSON413 the response for an HTTP 413 `application/problem+json` response
 	ApplicationproblemJSON413 *externalRef0.ErrorResponse
+	// ApplicationproblemJSON422 the response for an HTTP 422 `application/problem+json` response
+	ApplicationproblemJSON422 *externalRef0.ErrorResponse
 	// ApplicationproblemJSON429 the response for an HTTP 429 `application/problem+json` response
 	ApplicationproblemJSON429 *externalRef0.ErrorResponse
 	// ApplicationproblemJSONDefault the response for an HTTP default `application/problem+json` response
@@ -755,6 +776,8 @@ type ListClustersResult struct {
 	Headers403 *ListClustersResult403Headers
 	// Headers413 the parsed response headers for an HTTP 413 response
 	Headers413 *ListClustersResult413Headers
+	// Headers422 the parsed response headers for an HTTP 422 response
+	Headers422 *ListClustersResult422Headers
 	// Headers429 the parsed response headers for an HTTP 429 response
 	Headers429 *ListClustersResult429Headers
 }
@@ -777,6 +800,11 @@ func (r ListClustersResult) GetApplicationproblemJSON403() *externalRef0.ErrorRe
 // GetApplicationproblemJSON413 returns the response for an HTTP 413 `application/problem+json` response
 func (r ListClustersResult) GetApplicationproblemJSON413() *externalRef0.ErrorResponse {
 	return r.ApplicationproblemJSON413
+}
+
+// GetApplicationproblemJSON422 returns the response for an HTTP 422 `application/problem+json` response
+func (r ListClustersResult) GetApplicationproblemJSON422() *externalRef0.ErrorResponse {
+	return r.ApplicationproblemJSON422
 }
 
 // GetApplicationproblemJSON429 returns the response for an HTTP 429 `application/problem+json` response
@@ -1531,6 +1559,13 @@ func ParseListClustersResult(rsp *http.Response) (*ListClustersResult, error) {
 		}
 		response.ApplicationproblemJSON413 = &dest
 
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
+		var dest externalRef0.ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON422 = &dest
+
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
 		var dest externalRef0.ErrorResponse
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
@@ -1582,6 +1617,23 @@ func ParseListClustersResult(rsp *http.Response) (*ListClustersResult, error) {
 			headers.RateLimitPolicy = &value
 		}
 		response.Headers413 = &headers
+	case rsp.StatusCode == 422:
+		var headers ListClustersResult422Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value externalRef0.RateLimitHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value externalRef0.RateLimitPolicyHeader
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		response.Headers422 = &headers
 	case rsp.StatusCode == 429:
 		var headers ListClustersResult429Headers
 		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
