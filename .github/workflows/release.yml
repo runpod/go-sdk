@@ -1,0 +1,169 @@
+# Turns a merged version bump into a release: the tag, the GitHub Release with
+# the changelog section, and the event the consumers listen to. Nothing is
+# published to a registry; proxy.golang.org fetches the module from the tag.
+#
+# The version is `const Version` in runpod.go, which README's Releasing section
+# already makes part of the release commit. This file automates steps 4 and on:
+# a merge that leaves Version on an already tagged value does nothing.
+#
+# It starts after ci, not on the push, so the offline lane (lint, unit, codegen
+# reproducibility, govulncheck) has already passed on the same commit rather
+# than being run a second time here. A workflow_run reads the file on the
+# default branch and has to check the triggering commit out by sha.
+#
+# A pushed tag cannot be withdrawn: the proxy keeps the first copy it fetched,
+# and a mistake needs the next patch version. Hence the checks in `gate`.
+name: release
+
+on:
+  workflow_run:
+    workflows: [ci]
+    types: [completed]
+    branches: [main]
+  # Catches up a release whose ci run was cancelled or whose dispatch never left.
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  gate:
+    name: Gate
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    runs-on: blacksmith-2vcpu-ubuntu-2404
+    timeout-minutes: 5
+    outputs:
+      release: ${{ steps.read.outputs.release }}
+      version: ${{ steps.read.outputs.version }}
+      tag: ${{ steps.read.outputs.tag }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.ref }}
+          fetch-depth: 0
+
+      - name: Read the version and decide
+        id: read
+        run: |
+          set -euo pipefail
+          version=$(sed -n 's/^const Version = "\(.*\)"$/\1/p' runpod.go)
+          if [ -z "$version" ]; then
+            echo "::error::runpod.go has no const Version line"
+            exit 1
+          fi
+          tag="v${version}"
+
+          # The module path carries the major, so a v2 module can only be
+          # tagged v2.x. Getting this wrong publishes a version no one resolves.
+          module=$(sed -n 's/^module \(.*\)$/\1/p' go.mod)
+          major=${version%%.*}
+          case "$module" in
+            */v"$major") ;;
+            *) echo "::error::module $module cannot carry tag $tag"; exit 1 ;;
+          esac
+
+          if git rev-parse -q --verify "refs/tags/$tag" > /dev/null; then
+            echo "$tag is already tagged, nothing to release" >> "$GITHUB_STEP_SUMMARY"
+            echo "release=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # The Release notes are this section, so an untagged version without
+          # one is a half-finished release commit, not something to publish.
+          if ! grep -q "^## ${tag}$" CHANGELOG.md; then
+            echo "::error::CHANGELOG.md has no '## ${tag}' section"
+            exit 1
+          fi
+
+          {
+            echo "release=true"
+            echo "version=$version"
+            echo "tag=$tag"
+          } >> "$GITHUB_OUTPUT"
+          echo "Releasing $tag" >> "$GITHUB_STEP_SUMMARY"
+
+  release:
+    name: Release
+    needs: gate
+    if: needs.gate.outputs.release == 'true'
+    runs-on: blacksmith-2vcpu-ubuntu-2404
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.ref }}
+          fetch-depth: 0
+
+      - name: Tag
+        env:
+          TAG: ${{ needs.gate.outputs.tag }}
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git tag -a "$TAG" -m "$TAG"
+          git push origin "$TAG"
+
+      - name: Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ needs.gate.outputs.tag }}
+        run: |
+          set -euo pipefail
+          # The changelog is written by hand and says what broke; generated
+          # notes would only list commit subjects.
+          awk -v tag="## $TAG" '
+            $0 == tag { inside = 1; next }
+            inside && /^## / { exit }
+            inside { print }
+          ' CHANGELOG.md > "$RUNNER_TEMP/notes.md"
+          gh release create "$TAG" --title "$TAG" --notes-file "$RUNNER_TEMP/notes.md"
+
+      - name: Warm the module proxy
+        env:
+          TAG: ${{ needs.gate.outputs.tag }}
+        run: |
+          set -euo pipefail
+          # Without this the first `go get` pays for the fetch and pkg.go.dev
+          # indexes late. A proxy that has not seen the tag yet answers 404,
+          # which is not a release failure.
+          module=$(sed -n 's/^module \(.*\)$/\1/p' go.mod)
+          curl -fsS "https://proxy.golang.org/${module}/@v/${TAG}.info" > /dev/null \
+            || echo "::warning::the proxy has not picked ${TAG} up yet"
+
+  notify:
+    name: Notify consumers
+    needs: [gate, release]
+    if: needs.gate.outputs.release == 'true'
+    runs-on: blacksmith-2vcpu-ubuntu-2404
+    timeout-minutes: 5
+    steps:
+      - name: Mint a token for terraform-provider-runpod
+        id: token
+        uses: actions/create-github-app-token@fee1f7d63c2ff003460e3d139729b119787bc349 # v2
+        with:
+          app-id: ${{ secrets.RELEASE_DISPATCH_APP_ID }}
+          private-key: ${{ secrets.RELEASE_DISPATCH_APP_PRIVATE_KEY }}
+          owner: runpod
+          repositories: terraform-provider-runpod
+
+      - name: Dispatch go-sdk-release
+        env:
+          GH_TOKEN: ${{ steps.token.outputs.token }}
+          TAG: ${{ needs.gate.outputs.tag }}
+          VERSION: ${{ needs.gate.outputs.version }}
+        run: |
+          set -euo pipefail
+          gh api repos/runpod/terraform-provider-runpod/dispatches \
+            -f event_type=go-sdk-release \
+            -f "client_payload[tag]=$TAG" \
+            -f "client_payload[version]=$VERSION"
+          echo "Dispatched go-sdk-release $TAG to terraform-provider-runpod" >> "$GITHUB_STEP_SUMMARY"
