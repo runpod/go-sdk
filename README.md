@@ -271,21 +271,27 @@ current stable, a tidy check, the spec patch-layer tests, a check that
 regenerating `lib/` changes nothing, and govulncheck. No API key is configured,
 so the live smoke test never runs in CI.
 
+`release.yml` starts after a successful `ci` run on `main` and does the
+tagging described under Releasing. It is the only workflow here that writes
+anything.
+
 ## Releasing
 
-Releases are tagged by hand; there is no release automation.
+A release is a merge to `main` that moves `Version`; the tag and everything
+after it are automatic.
 
 1. Run `task all` and confirm it is clean.
 2. Add the release's section to [CHANGELOG.md](CHANGELOG.md): what changed,
    what breaks, and the spec date the generated packages came from.
 3. Set `Version` in `runpod.go` to the release, in the same commit as the
-   changelog entry. It is the value the `User-Agent` header carries.
-4. Tag the merge commit on `main` and push the tag:
+   changelog entry. It is the value the `User-Agent` header carries, and the
+   release workflow reads it.
 
-```bash
-git tag -a v2.0.0 -m 'v2.0.0'
-git push origin v2.0.0
-```
+Once `ci` passes on `main`, `.github/workflows/release.yml` tags the merge
+commit, opens the GitHub Release with that changelog section, warms the module
+proxy and tells runpod/terraform-provider-runpod, which opens its own bump pull
+request. A merge that leaves `Version` on a version already tagged releases
+nothing. Actions → release → Run workflow repeats the check by hand.
 
 The proxy picks the module up from the tag, so `go get
 github.com/runpod/go-sdk/v2@v2.0.0` resolves within a few minutes and
