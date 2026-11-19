@@ -146,14 +146,12 @@ jobs:
     runs-on: blacksmith-2vcpu-ubuntu-2404
     timeout-minutes: 5
     steps:
-      # The App is how this repository reaches another one; the workflow token
-      # cannot dispatch into terraform-provider-runpod.
       - name: Mint a token for terraform-provider-runpod
         id: token
         uses: actions/create-github-app-token@fee1f7d63c2ff003460e3d139729b119787bc349 # v2
         with:
-          app-id: ${{ secrets.AGENT_PIPELINE_APP_ID }}
-          private-key: ${{ secrets.AGENT_PIPELINE_APP_PRIVATE_KEY }}
+          app-id: ${{ secrets.RELEASE_DISPATCH_APP_ID }}
+          private-key: ${{ secrets.RELEASE_DISPATCH_APP_PRIVATE_KEY }}
           owner: runpod
           repositories: terraform-provider-runpod
 
