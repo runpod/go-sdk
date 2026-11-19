@@ -125,10 +125,6 @@ func (ep *Endpoint) RunSync(input *RunSyncInput) (*RunSyncOutput, error) {
 			if err != nil {
 				return &result, fmt.Errorf("json decoder error: %s", err)
 			}
-			err = json.Unmarshal(respBody, &result)
-			if err != nil {
-				return &result, fmt.Errorf("json decoder error: %s", err)
-			}
 			if result.Status != nil && (isCompleted(*result.Status)) {
 				return &result, nil
 			} else if result.Error != nil {
