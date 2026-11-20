@@ -16,7 +16,9 @@ it returns the number of edits it made, so a re-run over an already-patched
 spec reports 0 instead of failing. A patch whose anchor has disappeared — the
 node is gone, or upstream rewrote the text it targets — raises PatchError
 instead of silently doing nothing. Keep every entry small, dated, and pointing
-at the evidence for why it exists (issue link, observed live response).
+at the evidence for why it exists (issue link, observed live response). The
+exception is a description edit: upstream rewording a published sentence is
+reported and skipped, never fatal, since nothing is generated from prose.
 
 YAML versions matter here. Stock PyYAML implements YAML 1.1, where the bare
 scalars OFF, ON, YES and NO are booleans: a `yaml.safe_load` round-trip turns
@@ -464,11 +466,6 @@ DESCRIPTION_EDITS: list[tuple[tuple[str | int, ...], str, str]] = [
         "rejected with 400.",
     ),
     (
-        ("components", "schemas", "Mounts", "allOf", 1, "properties", "global", "description"),
-        "`persistent` (rejected with 400): upstream drops a persistent\ndisk whenever a volume is attached.",
-        "`persistent` (rejected with 400): a persistent disk is dropped\nwhenever a volume is attached.",
-    ),
-    (
         ("components", "schemas", "TemplateMounts", "description"),
         "Templates support only a\nsingle persistent mount today; any `network` property is rejected\n"
         "with 422 by the schema validator.",
@@ -548,21 +545,38 @@ DESCRIPTION_EDITS: list[tuple[tuple[str | int, ...], str, str]] = [
 ]
 
 
+# Filled by the pass below and read by main(). A cleanup that no longer matches
+# is reported rather than raised: stopping the regeneration over a sentence
+# nothing is generated from costs more than shipping that sentence unedited.
+STALE_DESCRIPTION_EDITS: list[str] = []
+
+
+def flatten(text: str) -> str:
+    """Collapse runs of whitespace, so a rewrapped paragraph compares equal."""
+    return " ".join(text.split())
+
+
 def normalize_public_descriptions(spec: dict) -> int:
     """2026-08-28: descriptions are the published API reference.
 
     Drops server-internal vocabulary, the duplicated include-expansion
     sentence, and version-relative wording that ages silently.
+
+    An edit whose text upstream has rewritten lands in STALE_DESCRIPTION_EDITS;
+    a vanished node still raises, through resolve().
     """
+    STALE_DESCRIPTION_EDITS.clear()
     edits = 0
     for path, old, new in DESCRIPTION_EDITS:
         current = resolve(spec, path)
-        if old not in current:
-            if new in current:
-                continue
-            raise PatchError(f"{label(path)}: upstream text changed — re-derive this edit")
-        resolve(spec, path[:-1])[path[-1]] = current.replace(old, new)
-        edits += 1
+        if old in current:
+            resolve(spec, path[:-1])[path[-1]] = current.replace(old, new)
+            edits += 1
+            continue
+        # Upstream adopting the replacement, rewrapped or not, leaves nothing
+        # to do; anything else means the edit has to be derived again.
+        if flatten(new) not in flatten(current):
+            STALE_DESCRIPTION_EDITS.append(label(path))
     return edits
 
 
@@ -671,6 +685,10 @@ def main() -> int:
     except PatchError as err:
         print(f"{args.spec}: {err}", file=sys.stderr)
         return 1
+
+    # One line per stale edit, with a fixed prefix: Spec drift reads the log.
+    for stale in STALE_DESCRIPTION_EDITS:
+        print(f"stale-description-edit: {stale}: upstream rewrote this text, re-derive the edit")
 
     text = dump_spec(spec)
     for reader in (SpecLoader, yaml.SafeLoader):

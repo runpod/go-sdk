@@ -235,10 +235,20 @@ class MovedAnchors(unittest.TestCase):
         with self.assertRaises(fix_spec.PatchError):
             fix_spec.normalize_public_descriptions(self.spec)
 
-    def test_rewritten_description_text_raises(self):
+    def test_rewritten_description_text_is_reported_not_raised(self):
         self.spec["components"]["schemas"]["EndpointType"]["description"] = "Rewritten upstream."
-        with self.assertRaises(fix_spec.PatchError):
-            fix_spec.normalize_public_descriptions(self.spec)
+        fix_spec.normalize_public_descriptions(self.spec)
+        self.assertTrue(
+            any("EndpointType" in entry for entry in fix_spec.STALE_DESCRIPTION_EDITS),
+            fix_spec.STALE_DESCRIPTION_EDITS,
+        )
+
+    def test_a_replacement_upstream_adopted_is_silent(self):
+        path, _, new = fix_spec.DESCRIPTION_EDITS[0]
+        # Upstream wraps its own way, so only the words can be compared.
+        fix_spec.resolve(self.spec, path[:-1])[path[-1]] = " ".join(new.split())
+        fix_spec.normalize_public_descriptions(self.spec)
+        self.assertEqual(fix_spec.STALE_DESCRIPTION_EDITS, [])
 
     def test_a_changed_secret_example_raises(self):
         env = self.spec["components"]["schemas"]["BaseContainerConfig"]["properties"]["env"]
