@@ -679,16 +679,27 @@ def main() -> int:
     applied = 0
     try:
         for name, patch in PATCHES:
+            # Counted per patch, so the line says "already applied" only when
+            # the document really is in the state the registry describes.
+            before = len(STALE_DESCRIPTION_EDITS)
             edits = patch(spec)
+            stale = len(STALE_DESCRIPTION_EDITS) - before
             applied += 1 if edits else 0
-            print(f"{'applied' if edits else 'already applied'}: {name}")
+            if edits:
+                status = "applied"
+            elif stale:
+                status = "nothing applied"
+            else:
+                status = "already applied"
+            print(f"{status}: {name}" + (f" ({stale} stale)" if stale else ""))
     except PatchError as err:
         print(f"{args.spec}: {err}", file=sys.stderr)
         return 1
-
-    # One line per stale edit, with a fixed prefix: Spec drift reads the log.
-    for stale in STALE_DESCRIPTION_EDITS:
-        print(f"stale-description-edit: {stale}: upstream rewrote this text, re-derive the edit")
+    finally:
+        # One line per stale edit, with a fixed prefix: Spec drift reads the
+        # log, and a later patch raising must not swallow these.
+        for entry in STALE_DESCRIPTION_EDITS:
+            print(f"stale-description-edit: {entry}: upstream rewrote this text, re-derive the edit")
 
     text = dump_spec(spec)
     for reader in (SpecLoader, yaml.SafeLoader):

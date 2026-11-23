@@ -97,6 +97,43 @@ class VendoredSpec(unittest.TestCase):
             self.assertIn("already normalized", result.stdout)
             self.assertEqual(copy.read_text(encoding="utf-8"), self.text, "patch layer rewrote the spec")
 
+    def run_on_a_broken_copy(self, break_it):
+        """fix_spec.py over the vendored spec with one node broken by hand."""
+        spec = yaml.load(self.text, Loader=SpecLoader)
+        break_it(spec)
+        with tempfile.TemporaryDirectory() as tmp:
+            copy = pathlib.Path(tmp) / "openapi.yaml"
+            copy.write_text(dump_spec(spec), encoding="utf-8")
+            return subprocess.run(
+                [sys.executable, str(SCRIPTS / "fix_spec.py"), str(copy)],
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+
+    def test_a_stale_description_edit_is_logged_and_the_run_still_succeeds(self):
+        """What Spec drift depends on: a candidate is produced, the log says why."""
+
+        def rewrite_upstream(spec):
+            spec["components"]["schemas"]["EndpointType"]["description"] = "Rewritten upstream."
+
+        result = self.run_on_a_broken_copy(rewrite_upstream)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("stale-description-edit: ", result.stdout)
+        self.assertIn("EndpointType", result.stdout)
+
+    def test_a_stale_edit_is_logged_even_when_a_later_patch_fails(self):
+        """The red run is the one read closest, so the warning has to survive it."""
+
+        def rewrite_upstream_and_break_a_secret(spec):
+            spec["components"]["schemas"]["EndpointType"]["description"] = "Rewritten upstream."
+            env = spec["components"]["schemas"]["BaseContainerConfig"]["properties"]["env"]
+            env["examples"] = [{"JUPYTER_PASSWORD": "s3cr3t"}]
+
+        result = self.run_on_a_broken_copy(rewrite_upstream_and_break_a_secret)
+        self.assertEqual(result.returncode, 1)
+        self.assertIn("stale-description-edit: ", result.stdout)
+
     def test_flashboot_enum_is_strings_under_both_yaml_versions(self):
         for reader in (SpecLoader, yaml.SafeLoader):
             spec = yaml.load(self.text, Loader=reader)
