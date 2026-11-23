@@ -291,7 +291,9 @@ Once `ci` passes on `main`, `.github/workflows/release.yml` tags the merge
 commit, opens the GitHub Release with that changelog section, warms the module
 proxy and tells runpod/terraform-provider-runpod, which opens its own bump pull
 request. A merge that leaves `Version` on a version already tagged releases
-nothing. Actions → release → Run workflow repeats the check by hand.
+nothing. Actions → release → Run workflow repeats the check by hand, and
+finishes a release whose tag went out but whose Release or dispatch did not.
+Only a commit that is on `main` is ever tagged.
 
 The proxy picks the module up from the tag, so `go get
 github.com/runpod/go-sdk/v2@v2.0.0` resolves within a few minutes and

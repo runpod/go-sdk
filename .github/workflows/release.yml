@@ -33,7 +33,14 @@ concurrency:
 jobs:
   gate:
     name: Gate
-    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    # A fork's pull request branch can be called main too, and its ci run reaches
+    # this handler with write access to our repository. Only our own pushes may
+    # be released; Run workflow is a person here, gated by the ancestor check.
+    if: >-
+      github.event_name == 'workflow_dispatch'
+      || (github.event.workflow_run.conclusion == 'success'
+          && github.event.workflow_run.event == 'push'
+          && github.event.workflow_run.head_repository.full_name == github.repository)
     runs-on: blacksmith-2vcpu-ubuntu-2404
     timeout-minutes: 5
     outputs:
@@ -49,6 +56,8 @@ jobs:
 
       - name: Read the version and decide
         id: read
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
           version=$(sed -n 's/^const Version = "\(.*\)"$/\1/p' runpod.go)
@@ -67,10 +76,29 @@ jobs:
             *) echo "::error::module $module cannot carry tag $tag"; exit 1 ;;
           esac
 
+          # Run workflow starts from any ref, and a fork branch can carry any
+          # name: only a commit that is on main may be tagged.
+          git fetch -q origin main
+          if ! git merge-base --is-ancestor HEAD FETCH_HEAD; then
+            echo "::error::$(git rev-parse --short HEAD) is not on main"
+            exit 1
+          fi
+
+          # Three cases for a tag that exists: an older release, which is the
+          # usual merge; this commit, already released; or this commit with a
+          # later step failed, which a re-run is here to finish.
           if git rev-parse -q --verify "refs/tags/$tag" > /dev/null; then
-            echo "$tag is already tagged, nothing to release" >> "$GITHUB_STEP_SUMMARY"
-            echo "release=false" >> "$GITHUB_OUTPUT"
-            exit 0
+            if [ "$(git rev-list -n1 "$tag")" != "$(git rev-parse HEAD)" ]; then
+              echo "$tag is already tagged elsewhere, nothing to release" >> "$GITHUB_STEP_SUMMARY"
+              echo "release=false" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+            if gh release view "$tag" > /dev/null 2>&1; then
+              echo "$tag is released, nothing to do" >> "$GITHUB_STEP_SUMMARY"
+              echo "release=false" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+            echo "$tag is tagged but has no Release; finishing it" >> "$GITHUB_STEP_SUMMARY"
           fi
 
           # The Release notes are this section, so an untagged version without
@@ -102,11 +130,17 @@ jobs:
           ref: ${{ github.event.workflow_run.head_sha || github.ref }}
           fetch-depth: 0
 
+      # Both steps below tolerate their half being done already: the gate lets a
+      # re-run through when the tag is on this commit but the Release is not out.
       - name: Tag
         env:
           TAG: ${{ needs.gate.outputs.tag }}
         run: |
           set -euo pipefail
+          if git rev-parse -q --verify "refs/tags/$TAG" > /dev/null; then
+            echo "$TAG is already tagged"
+            exit 0
+          fi
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git tag -a "$TAG" -m "$TAG"
@@ -118,6 +152,10 @@ jobs:
           TAG: ${{ needs.gate.outputs.tag }}
         run: |
           set -euo pipefail
+          if gh release view "$TAG" > /dev/null 2>&1; then
+            echo "$TAG already has a Release"
+            exit 0
+          fi
           # The changelog is written by hand and says what broke; generated
           # notes would only list commit subjects.
           awk -v tag="## $TAG" '
