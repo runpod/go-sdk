@@ -135,10 +135,18 @@ the spec's `runpod/pytorch:2.8.0-py3.11-cuda12.8.1` examples abbreviate the same
 image to its framework and CUDA versions.
 
 Options: `WithAPIKey` overrides the environment, `WithBaseURL` targets another
-environment (e.g. stage), `WithUserAgent` replaces the SDK's own `User-Agent`
-(`runpod-go-sdk/<version> (go<release>)`, `<version>` being
-`runpod.BuildVersion()`) for a tool that wants its requests attributed to
-itself, `WithHTTPClient` replaces the HTTP client entirely.
+environment (e.g. stage), `WithIntegration` names the tool built on the SDK,
+`WithUserAgent` replaces the SDK's own `User-Agent` entirely,
+`WithHTTPClient` replaces the HTTP client entirely.
+
+The default `User-Agent` is
+`runpod-go-sdk/<version> (<os>; <arch>) go<release>`, with `<version>` being
+`runpod.BuildVersion()`, followed by `Integration/<name>` for
+`WithIntegration` and for the `RUNPOD_UA_INTEGRATION` environment variable, and
+by `(via <agent>)` when an AI coding agent such as Claude Code or Codex is
+detected from its environment variables. The integration tokens follow
+runpod-python, and the agent names are the ones runpodctl and runpod-python
+use.
 
 Every request goes through the shared retry transport (`transport/`):
 rate-limited requests (429) retry for all methods honoring `Retry-After`;

@@ -7,11 +7,13 @@ import (
 	"net/http/httptest"
 	"os"
 	"reflect"
+	"runtime"
 	"strings"
 	"sync/atomic"
 	"testing"
 	"time"
 
+	"github.com/runpod/go-sdk/v2/internal/agent"
 	"github.com/runpod/go-sdk/v2/lib/globalvolumes"
 	"github.com/runpod/go-sdk/v2/transport"
 )
@@ -108,6 +110,45 @@ func TestUserAgentIdentifiesTheSDK(t *testing.T) {
 	}
 	if got := gotAgent.Load(); got != "my-tool/1.0" {
 		t.Errorf("User-Agent = %q, want the caller's override", got)
+	}
+}
+
+func TestUserAgentFormat(t *testing.T) {
+	base := "runpod-go-sdk/" + BuildVersion() + " (" + runtime.GOOS + "; " + runtime.GOARCH + ") " + runtime.Version()
+	tests := []struct {
+		name        string
+		integration string
+		env         map[string]string
+		want        string
+	}{
+		{"plain", "", nil, base},
+		{"integration", "terraform", nil, base + " Integration/terraform"},
+		{"env integration", "", map[string]string{"RUNPOD_UA_INTEGRATION": "my-tool"}, base + " Integration/my-tool"},
+		{"both", "terraform", map[string]string{"RUNPOD_UA_INTEGRATION": "my-tool"}, base + " Integration/terraform Integration/my-tool"},
+		{"same name once", "terraform", map[string]string{"RUNPOD_UA_INTEGRATION": "terraform"}, base + " Integration/terraform"},
+		{"env integration cleaned", "", map[string]string{"RUNPOD_UA_INTEGRATION": "my tool\r\nX: 1"}, base + " Integration/mytoolX1"},
+		{"agent", "terraform", map[string]string{"CLAUDECODE": "1"}, base + " Integration/terraform (via claude-code)"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			for _, v := range append(agent.EnvVars(), "RUNPOD_UA_INTEGRATION") {
+				t.Setenv(v, "")
+			}
+			for k, v := range tt.env {
+				t.Setenv(k, v)
+			}
+			if got := userAgent(tt.integration); got != tt.want {
+				t.Errorf("userAgent(%q) = %q, want %q", tt.integration, got, tt.want)
+			}
+		})
+	}
+}
+
+func TestNewRejectsInvalidIntegration(t *testing.T) {
+	for _, name := range []string{"my tool", "tool/1.0", strings.Repeat("a", 65)} {
+		if _, err := New(WithAPIKey("test-key"), WithIntegration(name)); err == nil {
+			t.Errorf("WithIntegration(%q): want an error", name)
+		}
 	}
 }
 

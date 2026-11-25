@@ -8,6 +8,11 @@ section of [README.md](README.md) for the tagging procedure.
 - `runpod.BuildVersion()`: the module version from Go's build information,
   `Version` plus `-dev` when there is none. The `User-Agent` header now carries
   it instead of `Version`.
+- `User-Agent` is now `runpod-go-sdk/<version> (<os>; <arch>) go<release>`,
+  plus `Integration/<name>` from the new `WithIntegration` option or the
+  `RUNPOD_UA_INTEGRATION` environment variable, and `(via <agent>)` when an AI
+  coding agent is detected, using the same agent names as runpodctl and
+  runpod-python.
 
 ## v2.2.0
 

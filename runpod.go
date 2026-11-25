@@ -15,6 +15,7 @@ import (
 	"runtime"
 	"time"
 
+	"github.com/runpod/go-sdk/v2/internal/agent"
 	"github.com/runpod/go-sdk/v2/lib/account"
 	"github.com/runpod/go-sdk/v2/lib/auditlogs"
 	"github.com/runpod/go-sdk/v2/lib/billing"
@@ -42,10 +43,21 @@ const Version = "2.2.0"
 // bodies take by pointer.
 func Ptr[T any](v T) *T { return &v }
 
-// defaultUserAgent identifies the SDK and the Go release it was built with, so
-// Runpod can tell official-SDK traffic from any other Go HTTP client.
-func defaultUserAgent() string {
-	return "runpod-go-sdk/" + BuildVersion() + " (" + runtime.Version() + ")"
+// userAgent identifies the SDK: product and version, OS and architecture, the
+// Go release, then the integration tokens and the calling AI agent when there
+// are any.
+func userAgent(integration string) string {
+	ua := "runpod-go-sdk/" + BuildVersion() + " (" + runtime.GOOS + "; " + runtime.GOARCH + ") " + runtime.Version()
+	if integration != "" {
+		ua += " Integration/" + integration
+	}
+	if env := agent.Token(os.Getenv("RUNPOD_UA_INTEGRATION")); env != "" && env != integration {
+		ua += " Integration/" + env
+	}
+	if name := agent.Name(); name != "" {
+		ua += " (via " + name + ")"
+	}
+	return ua
 }
 
 // Client bundles one authenticated client per API area. Signup is the one tag
@@ -68,10 +80,11 @@ type Client struct {
 }
 
 type options struct {
-	apiKey     string
-	baseURL    string
-	userAgent  string
-	httpClient *http.Client
+	apiKey      string
+	baseURL     string
+	userAgent   string
+	integration string
+	httpClient  *http.Client
 }
 
 // Option configures New. The With* functions in this package are its
@@ -89,6 +102,14 @@ func WithUserAgent(agent string) Option {
 	return func(o *options) { o.userAgent = agent }
 }
 
+// WithIntegration names the tool built on the SDK, e.g. "terraform", which the
+// User-Agent then carries as Integration/<name>. The name may use letters,
+// digits, '.', '_' and '-', up to 64 characters. The RUNPOD_UA_INTEGRATION
+// environment variable adds a second token when it names something else.
+func WithIntegration(name string) Option {
+	return func(o *options) { o.integration = name }
+}
+
 // WithBaseURL points the client at a non-production API, e.g. stage.
 func WithBaseURL(url string) Option {
 	return func(o *options) { o.baseURL = url }
@@ -103,15 +124,20 @@ func WithHTTPClient(c *http.Client) Option {
 // a missing key is an error rather than a deferred 401.
 func New(opts ...Option) (*Client, error) {
 	o := options{
-		apiKey:    os.Getenv("RUNPOD_API_KEY"),
-		baseURL:   DefaultBaseURL,
-		userAgent: defaultUserAgent(),
+		apiKey:  os.Getenv("RUNPOD_API_KEY"),
+		baseURL: DefaultBaseURL,
 	}
 	for _, opt := range opts {
 		opt(&o)
 	}
 	if o.apiKey == "" {
 		return nil, errors.New("runpod: API key required (set RUNPOD_API_KEY or use WithAPIKey)")
+	}
+	if o.integration != "" && agent.Token(o.integration) != o.integration {
+		return nil, fmt.Errorf("runpod: integration %q must be up to 64 of A-Z, a-z, 0-9, '.', '_', '-'", o.integration)
+	}
+	if o.userAgent == "" {
+		o.userAgent = userAgent(o.integration)
 	}
 	if o.httpClient == nil {
 		o.httpClient = &http.Client{
