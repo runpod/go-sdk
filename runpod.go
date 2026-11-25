@@ -34,8 +34,8 @@ import (
 // DefaultBaseURL is the production API host; spec paths carry the /v2 prefix.
 const DefaultBaseURL = "https://api.runpod.io"
 
-// Version is this module's release, sent in the User-Agent header. Bump it in
-// the same commit as the release tag; CHANGELOG.md records what changed.
+// Version is this module's release; release.yml reads this line to tag it. Bump
+// it in the same commit as the CHANGELOG.md entry.
 const Version = "2.2.0"
 
 // Ptr returns a pointer to v, for the optional fields the generated request
@@ -45,7 +45,7 @@ func Ptr[T any](v T) *T { return &v }
 // defaultUserAgent identifies the SDK and the Go release it was built with, so
 // Runpod can tell official-SDK traffic from any other Go HTTP client.
 func defaultUserAgent() string {
-	return "runpod-go-sdk/" + Version + " (" + runtime.Version() + ")"
+	return "runpod-go-sdk/" + BuildVersion() + " (" + runtime.Version() + ")"
 }
 
 // Client bundles one authenticated client per API area. Signup is the one tag

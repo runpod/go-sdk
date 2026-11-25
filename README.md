@@ -136,8 +136,9 @@ image to its framework and CUDA versions.
 
 Options: `WithAPIKey` overrides the environment, `WithBaseURL` targets another
 environment (e.g. stage), `WithUserAgent` replaces the SDK's own `User-Agent`
-(`runpod-go-sdk/<version> (go<release>)`) for a tool that wants its requests
-attributed to itself, `WithHTTPClient` replaces the HTTP client entirely.
+(`runpod-go-sdk/<version> (go<release>)`, `<version>` being
+`runpod.BuildVersion()`) for a tool that wants its requests attributed to
+itself, `WithHTTPClient` replaces the HTTP client entirely.
 
 Every request goes through the shared retry transport (`transport/`):
 rate-limited requests (429) retry for all methods honoring `Retry-After`;
@@ -291,8 +292,7 @@ after it are automatic.
 2. Add the release's section to [CHANGELOG.md](CHANGELOG.md): what changed,
    what breaks, and the spec date the generated packages came from.
 3. Set `Version` in `runpod.go` to the release, in the same commit as the
-   changelog entry. It is the value the `User-Agent` header carries, and the
-   release workflow reads it.
+   changelog entry. The release workflow reads it.
 
 Once `ci` passes on `main`, `.github/workflows/release.yml` tags the merge
 commit, opens the GitHub Release with that changelog section, warms the module

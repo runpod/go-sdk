@@ -3,6 +3,12 @@
 This file is maintained by hand, newest release first. See the Releasing
 section of [README.md](README.md) for the tagging procedure.
 
+## Unreleased
+
+- `runpod.BuildVersion()`: the module version from Go's build information,
+  `Version` plus `-dev` when there is none. The `User-Agent` header now carries
+  it instead of `Version`.
+
 ## v2.2.0
 
 Regenerated from the 2026-11-13 released REST v2 spec, the profile a production
