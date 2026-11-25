@@ -453,8 +453,8 @@ def name_enum_constants(spec: dict) -> int:
 
 
 # Public-description edits: (node path, exact upstream text, replacement). The
-# upstream text is spelled out so a spec refresh that rewrites the sentence
-# fails here instead of quietly dropping the fix.
+# upstream text is spelled out so a spec refresh that rewrites the sentence is
+# reported and skipped instead of quietly dropping the fix.
 DESCRIPTION_EDITS: list[tuple[tuple[str | int, ...], str, str]] = [
     # Server-internal structure ("the handler", "upstream") described to
     # external API consumers; the contract half is what callers need.
@@ -545,10 +545,11 @@ DESCRIPTION_EDITS: list[tuple[tuple[str | int, ...], str, str]] = [
 ]
 
 
-# Filled by the pass below and read by main(). A cleanup that no longer matches
-# is reported rather than raised: stopping the regeneration over a sentence
-# nothing is generated from costs more than shipping that sentence unedited.
-STALE_DESCRIPTION_EDITS: list[str] = []
+# Filled by the pass below and read by main(), as (path, why) pairs. A cleanup
+# that no longer matches is reported rather than raised: stopping the
+# regeneration over a sentence nothing is generated from costs more than
+# shipping that sentence unedited.
+STALE_DESCRIPTION_EDITS: list[tuple[str, str]] = []
 
 
 def flatten(text: str) -> str:
@@ -562,13 +563,19 @@ def normalize_public_descriptions(spec: dict) -> int:
     Drops server-internal vocabulary, the duplicated include-expansion
     sentence, and version-relative wording that ages silently.
 
-    An edit whose text upstream has rewritten lands in STALE_DESCRIPTION_EDITS;
-    a vanished node still raises, through resolve().
+    An edit upstream has rewritten, and one whose node has moved or gone, both
+    land in STALE_DESCRIPTION_EDITS: neither stops the regeneration.
     """
     STALE_DESCRIPTION_EDITS.clear()
     edits = 0
     for path, old, new in DESCRIPTION_EDITS:
-        current = resolve(spec, path)
+        try:
+            current = resolve(spec, path)
+        except PatchError:
+            # Structural patches raise here, since the SDK would be wrong
+            # without them. Nothing is generated from a description.
+            STALE_DESCRIPTION_EDITS.append((label(path), "this node has moved or gone"))
+            continue
         if old in current:
             resolve(spec, path[:-1])[path[-1]] = current.replace(old, new)
             edits += 1
@@ -576,7 +583,7 @@ def normalize_public_descriptions(spec: dict) -> int:
         # Upstream adopting the replacement, rewrapped or not, leaves nothing
         # to do; anything else means the edit has to be derived again.
         if flatten(new) not in flatten(current):
-            STALE_DESCRIPTION_EDITS.append(label(path))
+            STALE_DESCRIPTION_EDITS.append((label(path), "upstream rewrote this text"))
     return edits
 
 
@@ -698,8 +705,8 @@ def main() -> int:
     finally:
         # One line per stale edit, with a fixed prefix: Spec drift reads the
         # log, and a later patch raising must not swallow these.
-        for entry in STALE_DESCRIPTION_EDITS:
-            print(f"stale-description-edit: {entry}: upstream rewrote this text, re-derive the edit")
+        for entry, why in STALE_DESCRIPTION_EDITS:
+            print(f"stale-description-edit: {entry}: {why}, re-derive the edit")
 
     text = dump_spec(spec)
     for reader in (SpecLoader, yaml.SafeLoader):

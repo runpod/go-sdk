@@ -246,9 +246,9 @@ directive in `generator/go.mod`.
 
 A patch whose anchor has gone stops the run and names itself, so a fix is never
 dropped in silence. Description cleanups are the exception: upstream rewording a
-published sentence prints one `stale-description-edit:` line and the run carries
-on, because nothing is generated from prose and a stale cleanup must not hold up
-an SDK regeneration. A wording upstream has since adopted, however it is
+published sentence, or moving the node it sits on, prints one
+`stale-description-edit:` line and the run carries on, because nothing is
+generated from prose and a stale cleanup must not hold up an SDK regeneration. A wording upstream has since adopted, however it is
 wrapped, counts as applied and says nothing.
 
 ## Testing

@@ -122,6 +122,17 @@ class VendoredSpec(unittest.TestCase):
         self.assertIn("stale-description-edit: ", result.stdout)
         self.assertIn("EndpointType", result.stdout)
 
+    def test_a_description_node_that_moved_is_logged_and_the_run_still_succeeds(self):
+        """An upstream reshuffle of the node, not of the prose, is the same case."""
+
+        def drop_the_node(spec):
+            del spec["components"]["schemas"]["EndpointType"]["description"]
+
+        result = self.run_on_a_broken_copy(drop_the_node)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("stale-description-edit: ", result.stdout)
+        self.assertIn("EndpointType", result.stdout)
+
     def test_a_stale_edit_is_logged_even_when_a_later_patch_fails(self):
         """The red run is the one read closest, so the warning has to survive it."""
 
@@ -267,16 +278,19 @@ class MovedAnchors(unittest.TestCase):
         with self.assertRaises(fix_spec.PatchError):
             fix_spec.name_enum_constants(self.spec)
 
-    def test_a_vanished_description_node_raises(self):
+    def test_a_vanished_description_node_is_reported_not_raised(self):
         del self.spec["components"]["schemas"]["Mounts"]["description"]
-        with self.assertRaises(fix_spec.PatchError):
-            fix_spec.normalize_public_descriptions(self.spec)
+        fix_spec.normalize_public_descriptions(self.spec)
+        self.assertTrue(
+            any("Mounts" in path for path, _ in fix_spec.STALE_DESCRIPTION_EDITS),
+            fix_spec.STALE_DESCRIPTION_EDITS,
+        )
 
     def test_rewritten_description_text_is_reported_not_raised(self):
         self.spec["components"]["schemas"]["EndpointType"]["description"] = "Rewritten upstream."
         fix_spec.normalize_public_descriptions(self.spec)
         self.assertTrue(
-            any("EndpointType" in entry for entry in fix_spec.STALE_DESCRIPTION_EDITS),
+            any("EndpointType" in path for path, _ in fix_spec.STALE_DESCRIPTION_EDITS),
             fix_spec.STALE_DESCRIPTION_EDITS,
         )
 
