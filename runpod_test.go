@@ -152,6 +152,112 @@ func TestNewRejectsInvalidIntegration(t *testing.T) {
 	}
 }
 
+func TestResolveBaseURL(t *testing.T) {
+	tests := []struct {
+		in, want string
+	}{
+		{"https://api.runpod.io", "https://api.runpod.io"},
+		{"https://api.runpod.io/", "https://api.runpod.io"},
+		{"https://api.runpod.io/v2", "https://api.runpod.io"},
+		{"https://api.runpod.io/v2/", "https://api.runpod.io"},
+		{"https://proxy.example.com/runpod/v2", "https://proxy.example.com/runpod"},
+		{"https://api.runpod.io/v1", ""},
+		{"https://api.runpod.io/v3/", ""},
+		{"api.runpod.io", ""},
+		{"ftp://api.runpod.io", ""},
+	}
+	for _, tt := range tests {
+		got, err := resolveBaseURL(tt.in)
+		switch {
+		case tt.want == "" && err == nil:
+			t.Errorf("resolveBaseURL(%q) = %q, want an error", tt.in, got)
+		case tt.want != "" && err != nil:
+			t.Errorf("resolveBaseURL(%q): %v", tt.in, err)
+		case tt.want != "" && got.String() != tt.want:
+			t.Errorf("resolveBaseURL(%q) = %q, want %q", tt.in, got, tt.want)
+		}
+	}
+}
+
+func TestBaseURLOptionOverEnvironment(t *testing.T) {
+	var gotPath atomic.Value
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		gotPath.Store(r.URL.Path)
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(gpuTypesJSON))
+	}))
+	t.Cleanup(srv.Close)
+
+	// The environment alone is used, with its /v2 dropped.
+	t.Setenv("RUNPOD_API_BASE_URL", srv.URL+"/v2/")
+	client, err := New(WithAPIKey("test-key"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := client.Catalog.ListGpuTypesWithResponse(context.Background(), nil); err != nil {
+		t.Fatal(err)
+	}
+	if got := gotPath.Load(); got != "/v2/catalog/gpus" {
+		t.Errorf("path = %q, want /v2/catalog/gpus", got)
+	}
+
+	// The option wins over an environment value that would fail.
+	t.Setenv("RUNPOD_API_BASE_URL", "https://api.runpod.io/v1")
+	if _, err := New(WithAPIKey("test-key")); err == nil {
+		t.Error("New with RUNPOD_API_BASE_URL ending in /v1: want an error")
+	}
+	if _, err := New(WithAPIKey("test-key"), WithBaseURL(srv.URL)); err != nil {
+		t.Errorf("New with WithBaseURL over a bad environment value: %v", err)
+	}
+}
+
+func TestRequestHeaders(t *testing.T) {
+	var got atomic.Value
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		got.Store(r.Header.Clone())
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(gpuTypesJSON))
+	}))
+	t.Cleanup(srv.Close)
+	ctx := context.Background()
+	header := func() http.Header { h, _ := got.Load().(http.Header); return h }
+
+	client, err := New(WithAPIKey("test-key"), WithBaseURL(srv.URL))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := client.Catalog.ListGpuTypesWithResponse(ctx, nil); err != nil {
+		t.Fatal(err)
+	}
+	if a := header().Get("Accept"); a != "application/json, application/problem+json" {
+		t.Errorf("Accept = %q, want JSON and problem JSON", a)
+	}
+	if _, ok := header()["X-Runpod-Session-Id"]; ok {
+		t.Error("X-Runpod-Session-Id sent without WithSessionID")
+	}
+
+	client, err = New(WithAPIKey("test-key"), WithBaseURL(srv.URL), WithSessionID("session-1"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	for name, call := range map[string]func() (*http.Response, error){
+		"pod logs":    func() (*http.Response, error) { return client.Pods.GetPodLogs(ctx, "pod-1", nil) },
+		"worker logs": func() (*http.Response, error) { return client.Serverless.GetWorkerLogs(ctx, "ep-1", "worker-1", nil) },
+	} {
+		resp, err := call()
+		if err != nil {
+			t.Fatal(err)
+		}
+		_ = resp.Body.Close()
+		if a := header().Get("Accept"); a != "text/event-stream" {
+			t.Errorf("%s: Accept = %q, want text/event-stream", name, a)
+		}
+		if s := header().Get("X-Runpod-Session-Id"); s != "session-1" {
+			t.Errorf("%s: X-Runpod-Session-Id = %q, want session-1", name, s)
+		}
+	}
+}
+
 func TestCatalogListGpuTypes(t *testing.T) {
 	var gotPath, gotAuth atomic.Value
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

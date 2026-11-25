@@ -135,9 +135,18 @@ the spec's `runpod/pytorch:2.8.0-py3.11-cuda12.8.1` examples abbreviate the same
 image to its framework and CUDA versions.
 
 Options: `WithAPIKey` overrides the environment, `WithBaseURL` targets another
-environment (e.g. stage), `WithIntegration` names the tool built on the SDK,
+environment (e.g. stage) and overrides `RUNPOD_API_BASE_URL`,
+`WithIntegration` names the tool built on the SDK, `WithSessionID` sends an
+`X-Runpod-Session-Id` header on every request (off by default),
 `WithUserAgent` replaces the SDK's own `User-Agent` entirely,
 `WithHTTPClient` replaces the HTTP client entirely.
+
+The base URL is the host without the API version, because every operation path
+starts with `/v2`: a trailing `/v2` is dropped, and any other version, such as
+`/v1`, makes `New` return an error. Every request sends
+`Accept: application/json, application/problem+json`, except the two log
+streams (`Pods.GetPodLogs`, `Serverless.GetWorkerLogs`), which send
+`Accept: text/event-stream`.
 
 The default `User-Agent` is
 `runpod-go-sdk/<version> (<os>; <arch>) go<release>`, with `<version>` being

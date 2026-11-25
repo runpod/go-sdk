@@ -11,8 +11,11 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"net/url"
 	"os"
+	"path"
 	"runtime"
+	"strings"
 	"time"
 
 	"github.com/runpod/go-sdk/v2/internal/agent"
@@ -84,6 +87,7 @@ type options struct {
 	baseURL     string
 	userAgent   string
 	integration string
+	sessionID   string
 	httpClient  *http.Client
 }
 
@@ -110,9 +114,18 @@ func WithIntegration(name string) Option {
 	return func(o *options) { o.integration = name }
 }
 
-// WithBaseURL points the client at a non-production API, e.g. stage.
+// WithBaseURL points the client at a non-production API, e.g. stage, and
+// overrides the RUNPOD_API_BASE_URL environment variable. The URL names the
+// host without the API version: a trailing /v2 is dropped, because every
+// operation path starts with /v2, and any other version segment is an error.
 func WithBaseURL(url string) Option {
 	return func(o *options) { o.baseURL = url }
+}
+
+// WithSessionID sends id as the X-Runpod-Session-Id header on every request,
+// so the requests of one session or run can be grouped. Off by default.
+func WithSessionID(id string) Option {
+	return func(o *options) { o.sessionID = id }
 }
 
 // WithHTTPClient replaces the default retrying HTTP client entirely.
@@ -125,10 +138,17 @@ func WithHTTPClient(c *http.Client) Option {
 func New(opts ...Option) (*Client, error) {
 	o := options{
 		apiKey:  os.Getenv("RUNPOD_API_KEY"),
-		baseURL: DefaultBaseURL,
+		baseURL: os.Getenv("RUNPOD_API_BASE_URL"),
 	}
 	for _, opt := range opts {
 		opt(&o)
+	}
+	if o.baseURL == "" {
+		o.baseURL = DefaultBaseURL
+	}
+	base, err := resolveBaseURL(o.baseURL)
+	if err != nil {
+		return nil, err
 	}
 	if o.apiKey == "" {
 		return nil, errors.New("runpod: API key required (set RUNPOD_API_KEY or use WithAPIKey)")
@@ -146,67 +166,105 @@ func New(opts ...Option) (*Client, error) {
 		}
 	}
 
-	auth := func(_ context.Context, req *http.Request) error {
+	headers := func(_ context.Context, req *http.Request) error {
 		req.Header.Set("Authorization", "Bearer "+o.apiKey)
 		req.Header.Set("User-Agent", o.userAgent)
+		req.Header.Set("Accept", accept(req, base.Path))
+		if o.sessionID != "" {
+			req.Header.Set("X-Runpod-Session-Id", o.sessionID)
+		}
 		return nil
 	}
+	o.baseURL = base.String()
 
 	// Every area is wired the same way; the error is wrapped with the area name
 	// because a bare one says only that some base URL did not parse.
 	c := &Client{}
-	var err error
 	if c.Pods, err = pods.NewClientWithResponses(o.baseURL,
-		pods.WithHTTPClient(o.httpClient), pods.WithRequestEditorFn(auth)); err != nil {
+		pods.WithHTTPClient(o.httpClient), pods.WithRequestEditorFn(headers)); err != nil {
 		return nil, fmt.Errorf("runpod: pods client: %w", err)
 	}
 	if c.Serverless, err = serverless.NewClientWithResponses(o.baseURL,
-		serverless.WithHTTPClient(o.httpClient), serverless.WithRequestEditorFn(auth)); err != nil {
+		serverless.WithHTTPClient(o.httpClient), serverless.WithRequestEditorFn(headers)); err != nil {
 		return nil, fmt.Errorf("runpod: serverless client: %w", err)
 	}
 	if c.Templates, err = templates.NewClientWithResponses(o.baseURL,
-		templates.WithHTTPClient(o.httpClient), templates.WithRequestEditorFn(auth)); err != nil {
+		templates.WithHTTPClient(o.httpClient), templates.WithRequestEditorFn(headers)); err != nil {
 		return nil, fmt.Errorf("runpod: templates client: %w", err)
 	}
 	if c.NetworkVolumes, err = networkvolumes.NewClientWithResponses(o.baseURL,
-		networkvolumes.WithHTTPClient(o.httpClient), networkvolumes.WithRequestEditorFn(auth)); err != nil {
+		networkvolumes.WithHTTPClient(o.httpClient), networkvolumes.WithRequestEditorFn(headers)); err != nil {
 		return nil, fmt.Errorf("runpod: network volumes client: %w", err)
 	}
 	if c.GlobalVolumes, err = globalvolumes.NewClientWithResponses(o.baseURL,
-		globalvolumes.WithHTTPClient(o.httpClient), globalvolumes.WithRequestEditorFn(auth)); err != nil {
+		globalvolumes.WithHTTPClient(o.httpClient), globalvolumes.WithRequestEditorFn(headers)); err != nil {
 		return nil, fmt.Errorf("runpod: global volumes client: %w", err)
 	}
 	if c.Registries, err = registries.NewClientWithResponses(o.baseURL,
-		registries.WithHTTPClient(o.httpClient), registries.WithRequestEditorFn(auth)); err != nil {
+		registries.WithHTTPClient(o.httpClient), registries.WithRequestEditorFn(headers)); err != nil {
 		return nil, fmt.Errorf("runpod: registries client: %w", err)
 	}
 	if c.Catalog, err = catalog.NewClientWithResponses(o.baseURL,
-		catalog.WithHTTPClient(o.httpClient), catalog.WithRequestEditorFn(auth)); err != nil {
+		catalog.WithHTTPClient(o.httpClient), catalog.WithRequestEditorFn(headers)); err != nil {
 		return nil, fmt.Errorf("runpod: catalog client: %w", err)
 	}
 	if c.Billing, err = billing.NewClientWithResponses(o.baseURL,
-		billing.WithHTTPClient(o.httpClient), billing.WithRequestEditorFn(auth)); err != nil {
+		billing.WithHTTPClient(o.httpClient), billing.WithRequestEditorFn(headers)); err != nil {
 		return nil, fmt.Errorf("runpod: billing client: %w", err)
 	}
 	if c.Clusters, err = clusters.NewClientWithResponses(o.baseURL,
-		clusters.WithHTTPClient(o.httpClient), clusters.WithRequestEditorFn(auth)); err != nil {
+		clusters.WithHTTPClient(o.httpClient), clusters.WithRequestEditorFn(headers)); err != nil {
 		return nil, fmt.Errorf("runpod: clusters client: %w", err)
 	}
 	if c.Account, err = account.NewClientWithResponses(o.baseURL,
-		account.WithHTTPClient(o.httpClient), account.WithRequestEditorFn(auth)); err != nil {
+		account.WithHTTPClient(o.httpClient), account.WithRequestEditorFn(headers)); err != nil {
 		return nil, fmt.Errorf("runpod: account client: %w", err)
 	}
 	if c.Organization, err = organization.NewClientWithResponses(o.baseURL,
-		organization.WithHTTPClient(o.httpClient), organization.WithRequestEditorFn(auth)); err != nil {
+		organization.WithHTTPClient(o.httpClient), organization.WithRequestEditorFn(headers)); err != nil {
 		return nil, fmt.Errorf("runpod: organization client: %w", err)
 	}
 	if c.AuditLogs, err = auditlogs.NewClientWithResponses(o.baseURL,
-		auditlogs.WithHTTPClient(o.httpClient), auditlogs.WithRequestEditorFn(auth)); err != nil {
+		auditlogs.WithHTTPClient(o.httpClient), auditlogs.WithRequestEditorFn(headers)); err != nil {
 		return nil, fmt.Errorf("runpod: audit logs client: %w", err)
 	}
 	if c.CostCenters, err = costcenters.NewClientWithResponses(o.baseURL,
-		costcenters.WithHTTPClient(o.httpClient), costcenters.WithRequestEditorFn(auth)); err != nil {
+		costcenters.WithHTTPClient(o.httpClient), costcenters.WithRequestEditorFn(headers)); err != nil {
 		return nil, fmt.Errorf("runpod: cost centers client: %w", err)
 	}
 	return c, nil
+}
+
+// resolveBaseURL checks that raw is an absolute http(s) URL and drops a
+// trailing slash and a trailing /v2. Any other trailing version segment, such
+// as /v1, is an error: the client only speaks v2.
+func resolveBaseURL(raw string) (*url.URL, error) {
+	u, err := url.Parse(raw)
+	if err != nil || (u.Scheme != "http" && u.Scheme != "https") || u.Host == "" {
+		return nil, fmt.Errorf("runpod: base URL %q must be an absolute http or https URL", raw)
+	}
+	u.Path = strings.TrimRight(u.Path, "/")
+	last := u.Path[strings.LastIndex(u.Path, "/")+1:]
+	if last == "v2" {
+		u.Path = strings.TrimSuffix(u.Path, "/v2")
+	} else if len(last) > 1 && last[0] == 'v' && strings.Trim(last[1:], "0123456789") == "" {
+		return nil, fmt.Errorf("runpod: base URL %q ends in API version %s; this client speaks v2 and adds /v2 itself", raw, last)
+	}
+	u.RawPath = ""
+	return u, nil
+}
+
+// accept is the Accept header for req: the log-stream operations answer with
+// Server-Sent Events, everything else with JSON or, on an error, problem JSON.
+func accept(req *http.Request, basePath string) string {
+	p := strings.TrimPrefix(req.URL.Path, basePath)
+	if req.Method == http.MethodGet {
+		if ok, _ := path.Match("/v2/pods/*/logs", p); ok {
+			return "text/event-stream"
+		}
+		if ok, _ := path.Match("/v2/serverless/*/workers/*/logs", p); ok {
+			return "text/event-stream"
+		}
+	}
+	return "application/json, application/problem+json"
 }

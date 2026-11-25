@@ -13,6 +13,13 @@ section of [README.md](README.md) for the tagging procedure.
   `RUNPOD_UA_INTEGRATION` environment variable, and `(via <agent>)` when an AI
   coding agent is detected, using the same agent names as runpodctl and
   runpod-python.
+- `New` reads the base URL from `WithBaseURL`, then the `RUNPOD_API_BASE_URL`
+  environment variable, then the default. A trailing `/v2` is dropped; any
+  other version segment, or a URL that is not absolute http(s), is an error.
+- Every request sends `Accept: application/json, application/problem+json`; the
+  two log-stream operations send `Accept: text/event-stream`.
+- `WithSessionID` sends an `X-Runpod-Session-Id` header on every request. Off by
+  default.
 
 ## v2.2.0
 
