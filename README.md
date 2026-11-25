@@ -271,21 +271,39 @@ current stable, a tidy check, the spec patch-layer tests, a check that
 regenerating `lib/` changes nothing, and govulncheck. No API key is configured,
 so the live smoke test never runs in CI.
 
+`release.yml` starts after a successful `ci` run on `main` and does the
+tagging described under Releasing. It is the only workflow here that writes
+anything.
+
 ## Releasing
 
-Releases are tagged by hand; there is no release automation.
+A release is a merge to `main` that moves `Version`; the tag and everything
+after it are automatic.
 
 1. Run `task all` and confirm it is clean.
 2. Add the release's section to [CHANGELOG.md](CHANGELOG.md): what changed,
    what breaks, and the spec date the generated packages came from.
 3. Set `Version` in `runpod.go` to the release, in the same commit as the
-   changelog entry. It is the value the `User-Agent` header carries.
-4. Tag the merge commit on `main` and push the tag:
+   changelog entry. It is the value the `User-Agent` header carries, and the
+   release workflow reads it.
 
-```bash
-git tag -a v2.0.0 -m 'v2.0.0'
-git push origin v2.0.0
-```
+Once `ci` passes on `main`, `.github/workflows/release.yml` tags the merge
+commit, opens the GitHub Release with that changelog section, warms the module
+proxy and tells runpod/terraform-provider-runpod, which opens its own bump pull
+request. A merge that leaves `Version` on a version already tagged releases
+nothing. Only a commit that is on `main` is ever tagged.
+
+A release is three things: the tag, the Release and the dispatch. When one of
+them fails the earlier ones stay and every step redoes only what is missing.
+Finish it from the failed run with Re-run failed jobs, or from Actions →
+release → Run workflow with the release's tag as the ref: both carry on past a
+Release that already exists, where the automatic run stops, and that is how a
+lost dispatch is sent again too. Run workflow on `main` fits only while main's
+head is still the release commit; after anything else merges it finds the tag
+on an older commit and does nothing, or, if the tag never got pushed, would
+carry the version onto the wrong commit. Pushing a tag that way also needs a
+successful `ci` run on that commit, so a release whose `ci` was cancelled is
+finished by re-running `ci`, which starts the automatic path again.
 
 The proxy picks the module up from the tag, so `go get
 github.com/runpod/go-sdk/v2@v2.0.0` resolves within a few minutes and
