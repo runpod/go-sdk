@@ -3,8 +3,8 @@
 # published to a registry; proxy.golang.org fetches the module from the tag.
 #
 # The version is `const Version` in runpod.go, which README's Releasing section
-# already makes part of the release commit. This file automates steps 4 and on:
-# a merge that leaves Version on an already tagged value does nothing.
+# already makes part of the release commit. This file takes it from there: a
+# merge that leaves Version on an already tagged value does nothing.
 #
 # It starts after ci, not on the push, so the offline lane (lint, unit, codegen
 # reproducibility, govulncheck) has already passed on the same commit rather
@@ -20,7 +20,8 @@ on:
     workflows: [ci]
     types: [completed]
     branches: [main]
-  # Catches up a release whose ci run was cancelled or whose dispatch never left.
+  # Finishes a release whose tag, Release or dispatch did not land. A new tag
+  # still needs a green ci on the commit, so re-run ci rather than this.
   workflow_dispatch:
 
 permissions:
@@ -43,6 +44,10 @@ jobs:
           && github.event.workflow_run.head_repository.full_name == github.repository)
     runs-on: blacksmith-2vcpu-ubuntu-2404
     timeout-minutes: 5
+    # actions: read for the ci run this asks about below.
+    permissions:
+      contents: read
+      actions: read
     outputs:
       release: ${{ steps.read.outputs.release }}
       version: ${{ steps.read.outputs.version }}
@@ -87,7 +92,9 @@ jobs:
           # A tag that exists is either an older release, which is the usual
           # merge, or this commit with some of its release already done.
           plan="tagging and releasing $tag"
+          new_tag=true
           if git rev-parse -q --verify "refs/tags/$tag" > /dev/null; then
+            new_tag=false
             if [ "$(git rev-list -n1 "$tag")" != "$(git rev-parse HEAD)" ]; then
               echo "$tag is already tagged elsewhere, nothing to release" >> "$GITHUB_STEP_SUMMARY"
               echo "release=false" >> "$GITHUB_OUTPUT"
@@ -106,6 +113,17 @@ jobs:
               plan="$tag is tagged and released; sending the dispatch again"
             else
               plan="$tag is tagged but has no Release; finishing it"
+            fi
+          fi
+
+          # Run workflow skips the ci run that gates the automatic path, and the
+          # tag it would push cannot be withdrawn. Finishing an existing tag is
+          # left alone: ci passed on that commit when the tag was created.
+          if [ "$GITHUB_EVENT_NAME" = workflow_dispatch ] && [ "$new_tag" = true ]; then
+            sha=$(git rev-parse HEAD)
+            if [ -z "$(gh run list --workflow ci.yml --commit "$sha" --status success --limit 1 --json databaseId --jq '.[].databaseId')" ]; then
+              echo "::error::no successful ci run on $(git rev-parse --short HEAD); re-run ci on it first"
+              exit 1
             fi
           fi
 

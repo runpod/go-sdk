@@ -294,10 +294,16 @@ request. A merge that leaves `Version` on a version already tagged releases
 nothing. Only a commit that is on `main` is ever tagged.
 
 A release is three things: the tag, the Release and the dispatch. When one of
-them fails the earlier ones stay, and Actions → release → Run workflow on
-`main` finishes the rest: it carries on past a Release that already exists,
-where the automatic run stops, and every step redoes only what is missing. That
-is also how a lost dispatch is sent again.
+them fails the earlier ones stay and every step redoes only what is missing.
+Finish it from the failed run with Re-run failed jobs, or from Actions →
+release → Run workflow with the release's tag as the ref: both carry on past a
+Release that already exists, where the automatic run stops, and that is how a
+lost dispatch is sent again too. Run workflow on `main` fits only while main's
+head is still the release commit; after anything else merges it finds the tag
+on an older commit and does nothing, or, if the tag never got pushed, would
+carry the version onto the wrong commit. Pushing a tag that way also needs a
+successful `ci` run on that commit, so a release whose `ci` was cancelled is
+finished by re-running `ci`, which starts the automatic path again.
 
 The proxy picks the module up from the tag, so `go get
 github.com/runpod/go-sdk/v2@v2.0.0` resolves within a few minutes and
