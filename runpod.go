@@ -133,8 +133,8 @@ func WithSessionID(id string) Option {
 // WithTimeout bounds each call, retries and rate-limit waits included. The
 // default is 60 seconds; 0 means no bound and a negative value is an error.
 // The log streams are bounded too: for a long one use 0 and the request's
-// context. Retry-After is honored up to just below the timeout, or up to 60s
-// with no timeout. Ignored with WithHTTPClient.
+// context. Retry-After is honored up to 60s, or just under a shorter timeout.
+// Ignored with WithHTTPClient.
 func WithTimeout(d time.Duration) Option {
 	return func(o *options) { o.timeout = d }
 }
@@ -295,7 +295,7 @@ func accept(req *http.Request, basePath string) string {
 }
 
 // maxRetryAfter is the longest Retry-After or rate-limit wait honored under
-// timeout: a second below it, or half of it for a timeout of 2s or less.
+// timeout: 60s, or a second below a shorter timeout (half of it at 2s or less).
 func maxRetryAfter(timeout time.Duration) time.Duration {
 	if timeout <= 0 {
 		return transport.DefaultMaxRetryAfter

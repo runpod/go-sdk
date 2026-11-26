@@ -47,7 +47,7 @@ func Example() {
 	if err := runpod.CheckResponse(created.HTTPResponse, created.Body); err != nil {
 		log.Fatal(err)
 	}
-	// A 201 is the pod; a 202 means no capacity yet and the pod is queued.
+	// A 201 is the pod; a 202 (only with queue set) means it is queued.
 	if pod := created.JSON201; pod != nil {
 		fmt.Println(pod.Id)
 	}

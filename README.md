@@ -63,7 +63,7 @@ created, err := client.Pods.CreatePodWithResponse(ctx, pods.CreatePodJSONRequest
 })
 if err != nil { ... }
 if err := runpod.CheckResponse(created.HTTPResponse, created.Body); err != nil { ... }
-pod := created.JSON201 // nil on a 202: no capacity yet, the pod is queued
+pod := created.JSON201 // nil on a 202 (only with queue set): the pod is queued
 ```
 
 `example_test.go` compiles this block, so a regeneration that moves a request
@@ -142,17 +142,17 @@ and any other version, such as `/v1`, is an error from `New`. Requests send
 
 The default `User-Agent` is `runpod-go-sdk/<version> (<os>; <arch>) go<release>`
 with `<version>` from `runpod.BuildVersion()`, then `Integration/<name>` from
-`WithIntegration` or `RUNPOD_UA_INTEGRATION`, then `(via <agent>)` when an AI
-coding agent such as Claude Code is detected. The agent names match runpodctl
-and runpod-python.
+`WithIntegration` and/or `RUNPOD_UA_INTEGRATION`, then `(via <agent>)` when an
+AI coding agent such as Claude Code is detected. The agent names match
+runpodctl and runpod-python.
 
-Every request goes through the shared retry transport (`transport/`):
-rate-limited requests (429) retry for all methods honoring `Retry-After`;
-5xx and connection errors retry only for idempotent methods, with exponential
-backoff and jitter. A failed POST is never blindly replayed. Defaults: 4
-attempts, 1s to 30s exponential backoff with equal jitter, `Retry-After`
-honored up to just under the timeout (59s of the default 60s; 60s with no
-timeout).
+Every request from `runpod.New`'s default client goes through the retry
+transport (`transport/`): rate-limited requests (429) retry for all methods
+honoring `Retry-After`; 5xx and connection errors retry only for idempotent
+methods, with exponential backoff and jitter. A failed POST is never blindly
+replayed. Defaults: 4 attempts, 1s to 30s exponential backoff with equal
+jitter, `Retry-After` honored up to 60s, or just under a shorter timeout (59s
+with the default 60s).
 
 Requests are also paced on the API's `RateLimit` header: once a response
 reports a window exhausted, the next request waits for it to reset, unless the
@@ -182,7 +182,9 @@ requests through whatever HTTP client you give it.
 ## Repo layout
 
 ```
-runpod.go              hand-written: options, auth, one client per API area
+runpod.go              hand-written: options, headers, one client per API area
+errors.go, version.go  hand-written: APIError and CheckResponse, BuildVersion
+internal/agent/        hand-written: AI-agent detection for the User-Agent
 example_test.go        hand-written: the usage example above, compiled
 transport/             hand-written: the shared retry and rate-limit RoundTrippers
 legacy/                hand-written: deprecated GraphQL client, see below
@@ -280,8 +282,9 @@ wrapped, counts as applied and says nothing.
 
 Two tiers, both under `task test`:
 
-- **Offline** (default, no credentials, no network): retry-policy tests in
-  `transport/` (backoff, jitter, `Retry-After`, which methods may replay)
+- **Offline** (default, no credentials, no network): retry-policy and
+  rate-limit pacing tests in `transport/` (backoff, jitter, `Retry-After`,
+  which methods may replay, `RateLimit` waits)
   plus client-wiring tests in `runpod_test.go` that drive the generated catalog
   and global volumes clients against an `httptest` server. `task spec-test` covers the patch layer
   separately (Python, no Go toolchain needed).

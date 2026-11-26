@@ -16,11 +16,9 @@ import (
 // empty, so check Body or StatusCode before relying on them.
 type APIError struct {
 	StatusCode int
-	// Title and Detail are empty unless the body parsed as problem JSON.
-	Title  string
-	Detail string
-	// Errors lists the request-validation failures, on a 422. Empty unless the
-	// body parsed as problem JSON.
+	Title      string
+	Detail     string
+	// Errors lists the request-validation failures.
 	Errors []string
 	// Body is the raw response body, always set.
 	Body []byte

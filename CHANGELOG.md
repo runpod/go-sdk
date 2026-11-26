@@ -9,10 +9,11 @@ section of [README.md](README.md) for the tagging procedure.
   (`Version` plus `-dev` when there is none), now sent in the `User-Agent`
   instead of `Version`.
 - `User-Agent` is `runpod-go-sdk/<version> (<os>; <arch>) go<release>`, plus
-  `Integration/<name>` from the new `WithIntegration` option or
+  `Integration/<name>` from the new `WithIntegration` option and/or
   `RUNPOD_UA_INTEGRATION`, and `(via <agent>)` when an AI coding agent is
   detected, with the agent names runpodctl and runpod-python use.
-- `New` takes the base URL from `WithBaseURL`, then `RUNPOD_API_BASE_URL`. A
+- `New` now reads `RUNPOD_API_BASE_URL` (`WithBaseURL` still wins); before, only
+  the live test did. If it is set for other tools, SDK requests go there too. A
   trailing `/v2` is dropped; another version segment or a URL that is not
   absolute http(s) is an error.
 - `Accept: application/json, application/problem+json` on every request,
@@ -20,8 +21,8 @@ section of [README.md](README.md) for the tagging procedure.
 - `WithSessionID` sends `X-Runpod-Session-Id` on every request. Off by default.
 - `WithTimeout` (default 60s, 0 for none) bounds a call, retries included.
   `WithTransport` replaces only the `http.RoundTripper` beneath the retry layer.
-- `Retry-After` is honored up to just under the timeout: 59s by default, was
-  60s. With `WithTimeout(0)` the limit stays 60s.
+- `Retry-After` is honored up to 60s, or just under a shorter timeout: 59s with
+  the default 60s timeout (was 60s).
 - `transport.RateLimit` paces requests on the API's `RateLimit` header; the
   default client uses it.
 - `runpod.APIError` carries an error response's status and problem details
