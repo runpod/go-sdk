@@ -173,6 +173,12 @@ is left of the request's deadline is not waited out: the response is returned
 instead, so a short client timeout still shows you the 429 and its `Retry-After`
 rather than an opaque deadline error.
 
+Only clients built with `runpod.New` get any of this: the `User-Agent`,
+`Accept` and session headers, the base URL handling, the timeout, retry and
+pacing. A generated client built directly, such as
+`signup.NewClientWithResponses` or `pods.NewClientWithResponses`, sends plain
+requests through whatever HTTP client you give it.
+
 ## Repo layout
 
 ```
