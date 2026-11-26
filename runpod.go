@@ -88,6 +88,8 @@ type options struct {
 	userAgent   string
 	integration string
 	sessionID   string
+	timeout     time.Duration
+	transport   http.RoundTripper
 	httpClient  *http.Client
 }
 
@@ -123,12 +125,29 @@ func WithBaseURL(url string) Option {
 }
 
 // WithSessionID sends id as the X-Runpod-Session-Id header on every request,
-// so the requests of one session or run can be grouped. Off by default.
+// to group the requests of one session. Off by default.
 func WithSessionID(id string) Option {
 	return func(o *options) { o.sessionID = id }
 }
 
-// WithHTTPClient replaces the default retrying HTTP client entirely.
+// WithTimeout bounds each call, retries and rate-limit waits included. The
+// default is 60 seconds; 0 means no bound and a negative value is an error.
+// The log streams are bounded too: for a long one use 0 and the request's
+// context. Retry-After is honored up to just below the timeout, or up to 60s
+// with no timeout. Ignored with WithHTTPClient.
+func WithTimeout(d time.Duration) Option {
+	return func(o *options) { o.timeout = d }
+}
+
+// WithTransport sets the http.RoundTripper requests go out through, e.g. for
+// a proxy or custom TLS, beneath the SDK's retry and rate-limit layers, which
+// stay in place. Ignored with WithHTTPClient.
+func WithTransport(rt http.RoundTripper) Option {
+	return func(o *options) { o.transport = rt }
+}
+
+// WithHTTPClient replaces the default HTTP client entirely: no SDK timeout,
+// retry or rate-limit pacing applies unless the client brings its own.
 func WithHTTPClient(c *http.Client) Option {
 	return func(o *options) { o.httpClient = c }
 }
@@ -139,6 +158,7 @@ func New(opts ...Option) (*Client, error) {
 	o := options{
 		apiKey:  os.Getenv("RUNPOD_API_KEY"),
 		baseURL: os.Getenv("RUNPOD_API_BASE_URL"),
+		timeout: 60 * time.Second,
 	}
 	for _, opt := range opts {
 		opt(&o)
@@ -160,10 +180,15 @@ func New(opts ...Option) (*Client, error) {
 		o.userAgent = userAgent(o.integration)
 	}
 	if o.httpClient == nil {
-		o.httpClient = &http.Client{
-			Timeout:   60 * time.Second,
-			Transport: &transport.Retry{},
+		if o.timeout < 0 {
+			return nil, fmt.Errorf("runpod: negative timeout %v", o.timeout)
 		}
+		maxWait := maxRetryAfter(o.timeout)
+		retry := &transport.Retry{
+			Base:          &transport.RateLimit{Base: o.transport, MaxWait: maxWait},
+			MaxRetryAfter: maxWait,
+		}
+		o.httpClient = &http.Client{Timeout: o.timeout, Transport: retry}
 	}
 
 	headers := func(_ context.Context, req *http.Request) error {
@@ -267,4 +292,14 @@ func accept(req *http.Request, basePath string) string {
 		}
 	}
 	return "application/json, application/problem+json"
+}
+
+// maxRetryAfter is the longest Retry-After or rate-limit wait honored under
+// timeout: a second below it, or half of it for a timeout of 2s or less.
+func maxRetryAfter(timeout time.Duration) time.Duration {
+	if timeout <= 0 {
+		return transport.DefaultMaxRetryAfter
+	}
+	// At least 1ns: both layers read 0 as "use the 60s default".
+	return max(min(transport.DefaultMaxRetryAfter, max(timeout-time.Second, timeout/2)), 1)
 }

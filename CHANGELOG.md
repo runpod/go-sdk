@@ -5,21 +5,25 @@ section of [README.md](README.md) for the tagging procedure.
 
 ## Unreleased
 
-- `runpod.BuildVersion()`: the module version from Go's build information,
-  `Version` plus `-dev` when there is none. The `User-Agent` header now carries
-  it instead of `Version`.
-- `User-Agent` is now `runpod-go-sdk/<version> (<os>; <arch>) go<release>`,
-  plus `Integration/<name>` from the new `WithIntegration` option or the
-  `RUNPOD_UA_INTEGRATION` environment variable, and `(via <agent>)` when an AI
-  coding agent is detected, using the same agent names as runpodctl and
-  runpod-python.
-- `New` reads the base URL from `WithBaseURL`, then the `RUNPOD_API_BASE_URL`
-  environment variable, then the default. A trailing `/v2` is dropped; any
-  other version segment, or a URL that is not absolute http(s), is an error.
-- Every request sends `Accept: application/json, application/problem+json`; the
-  two log-stream operations send `Accept: text/event-stream`.
-- `WithSessionID` sends an `X-Runpod-Session-Id` header on every request. Off by
-  default.
+- `runpod.BuildVersion()`: the module version from Go's build information
+  (`Version` plus `-dev` when there is none), now sent in the `User-Agent`
+  instead of `Version`.
+- `User-Agent` is `runpod-go-sdk/<version> (<os>; <arch>) go<release>`, plus
+  `Integration/<name>` from the new `WithIntegration` option or
+  `RUNPOD_UA_INTEGRATION`, and `(via <agent>)` when an AI coding agent is
+  detected, with the agent names runpodctl and runpod-python use.
+- `New` takes the base URL from `WithBaseURL`, then `RUNPOD_API_BASE_URL`. A
+  trailing `/v2` is dropped; another version segment or a URL that is not
+  absolute http(s) is an error.
+- `Accept: application/json, application/problem+json` on every request,
+  `text/event-stream` on the two log-stream operations.
+- `WithSessionID` sends `X-Runpod-Session-Id` on every request. Off by default.
+- `WithTimeout` (default 60s, 0 for none) bounds a call, retries included.
+  `WithTransport` replaces only the `http.RoundTripper` beneath the retry layer.
+- `Retry-After` is honored up to just under the timeout: 59s by default, was
+  60s. With `WithTimeout(0)` the limit stays 60s.
+- `transport.RateLimit` paces requests on the API's `RateLimit` header; the
+  default client uses it.
 
 ## v2.2.0
 

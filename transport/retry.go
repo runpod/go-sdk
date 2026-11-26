@@ -1,5 +1,5 @@
 // Package transport provides the shared HTTP retry layer every Runpod client
-// generated from this repo goes through.
+// generated from this repo goes through, and the RateLimit pacing layer.
 //
 // Policy: idempotent requests (GET, HEAD, PUT, DELETE, OPTIONS) retry on 429,
 // on 500/502/503/504, and on transport-level errors. Non-idempotent requests

@@ -135,35 +135,42 @@ the spec's `runpod/pytorch:2.8.0-py3.11-cuda12.8.1` examples abbreviate the same
 image to its framework and CUDA versions.
 
 Options: `WithAPIKey` overrides the environment, `WithBaseURL` targets another
-environment (e.g. stage) and overrides `RUNPOD_API_BASE_URL`,
-`WithIntegration` names the tool built on the SDK, `WithSessionID` sends an
-`X-Runpod-Session-Id` header on every request (off by default),
-`WithUserAgent` replaces the SDK's own `User-Agent` entirely,
-`WithHTTPClient` replaces the HTTP client entirely.
+environment (e.g. stage) and overrides `RUNPOD_API_BASE_URL`, `WithIntegration`
+adds your tool's name to the `User-Agent`, `WithSessionID` sends
+`X-Runpod-Session-Id` on every request (off by default), `WithUserAgent`
+replaces the `User-Agent` entirely. `WithTimeout`, `WithTransport` and
+`WithHTTPClient` are covered with retries below.
 
-The base URL is the host without the API version, because every operation path
-starts with `/v2`: a trailing `/v2` is dropped, and any other version, such as
-`/v1`, makes `New` return an error. Every request sends
-`Accept: application/json, application/problem+json`, except the two log
-streams (`Pods.GetPodLogs`, `Serverless.GetWorkerLogs`), which send
-`Accept: text/event-stream`.
+The base URL is the host without the API version: a trailing `/v2` is dropped,
+and any other version, such as `/v1`, is an error from `New`. Requests send
+`Accept: application/json, application/problem+json`; the two log streams
+(`Pods.GetPodLogs`, `Serverless.GetWorkerLogs`) send `Accept: text/event-stream`.
 
-The default `User-Agent` is
-`runpod-go-sdk/<version> (<os>; <arch>) go<release>`, with `<version>` being
-`runpod.BuildVersion()`, followed by `Integration/<name>` for
-`WithIntegration` and for the `RUNPOD_UA_INTEGRATION` environment variable, and
-by `(via <agent>)` when an AI coding agent such as Claude Code or Codex is
-detected from its environment variables. The integration tokens follow
-runpod-python, and the agent names are the ones runpodctl and runpod-python
-use.
+The default `User-Agent` is `runpod-go-sdk/<version> (<os>; <arch>) go<release>`
+with `<version>` from `runpod.BuildVersion()`, then `Integration/<name>` from
+`WithIntegration` or `RUNPOD_UA_INTEGRATION`, then `(via <agent>)` when an AI
+coding agent such as Claude Code is detected. The agent names match runpodctl
+and runpod-python.
 
 Every request goes through the shared retry transport (`transport/`):
 rate-limited requests (429) retry for all methods honoring `Retry-After`;
 5xx and connection errors retry only for idempotent methods, with exponential
 backoff and jitter. A failed POST is never blindly replayed. Defaults: 4
 attempts, 1s to 30s exponential backoff with equal jitter, `Retry-After`
-honored up to 60s, inside a 60s client timeout. To tune it, pass your own
-client: `runpod.WithHTTPClient(&http.Client{Transport: &transport.Retry{MaxAttempts: 6}})`.
+honored up to just under the timeout (59s of the default 60s; 60s with no
+timeout).
+
+Requests are also paced on the API's `RateLimit` header: once a response
+reports a window exhausted, the next request waits for it to reset, unless the
+wait is longer than the `Retry-After` limit or would pass the request's
+deadline; then it goes out and gets the 429.
+
+`WithTimeout` bounds each call, retries and waits included (default 60s, 0 for
+none). It bounds the log streams too, so for a long stream use `WithTimeout(0)`
+and a context. `WithTransport` replaces the `http.RoundTripper` underneath (a
+proxy, custom TLS) and keeps retry and pacing. `WithHTTPClient` replaces the
+whole stack, so none of this applies unless your client sets it up, e.g.
+`runpod.WithHTTPClient(&http.Client{Transport: &transport.Retry{MaxAttempts: 6}})`.
 
 Two cases opt out of a retry that would otherwise apply. A request whose body
 cannot be rewound (a streamed body, where net/http could not record one) is
@@ -177,7 +184,7 @@ rather than an opaque deadline error.
 ```
 runpod.go              hand-written: options, auth, one client per API area
 example_test.go        hand-written: the usage example above, compiled
-transport/             hand-written: the shared retry RoundTripper
+transport/             hand-written: the shared retry and rate-limit RoundTrippers
 legacy/                hand-written: deprecated GraphQL client, see below
 generator/             hand-written: its own module — splits the spec per tag, runs oapi-codegen
 scripts/               hand-written: the spec patch registry, its normalizer and tests
