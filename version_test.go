@@ -13,7 +13,7 @@ func TestVersionFromBuildInfo(t *testing.T) {
 		want string
 	}{
 		{"dependency", []*debug.Module{{Path: path, Version: "v2.3.0"}}, "2.3.0"},
-		{"replaced by a local path", []*debug.Module{{Path: path, Version: "v2.3.0", Replace: &debug.Module{Path: "../go-sdk"}}}, Version + "-dev"},
+		{"replaced by a local path", []*debug.Module{{Path: path, Version: "v2.3.0", Replace: &debug.Module{Path: "../go-sdk", Version: "(devel)"}}}, Version + "-dev"},
 		{"not a dependency", nil, Version + "-dev"},
 	}
 	for _, tt := range tests {

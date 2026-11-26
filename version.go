@@ -23,7 +23,8 @@ func versionFromBuildInfo(info *debug.BuildInfo) string {
 			if dep.Replace != nil {
 				dep = dep.Replace
 			}
-			if dep.Version != "" {
+			// A replace by a local path records "(devel)", not a version.
+			if dep.Version != "" && dep.Version != "(devel)" {
 				return strings.TrimPrefix(dep.Version, "v")
 			}
 		}
