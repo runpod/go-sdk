@@ -24,6 +24,9 @@ section of [README.md](README.md) for the tagging procedure.
   60s. With `WithTimeout(0)` the limit stays 60s.
 - `transport.RateLimit` paces requests on the API's `RateLimit` header; the
   default client uses it.
+- `runpod.APIError` carries an error response's status and problem details
+  (`Title`, `Detail`, `Errors`, raw `Body`); `runpod.CheckResponse` returns one
+  for any non-2xx result.
 
 ## v2.2.0
 

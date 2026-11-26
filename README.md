@@ -50,12 +50,10 @@ if err != nil { ... }
 
 // The *WithResponse methods return a response wrapper: err covers transport,
 // body-read and decode failures. An API-level error arrives as a status code,
-// so check the typed status field for it.
+// which CheckResponse turns into an *APIError.
 gpus, err := client.Catalog.ListGpuTypesWithResponse(ctx, nil)
 if err != nil { ... }
-if gpus.JSON200 == nil {
-    log.Fatalf("catalog: HTTP %d: %s", gpus.HTTPResponse.StatusCode, gpus.Body)
-}
+if err := runpod.CheckResponse(gpus.HTTPResponse, gpus.Body); err != nil { ... }
 for _, gpu := range gpus.JSON200.Gpus { ... }
 
 created, err := client.Pods.CreatePodWithResponse(ctx, pods.CreatePodJSONRequestBody{
@@ -64,10 +62,8 @@ created, err := client.Pods.CreatePodWithResponse(ctx, pods.CreatePodJSONRequest
     Gpu:   &types.CreateGpuConfig{Id: "NVIDIA GeForce RTX 4090", Count: runpod.Ptr(1)},
 })
 if err != nil { ... }
-if created.JSON201 == nil {
-    log.Fatalf("create pod: HTTP %d: %s", created.HTTPResponse.StatusCode, created.Body)
-}
-pod := created.JSON201
+if err := runpod.CheckResponse(created.HTTPResponse, created.Body); err != nil { ... }
+pod := created.JSON201 // nil on a 202: no capacity yet, the pod is queued
 ```
 
 `example_test.go` compiles this block, so a regeneration that moves a request
@@ -108,9 +104,7 @@ params := &pods.ListPodsParams{}
 for {
     page, err := client.Pods.ListPodsWithResponse(ctx, params)
     if err != nil { ... }
-    if page.JSON200 == nil {
-        log.Fatalf("list pods: HTTP %d: %s", page.HTTPResponse.StatusCode, page.Body)
-    }
+    if err := runpod.CheckResponse(page.HTTPResponse, page.Body); err != nil { ... }
     all = append(all, page.JSON200.Pods...)
     if !page.JSON200.Pagination.HasNextPage {
         break
