@@ -50,12 +50,10 @@ if err != nil { ... }
 
 // The *WithResponse methods return a response wrapper: err covers transport,
 // body-read and decode failures. An API-level error arrives as a status code,
-// so check the typed status field for it.
+// which CheckResponse turns into an *APIError.
 gpus, err := client.Catalog.ListGpuTypesWithResponse(ctx, nil)
 if err != nil { ... }
-if gpus.JSON200 == nil {
-    log.Fatalf("catalog: HTTP %d: %s", gpus.HTTPResponse.StatusCode, gpus.Body)
-}
+if err := runpod.CheckResponse(gpus.HTTPResponse, gpus.Body); err != nil { ... }
 for _, gpu := range gpus.JSON200.Gpus { ... }
 
 created, err := client.Pods.CreatePodWithResponse(ctx, pods.CreatePodJSONRequestBody{
@@ -64,10 +62,8 @@ created, err := client.Pods.CreatePodWithResponse(ctx, pods.CreatePodJSONRequest
     Gpu:   &types.CreateGpuConfig{Id: "NVIDIA GeForce RTX 4090", Count: runpod.Ptr(1)},
 })
 if err != nil { ... }
-if created.JSON201 == nil {
-    log.Fatalf("create pod: HTTP %d: %s", created.HTTPResponse.StatusCode, created.Body)
-}
-pod := created.JSON201
+if err := runpod.CheckResponse(created.HTTPResponse, created.Body); err != nil { ... }
+pod := created.JSON201 // nil on a 202 (only with queue set): the pod is queued
 ```
 
 `example_test.go` compiles this block, so a regeneration that moves a request
@@ -108,9 +104,7 @@ params := &pods.ListPodsParams{}
 for {
     page, err := client.Pods.ListPodsWithResponse(ctx, params)
     if err != nil { ... }
-    if page.JSON200 == nil {
-        log.Fatalf("list pods: HTTP %d: %s", page.HTTPResponse.StatusCode, page.Body)
-    }
+    if err := runpod.CheckResponse(page.HTTPResponse, page.Body); err != nil { ... }
     all = append(all, page.JSON200.Pods...)
     if !page.JSON200.Pagination.HasNextPage {
         break
@@ -135,17 +129,44 @@ the spec's `runpod/pytorch:2.8.0-py3.11-cuda12.8.1` examples abbreviate the same
 image to its framework and CUDA versions.
 
 Options: `WithAPIKey` overrides the environment, `WithBaseURL` targets another
-environment (e.g. stage), `WithUserAgent` replaces the SDK's own `User-Agent`
-(`runpod-go-sdk/<version> (go<release>)`) for a tool that wants its requests
-attributed to itself, `WithHTTPClient` replaces the HTTP client entirely.
+environment (e.g. stage) and overrides `RUNPOD_API_BASE_URL`, `WithIntegration`
+adds your tool's name to the `User-Agent`, `WithSessionID` sends
+`X-Runpod-Session-Id` on every request (off by default), `WithNoRedirect`
+returns a 3xx response as is instead of following it, `WithUserAgent` replaces
+the `User-Agent` entirely. `WithTimeout`, `WithTransport` and
+`WithHTTPClient` are covered with retries below.
 
-Every request goes through the shared retry transport (`transport/`):
-rate-limited requests (429) retry for all methods honoring `Retry-After`;
-5xx and connection errors retry only for idempotent methods, with exponential
-backoff and jitter. A failed POST is never blindly replayed. Defaults: 4
-attempts, 1s to 30s exponential backoff with equal jitter, `Retry-After`
-honored up to 60s, inside a 60s client timeout. To tune it, pass your own
-client: `runpod.WithHTTPClient(&http.Client{Transport: &transport.Retry{MaxAttempts: 6}})`.
+The base URL is the host without the API version: a trailing `/v2` is dropped,
+and any other version, such as `/v1`, is an error from `New`. Requests send
+`Accept: application/json, application/problem+json`; the two log streams
+(`Pods.GetPodLogs`, `Serverless.GetWorkerLogs`) send `Accept: text/event-stream`.
+
+The default `User-Agent` is `runpod-go-sdk/<version> (<os>; <arch>) go<release>`
+with `<version>` from `runpod.BuildVersion()`, then `Integration/<name>` from
+`WithIntegration` and/or `RUNPOD_UA_INTEGRATION`, then `(via <agent>)` when an
+AI coding agent such as Claude Code is detected. The agent names match
+runpodctl and runpod-python.
+
+Every request from `runpod.New`'s default client goes through the retry
+transport (`transport/`): rate-limited requests (429), 5xx and connection
+errors retry only for idempotent methods (GET, HEAD, PUT, DELETE, OPTIONS),
+honoring `Retry-After`, with exponential backoff and jitter. A POST or PATCH
+is never replayed: a 429 or 5xx does not prove the write was not applied, so
+it comes straight back to the caller. Defaults: 4 attempts, 1s to 30s
+exponential backoff with equal jitter, `Retry-After` honored up to 60s, or
+just under a shorter timeout (59s with the default 60s).
+
+Requests are also paced on the API's `RateLimit` header: once a response
+reports a window exhausted, the next request waits for it to reset, unless the
+wait is longer than the `Retry-After` limit or would pass the request's
+deadline; then it goes out and gets the 429.
+
+`WithTimeout` bounds each call, retries and waits included (default 60s, 0 for
+none). It bounds the log streams too, so for a long stream use `WithTimeout(0)`
+and a context. `WithTransport` replaces the `http.RoundTripper` underneath (a
+proxy, custom TLS) and keeps retry and pacing. `WithHTTPClient` replaces the
+whole stack, so none of this applies unless your client sets it up, e.g.
+`runpod.WithHTTPClient(&http.Client{Transport: &transport.Retry{MaxAttempts: 6}})`.
 
 Two cases opt out of a retry that would otherwise apply. A request whose body
 cannot be rewound (a streamed body, where net/http could not record one) is
@@ -154,12 +175,20 @@ is left of the request's deadline is not waited out: the response is returned
 instead, so a short client timeout still shows you the 429 and its `Retry-After`
 rather than an opaque deadline error.
 
+Only clients built with `runpod.New` get any of this: the `User-Agent`,
+`Accept` and session headers, the base URL handling, the timeout, retry and
+pacing. A generated client built directly, such as
+`signup.NewClientWithResponses` or `pods.NewClientWithResponses`, sends plain
+requests through whatever HTTP client you give it.
+
 ## Repo layout
 
 ```
-runpod.go              hand-written: options, auth, one client per API area
+runpod.go              hand-written: options, headers, one client per API area
+errors.go, version.go  hand-written: APIError and CheckResponse, BuildVersion
+internal/agent/        hand-written: AI-agent detection for the User-Agent
 example_test.go        hand-written: the usage example above, compiled
-transport/             hand-written: the shared retry RoundTripper
+transport/             hand-written: the shared retry and rate-limit RoundTrippers
 legacy/                hand-written: deprecated GraphQL client, see below
 generator/             hand-written: its own module — splits the spec per tag, runs oapi-codegen
 scripts/               hand-written: the spec patch registry, its normalizer and tests
@@ -255,8 +284,9 @@ wrapped, counts as applied and says nothing.
 
 Two tiers, both under `task test`:
 
-- **Offline** (default, no credentials, no network): retry-policy tests in
-  `transport/` (backoff, jitter, `Retry-After`, which methods may replay)
+- **Offline** (default, no credentials, no network): retry-policy and
+  rate-limit pacing tests in `transport/` (backoff, jitter, `Retry-After`,
+  which methods may replay, `RateLimit` waits)
   plus client-wiring tests in `runpod_test.go` that drive the generated catalog
   and global volumes clients against an `httptest` server. `task spec-test` covers the patch layer
   separately (Python, no Go toolchain needed).
@@ -291,8 +321,7 @@ after it are automatic.
 2. Add the release's section to [CHANGELOG.md](CHANGELOG.md): what changed,
    what breaks, and the spec date the generated packages came from.
 3. Set `Version` in `runpod.go` to the release, in the same commit as the
-   changelog entry. It is the value the `User-Agent` header carries, and the
-   release workflow reads it.
+   changelog entry. The release workflow reads it.
 
 Once `ci` passes on `main`, `.github/workflows/release.yml` tags the merge
 commit, opens the GitHub Release with that changelog section, warms the module

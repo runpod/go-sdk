@@ -109,7 +109,64 @@ func TestPostDoesNotRetryServerError(t *testing.T) {
 	}
 }
 
-func TestPostRetries429WithReplayedBody(t *testing.T) {
+func TestPostAndPatch429AreNotRetried(t *testing.T) {
+	for _, method := range []string{http.MethodPost, http.MethodPatch} {
+		t.Run(method, func(t *testing.T) {
+			srv, calls := countingServer(t, func(_ int64, w http.ResponseWriter) {
+				w.Header().Set("Retry-After", "7")
+				w.WriteHeader(http.StatusTooManyRequests)
+			})
+			req, err := http.NewRequestWithContext(context.Background(), method, srv.URL, strings.NewReader(`{"name":"pod"}`))
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			resp, err := (&http.Client{Transport: fastRetry()}).Do(req)
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+			defer func() { _ = resp.Body.Close() }()
+
+			if got := atomic.LoadInt64(calls); got != 1 {
+				t.Fatalf("attempts = %d, want 1 (a write is never replayed on 429)", got)
+			}
+			if resp.StatusCode != http.StatusTooManyRequests || resp.Header.Get("Retry-After") != "7" {
+				t.Fatalf("status %d, Retry-After %q; want the 429 and its Retry-After", resp.StatusCode, resp.Header.Get("Retry-After"))
+			}
+		})
+	}
+}
+
+func TestIdempotent429IsRetried(t *testing.T) {
+	for _, method := range []string{http.MethodGet, http.MethodPut, http.MethodDelete} {
+		t.Run(method, func(t *testing.T) {
+			srv, calls := countingServer(t, func(n int64, w http.ResponseWriter) {
+				if n == 1 {
+					w.Header().Set("Retry-After", "0")
+					w.WriteHeader(http.StatusTooManyRequests)
+					return
+				}
+				w.WriteHeader(http.StatusOK)
+			})
+			req, err := http.NewRequestWithContext(context.Background(), method, srv.URL, nil)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			resp, err := (&http.Client{Transport: fastRetry()}).Do(req)
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+			defer func() { _ = resp.Body.Close() }()
+
+			if resp.StatusCode != http.StatusOK || atomic.LoadInt64(calls) != 2 {
+				t.Fatalf("status %d after %d attempts, want 200 after one retried 429", resp.StatusCode, atomic.LoadInt64(calls))
+			}
+		})
+	}
+}
+
+func TestPut429RetriesWithReplayedBody(t *testing.T) {
 	var lastBody atomic.Value
 	var calls int64
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -125,8 +182,11 @@ func TestPostRetries429WithReplayedBody(t *testing.T) {
 	}))
 	t.Cleanup(srv.Close)
 
-	client := &http.Client{Transport: fastRetry()}
-	resp, err := client.Post(srv.URL, "application/json", strings.NewReader(`{"name":"pod"}`))
+	req, err := http.NewRequestWithContext(context.Background(), http.MethodPut, srv.URL, strings.NewReader(`{"name":"pod"}`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	resp, err := (&http.Client{Transport: fastRetry()}).Do(req)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -136,7 +196,7 @@ func TestPostRetries429WithReplayedBody(t *testing.T) {
 		t.Fatalf("status = %d, want 200", resp.StatusCode)
 	}
 	if got := atomic.LoadInt64(&calls); got != 2 {
-		t.Fatalf("attempts = %d, want 2 (429 retries POST)", got)
+		t.Fatalf("attempts = %d, want 2 (429 retries PUT)", got)
 	}
 	if got := lastBody.Load(); got != `{"name":"pod"}` {
 		t.Fatalf("replayed body = %q, want original body", got)
@@ -207,7 +267,7 @@ func TestPostTransportErrorIsNotRetried(t *testing.T) {
 	}
 }
 
-func TestPost429WithAStreamedBodyIsNotReplayed(t *testing.T) {
+func TestPut429WithAStreamedBodyIsNotReplayed(t *testing.T) {
 	srv, calls := countingServer(t, func(_ int64, w http.ResponseWriter) {
 		w.Header().Set("Retry-After", "0")
 		w.WriteHeader(http.StatusTooManyRequests)
@@ -216,7 +276,7 @@ func TestPost429WithAStreamedBodyIsNotReplayed(t *testing.T) {
 	// io.NopCloser hides the concrete reader, so http.NewRequest cannot record
 	// a GetBody and the body is unrewindable.
 	body := io.NopCloser(strings.NewReader(`{"name":"pod"}`))
-	req, err := http.NewRequestWithContext(context.Background(), http.MethodPost, srv.URL, body)
+	req, err := http.NewRequestWithContext(context.Background(), http.MethodPut, srv.URL, body)
 	if err != nil {
 		t.Fatal(err)
 	}

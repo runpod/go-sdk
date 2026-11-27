@@ -3,6 +3,39 @@
 This file is maintained by hand, newest release first. See the Releasing
 section of [README.md](README.md) for the tagging procedure.
 
+## Unreleased
+
+- **Behaviour change:** `transport.Retry` no longer retries POST or PATCH on
+  429. A 429 does not prove a write was not applied (an API can perform the
+  write and still answer 429), so replaying it could apply it twice. The 429
+  and its `Retry-After` now come straight back; a caller that wants to retry a
+  write decides itself.
+- `runpod.BuildVersion()`: the module version from Go's build information
+  (`Version` plus `-dev` when there is none), now sent in the `User-Agent`
+  instead of `Version`.
+- `User-Agent` is `runpod-go-sdk/<version> (<os>; <arch>) go<release>`, plus
+  `Integration/<name>` from the new `WithIntegration` option and/or
+  `RUNPOD_UA_INTEGRATION`, and `(via <agent>)` when an AI coding agent is
+  detected, with the agent names runpodctl and runpod-python use.
+- `New` now reads `RUNPOD_API_BASE_URL` (`WithBaseURL` still wins); before, only
+  the live test did. If it is set for other tools, SDK requests go there too. A
+  trailing `/v2` is dropped; another version segment or a URL that is not
+  absolute http(s) is an error.
+- `Accept: application/json, application/problem+json` on every request,
+  `text/event-stream` on the two log-stream operations.
+- `WithSessionID` sends `X-Runpod-Session-Id` on every request. Off by default.
+- `WithNoRedirect` returns a 3xx response to the caller instead of following
+  it. Redirects are still followed by default.
+- `WithTimeout` (default 60s, 0 for none) bounds a call, retries included.
+  `WithTransport` replaces only the `http.RoundTripper` beneath the retry layer.
+- `Retry-After` is honored up to 60s, or just under a shorter timeout: 59s with
+  the default 60s timeout (was 60s).
+- `transport.RateLimit` paces requests on the API's `RateLimit` header; the
+  default client uses it.
+- `runpod.APIError` carries an error response's status and problem details
+  (`Title`, `Detail`, `Errors`, raw `Body`); `runpod.CheckResponse` returns one
+  for any non-2xx result.
+
 ## v2.2.0
 
 Regenerated from the 2026-11-13 released REST v2 spec, the profile a production

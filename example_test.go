@@ -24,13 +24,13 @@ func Example() {
 
 	// The *WithResponse methods return a response wrapper: err covers
 	// transport, body-read and decode failures. An API-level error arrives as
-	// a status code, so check the typed status field for it.
+	// a status code, which CheckResponse turns into an *APIError.
 	gpus, err := client.Catalog.ListGpuTypesWithResponse(ctx, nil)
 	if err != nil {
 		log.Fatal(err)
 	}
-	if gpus.JSON200 == nil {
-		log.Fatalf("catalog: HTTP %d: %s", gpus.HTTPResponse.StatusCode, gpus.Body)
+	if err := runpod.CheckResponse(gpus.HTTPResponse, gpus.Body); err != nil {
+		log.Fatal(err)
 	}
 	for _, gpu := range gpus.JSON200.Gpus {
 		fmt.Println(gpu.Id, gpu.Memory)
@@ -44,10 +44,13 @@ func Example() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	if created.JSON201 == nil {
-		log.Fatalf("create pod: HTTP %d: %s", created.HTTPResponse.StatusCode, created.Body)
+	if err := runpod.CheckResponse(created.HTTPResponse, created.Body); err != nil {
+		log.Fatal(err)
 	}
-	fmt.Println(created.JSON201.Id)
+	// A 201 is the pod; a 202 (only with queue set) means it is queued.
+	if pod := created.JSON201; pod != nil {
+		fmt.Println(pod.Id)
+	}
 }
 
 // Example_pagination is the README's paging block, compiled on the same terms.
@@ -68,8 +71,8 @@ func Example_pagination() {
 		if err != nil {
 			log.Fatal(err)
 		}
-		if page.JSON200 == nil {
-			log.Fatalf("list pods: HTTP %d: %s", page.HTTPResponse.StatusCode, page.Body)
+		if err := runpod.CheckResponse(page.HTTPResponse, page.Body); err != nil {
+			log.Fatal(err)
 		}
 		all = append(all, page.JSON200.Pods...)
 		if !page.JSON200.Pagination.HasNextPage {
