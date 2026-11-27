@@ -5,6 +5,11 @@ section of [README.md](README.md) for the tagging procedure.
 
 ## Unreleased
 
+- **Behaviour change:** `transport.Retry` no longer retries POST or PATCH on
+  429. A 429 does not prove a write was not applied (an API can perform the
+  write and still answer 429), so replaying it could apply it twice. The 429
+  and its `Retry-After` now come straight back; a caller that wants to retry a
+  write decides itself.
 - `runpod.BuildVersion()`: the module version from Go's build information
   (`Version` plus `-dev` when there is none), now sent in the `User-Agent`
   instead of `Version`.

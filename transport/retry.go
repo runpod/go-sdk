@@ -3,8 +3,9 @@
 //
 // Policy: idempotent requests (GET, HEAD, PUT, DELETE, OPTIONS) retry on 429,
 // on 500/502/503/504, and on transport-level errors. Non-idempotent requests
-// (POST, PATCH) retry only on 429: a 5xx may mean the API already performed
-// the mutation, and a blind replay can double-create. A Retry-After header
+// (POST, PATCH) are never retried: a 429 or a 5xx does not prove the write was
+// not applied, since an API can perform the write and still answer with an
+// error, so a replay could apply it twice. A Retry-After header
 // (delay-seconds or HTTP-date, RFC 9110 §10.2.3) is respected up to
 // MaxRetryAfter; otherwise delay is exponential backoff with equal jitter.
 //
@@ -136,10 +137,11 @@ func (r *Retry) shouldRetry(req *http.Request, resp *http.Response, err error) b
 	}
 
 	switch resp.StatusCode {
-	case http.StatusTooManyRequests:
-		return true // 429 = not processed; safe for any method
-	case http.StatusInternalServerError, http.StatusBadGateway,
+	case http.StatusTooManyRequests,
+		http.StatusInternalServerError, http.StatusBadGateway,
 		http.StatusServiceUnavailable, http.StatusGatewayTimeout:
+		// A 429 or 5xx can follow a write the API already applied, so only an
+		// idempotent request is safe to send again.
 		return idempotent
 	}
 	return false

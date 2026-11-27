@@ -148,12 +148,13 @@ AI coding agent such as Claude Code is detected. The agent names match
 runpodctl and runpod-python.
 
 Every request from `runpod.New`'s default client goes through the retry
-transport (`transport/`): rate-limited requests (429) retry for all methods
-honoring `Retry-After`; 5xx and connection errors retry only for idempotent
-methods, with exponential backoff and jitter. A failed POST is never blindly
-replayed. Defaults: 4 attempts, 1s to 30s exponential backoff with equal
-jitter, `Retry-After` honored up to 60s, or just under a shorter timeout (59s
-with the default 60s).
+transport (`transport/`): rate-limited requests (429), 5xx and connection
+errors retry only for idempotent methods (GET, HEAD, PUT, DELETE, OPTIONS),
+honoring `Retry-After`, with exponential backoff and jitter. A POST or PATCH
+is never replayed: a 429 or 5xx does not prove the write was not applied, so
+it comes straight back to the caller. Defaults: 4 attempts, 1s to 30s
+exponential backoff with equal jitter, `Retry-After` honored up to 60s, or
+just under a shorter timeout (59s with the default 60s).
 
 Requests are also paced on the API's `RateLimit` header: once a response
 reports a window exhausted, the next request waits for it to reset, unless the
