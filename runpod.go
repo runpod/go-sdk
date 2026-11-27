@@ -90,6 +90,7 @@ type options struct {
 	sessionID   string
 	timeout     time.Duration
 	transport   http.RoundTripper
+	noRedirect  bool
 	httpClient  *http.Client
 }
 
@@ -146,6 +147,13 @@ func WithTransport(rt http.RoundTripper) Option {
 	return func(o *options) { o.transport = rt }
 }
 
+// WithNoRedirect stops the client from following redirects: a 3xx response
+// comes back to the caller as is, Location header included. Ignored with
+// WithHTTPClient.
+func WithNoRedirect() Option {
+	return func(o *options) { o.noRedirect = true }
+}
+
 // WithHTTPClient replaces the default HTTP client entirely: no SDK timeout,
 // retry or rate-limit pacing applies unless the client brings its own.
 func WithHTTPClient(c *http.Client) Option {
@@ -189,6 +197,11 @@ func New(opts ...Option) (*Client, error) {
 			MaxRetryAfter: maxWait,
 		}
 		o.httpClient = &http.Client{Timeout: o.timeout, Transport: retry}
+		if o.noRedirect {
+			o.httpClient.CheckRedirect = func(*http.Request, []*http.Request) error {
+				return http.ErrUseLastResponse
+			}
+		}
 	}
 
 	headers := func(_ context.Context, req *http.Request) error {

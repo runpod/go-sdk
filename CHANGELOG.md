@@ -19,6 +19,8 @@ section of [README.md](README.md) for the tagging procedure.
 - `Accept: application/json, application/problem+json` on every request,
   `text/event-stream` on the two log-stream operations.
 - `WithSessionID` sends `X-Runpod-Session-Id` on every request. Off by default.
+- `WithNoRedirect` returns a 3xx response to the caller instead of following
+  it. Redirects are still followed by default.
 - `WithTimeout` (default 60s, 0 for none) bounds a call, retries included.
   `WithTransport` replaces only the `http.RoundTripper` beneath the retry layer.
 - `Retry-After` is honored up to 60s, or just under a shorter timeout: 59s with

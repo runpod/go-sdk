@@ -52,6 +52,41 @@ func TestWithTransportKeepsRetry(t *testing.T) {
 	}
 }
 
+func TestWithNoRedirect(t *testing.T) {
+	var followed atomic.Bool
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/elsewhere" {
+			followed.Store(true)
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = w.Write([]byte(`{"gpus":[]}`))
+			return
+		}
+		http.Redirect(w, r, "/elsewhere", http.StatusMovedPermanently)
+	}))
+	t.Cleanup(srv.Close)
+	get := func(opts ...Option) *http.Response {
+		t.Helper()
+		client, err := New(append([]Option{WithAPIKey("test-key"), WithBaseURL(srv.URL)}, opts...)...)
+		if err != nil {
+			t.Fatal(err)
+		}
+		resp, err := client.Catalog.ListGpuTypes(context.Background(), nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+		_ = resp.Body.Close()
+		return resp
+	}
+
+	if resp := get(WithNoRedirect()); resp.StatusCode != http.StatusMovedPermanently || resp.Header.Get("Location") != "/elsewhere" || followed.Load() {
+		t.Errorf("with WithNoRedirect: status %d, Location %q, followed %v; want the 301 back unfollowed",
+			resp.StatusCode, resp.Header.Get("Location"), followed.Load())
+	}
+	if resp := get(); resp.StatusCode != http.StatusOK || !followed.Load() {
+		t.Errorf("default: status %d, followed %v; want the redirect followed", resp.StatusCode, followed.Load())
+	}
+}
+
 type roundTripFunc func(*http.Request) (*http.Response, error)
 
 func (f roundTripFunc) RoundTrip(r *http.Request) (*http.Response, error) { return f(r) }

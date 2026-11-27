@@ -131,8 +131,9 @@ image to its framework and CUDA versions.
 Options: `WithAPIKey` overrides the environment, `WithBaseURL` targets another
 environment (e.g. stage) and overrides `RUNPOD_API_BASE_URL`, `WithIntegration`
 adds your tool's name to the `User-Agent`, `WithSessionID` sends
-`X-Runpod-Session-Id` on every request (off by default), `WithUserAgent`
-replaces the `User-Agent` entirely. `WithTimeout`, `WithTransport` and
+`X-Runpod-Session-Id` on every request (off by default), `WithNoRedirect`
+returns a 3xx response as is instead of following it, `WithUserAgent` replaces
+the `User-Agent` entirely. `WithTimeout`, `WithTransport` and
 `WithHTTPClient` are covered with retries below.
 
 The base URL is the host without the API version: a trailing `/v2` is dropped,
